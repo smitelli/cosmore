@@ -1,0 +1,63 @@
+; *****************************************************************************
+; *                     COSMORE EQUATES for LOWLEVEL.ASM                      *
+; *****************************************************************************
+
+;
+; Memory segment addresses.
+;
+EGA_SEGMENT                     EQU 0a000h
+SOLID_TILE_SEGMENT              EQU (EGA_SEGMENT + 400h)
+
+;
+; Interrupt numbers.
+;
+INT_VIDEO_SERVICE               EQU 10h
+
+;
+; Video Service subfunctions.
+;
+VSVC_SET_VIDEO_MODE             EQU 0h
+VSVC_SET_ACTIVE_PAGE            EQU 5h
+VSVC_PALETTE_REGISTERS          EQU 10h
+
+;
+; Set/Get Palette Registers subfunctions.
+;
+PALREG_SET_ONE_COLOR            EQU 0h
+PALREG_SET_BORDER_COLOR         EQU 1h
+
+;
+; EGA Sequencer I/O port and registers.
+;
+SEQUENCER_ADDR                  EQU 3c4h  ; During word access, high byte goes to 3c5h
+SEQUENCER_DATA                  EQU 3c5h
+SEQ_MAP_MASK                    EQU 2h
+
+;
+; EGA Graphics Controller I/O port and registers.
+;
+GRAPHICS_1_2_ADDR               EQU 3ceh  ; During word access, high byte goes to 3cfh
+GRAPHICS_DATA                   EQU 3cfh
+GFX_DATA_ROTATE                 EQU 3h
+GFX_READ_MAP_SELECT             EQU 4h
+GFX_MODE                        EQU 5h
+GFX_COLOR_DONT_CARE             EQU 7h
+GFX_BIT_MASK                    EQU 8h
+
+;
+; Stride constants.
+;
+SCREEN_Y_STRIDE                 EQU 40
+MASKED_TILE_ROW_STRIDE          EQU 5
+
+;
+; CPU types for GetProcessorType.
+;
+CPUTYPE_8088                    EQU 0
+CPUTYPE_8086                    EQU 1
+CPUTYPE_V20                     EQU 2
+CPUTYPE_V30                     EQU 3
+CPUTYPE_80188                   EQU 4
+CPUTYPE_80186                   EQU 5
+CPUTYPE_80286                   EQU 6
+CPUTYPE_80386                   EQU 7

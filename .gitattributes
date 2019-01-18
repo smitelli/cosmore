@@ -1,0 +1,8 @@
+src/Makefile       text eol=crlf
+src/tasm.cfg       text eol=crlf
+src/turboc.cfg     text eol=crlf
+src/*.[Aa][Ss][Mm] text eol=crlf
+src/*.[Bb][Aa][Tt] text eol=crlf
+src/*.[Cc]         text eol=crlf
+src/*.[Ee][Qq][Uu] text eol=crlf
+src/*.[Hh]         text eol=crlf
