@@ -4,7 +4,7 @@ by [Scott Smitelli](mailto:scott@smitelli.com)
 
 Cosmore is a reconstruction of the source code of _Cosmo's Cosmic Adventure_ version 1.20, using the original DOS compiler and toolchain. Its goal is to duplicate every detail, quirk, and bug of the original game as faithfully as possible. A player should not be able to distinguish a Cosmore binary from the original.
 
-The reconstruction is **96.3%** accurate by the following metric: The load images (skipping the EXE headers and relocation tables), when compared byte-by-byte against the corresponding uncompressed originals, have the same byte values in the same locations 96% of the time. The remaining 4% consists of uninitialized data segment memory addresses that have not (yet!) been arranged to match the original layout.
+The reconstruction is **96.28%** accurate by the following metric: The load images (skipping the EXE headers and relocation tables), when compared byte-by-byte against the corresponding uncompressed originals, have the same byte values in the same locations 96% of the time. The remaining 4% consists of uninitialized data segment memory addresses that have not (yet!) been arranged to match the original layout.
 
 ## Requirements
 
@@ -137,7 +137,7 @@ Cosmore is a meticulous reconstruction of _Cosmo_, but it is not perfect. Compar
 
 ### Similarities
 
-* **Same file size.** The reconstructed executable takes the exact same amount of space on disk, and the same amount in memory, as the original. *(TODO: Not precisely. Episode 2, after LZEXE, is 48 bytes smaller than the original.)*
+* **Same file size.** The reconstructed executable takes the exact same amount of space on disk, and the same amount in memory, as the original. *(TODO: Not precisely. Episode 2, after LZEXE, is 32 bytes smaller than the original.)*
 * **Same segment alignment and size.** The position of the C startup code, assembly routines, code segments, library functions, and data segments all match.
 * **Same function alignment and size.** All of the functions appear in the same order as the original, each beginning and ending at the same addresses as the original.
 * **Same instruction sequence.** All of the x86 instructions appear in the same order as the original. The CPU is performing the same steps in the same sequence, presumably taking the same number of clock cycles as the original.

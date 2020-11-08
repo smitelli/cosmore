@@ -47,14 +47,11 @@
 IDEAL
 ASSUME cs:_TEXT, ds:DGROUP, es:NOTHING
 
-;
-; Equates are stored in a separate file
-;
 INCLUDE "lowlevel.equ"
 
 SEGMENT _DATA
 ;
-; Global storage in the data segment
+; Global storage in the data segment.
 ;
 EXTRN _yOffsetTable:WORD:25     ; Maps tile Y coordinate to EGA memory offset
 yOffsetTable EQU _yOffsetTable  ; Defined in game2.c
@@ -62,7 +59,7 @@ ENDS
 
 SEGMENT _TEXT
 ;
-; Global storage in the code segment
+; Global storage in the code segment.
 ;
 drawPageNumber  dw 0            ; Most recent SelectDrawPage call argument
 drawPageSegment dw EGA_SEGMENT  ; EGA memory segment to be written to
@@ -1219,7 +1216,7 @@ MACRO DRAW_SPRITE_TILE_PLANE_FLIPPED plane_pos
 
         ; The mask data is in memory at DS:SI and 5-byte intervals beyond. The
         ; first row of color data is at DS:SI+plane_pos, and subsequent rows
-        ; are also spaced at 5-byte intervals. The destiation offset iterates
+        ; are also spaced at 5-byte intervals. The destination offset iterates
         ; backwards from the bottom up, while the source offset iterates
         ; forwards. This is what flips the tile vertically. Horizontal pixel
         ; order is unaffected.
@@ -1498,7 +1495,8 @@ P8086
 ;    modifying code, to try to determine if the processor has an 8- or 16-bit
 ;    data bus.
 ;
-; Returns: CPU type (0..7) as a word in AX.
+; Returns: CPU type (0..7) as a word in AX. More meaningful names for the
+;     numeric values are available as CPUTYPE_* equates.
 ; Registers destroyed: AX, CX, DX, ES
 ;
 PROC _GetProcessorType FAR
@@ -1592,7 +1590,7 @@ PROC _GetProcessorType FAR
         sti
         push  si
 
-        ; Here, ES is pointing to some unspecified place in memory. This is a
+        ; Here, ES is pointing to some unspecified place in memory. Below is a
         ; busy loop that reads 64 KB of memory from ES:SI, loading each byte
         ; into AL and doing nothing further with it. After each iteration, SI is
         ; incremented and CX is decremented. The loop ends when CX reaches zero.
@@ -1694,7 +1692,7 @@ PROC _GetProcessorType FAR
         popf
 
         ; Zero the high byte of DX, then copy the result into AX. This is the
-        ; procedure's ultimate return value.
+        ; procedure's final return value.
         xor   dh,dh
         mov   ax,dx
 
