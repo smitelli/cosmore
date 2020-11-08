@@ -54,7 +54,7 @@ Palette animation types.
 Map tile values. Values 0..15,999 are spaced in increments of 8 and reference
 solid tiles. Tiles not mentioned directly in the game code are excluded. For
 tiles that are meant to appear as part of a map, the name offers some hint about
-how they behave:
+how their tile attributes make them behave:
 - Empty/Free: Tile does not impede player/actor movement in any way. It is
   essentially background decoration.
 - Platform: Tile blocks southern movement, but all other directions are free.
@@ -76,7 +76,7 @@ how they behave:
 #define TILE_MYSTERY_BLOCK_NE   0x3e00
 #define TILE_MYSTERY_BLOCK_SW   0x3e08
 #define TILE_MYSTERY_BLOCK_SE   0x3e10
-/* Subsequent tiles are for UI elements; blocking attributes aren't relevant. */
+/* Subsequent tiles are for UI elements; tile attributes aren't relevant. */
 #define TILE_WAIT_SPINNER_1     0x3e18
 #define TILE_TXTFRAME_NORTHWEST 0x3e38
 #define TILE_TXTFRAME_NORTHEAST 0x3e40

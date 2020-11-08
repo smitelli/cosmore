@@ -45,17 +45,11 @@ word yOffsetTable[] = {
 };
 
 /*
-Both of these are true if AdLib hardware is installed, and false otherwise. Not
-impacted by the state of any game configuration options. The author decided to
-detect the AdLib twice into two distinct variables for different scopes.
-*/
-bbool isAdLibPresent;
-static bool isAdLibPresent2;
-
-/*
 Table of human-readable names for each keyboard scancode. The game font does not
 have characters for square/curly braces, grave accent, tilde, backslash, or
-vertical bar. None of these keys have a visible representation.
+vertical bar. None of those keys have a visible representation. For the rest of
+the scancodes, *only one* of the shifted/unshifted states for each key is
+represented.
 */
 static KeyName keyNames[] = {
     "NULL", "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=",
@@ -67,6 +61,14 @@ static KeyName keyNames[] = {
     "-", "\x1B", "5", "\x1C", "+", "END", "\x19", "PGDN", "INS", "DEL",
     "SYSRQ", "", "", "F11", "F12", ""
 };
+
+/*
+Both of these are true if AdLib hardware is installed, and false otherwise. Not
+impacted by the state of any game configuration options. The author decided to
+detect the AdLib twice into two distinct variables for different scopes.
+*/
+bbool isAdLibPresent;
+static bool isAdLibPresent2;
 
 /*
 Remaining AdLib state flags.
@@ -125,7 +127,7 @@ void StopAdLibPlayback(void);
 void FadeOutAdLibPlayback(void);
 
 /*
-Write `speed` to the counter on channel 0 of the programmable interval timer.
+Write `value` to the counter on channel 0 of the programmable interval timer.
 [ID_SD, SDL_SetTimer0()]
 */
 void SetPIT0Value(word value)
@@ -141,14 +143,14 @@ void SetPIT0Value(word value)
 }
 
 /*
-Program channel 0 of the PIT in terms of interrupts per second.
+Program channel 0 of the PIT in terms of interrupts per second (Hz).
 [ID_SD, SDL_SetIntsPerSec()]
 
 This controls how many times interrupt vector 8 will fire each second.
 
 The different compnents of the IBM PC ran at integral multiples of 315/88 MHz.
 The PIT clock was one-third of that, or 1,193,181.81... Hz. The chosen constant
-is 0.1% off for whatever reason.
+is about 0.1% off for an unknown reason.
 */
 void SetInterruptRate(word ints_second)
 {
@@ -156,7 +158,7 @@ void SetInterruptRate(word ints_second)
 }
 
 /*
-Define a simple test counter to benchmark the timer.
+Define a simple test counter to benchmark the CPU against the timer.
 [ID_SD, SDL_TimingService()]
 */
 void interrupt ProfilePITService(void)
@@ -217,9 +219,9 @@ done:
 }
 
 /*
-Wait for a period of time equal to `length`. This appears to be based on how
-many CPU clocks it takes to perform a pointless test/jnz pair.
-[ID_SD, SDL_Delay()]
+Wait for a period of time equal to `loops`. This appears to be based on how many
+CPU clocks it takes to perform a pointless test/jnz pair. The loop structure
+here closely matches that in ProfilePIT(). [ID_SD, SDL_Delay()]
 */
 void WaitWallclock(word loops)
 {
@@ -450,7 +452,7 @@ bool SetMusic(bool state)
             junk4 = true;
             found = true;
         }
-        /* Possible BUG: `found` may hold garbage here w/ !isAdLibPresent2 */
+        /* Possible BUG: `found` will hold garbage here w/ !isAdLibPresent2 */
         break;
 
     default:
@@ -495,7 +497,7 @@ void StartAdLib(void)
 
     isAdLibStarted = true;
 
-    /* Inelegant game-specific hack */
+    /* Rather inelegant, but this is how it was done. */
     isAdLibPresent = DetectAdLib();
 }
 
@@ -690,7 +692,7 @@ void FadeOut(void)
 
 /*
 Draw one frame of the wait spinner on the screen at x,y and return the last
-scancode read by the keyboard service.
+scancode read by the keyboard service. Does not wait.
 */
 byte StepWaitSpinner(word x, word y)
 {
@@ -742,7 +744,7 @@ byte WaitSpinner(word x, word y)
 }
 
 /*
-Clear the screen by drawing a 40x25 page of solid black tiles.
+Clear the screen by drawing a 40x25 page of black tiles.
 */
 void ClearScreen(void)
 {
@@ -758,7 +760,7 @@ void ClearScreen(void)
 }
 
 /*
-Poll for the X-Y position of the specified joystick, and store the result into
+Poll for the X,Y position of the specified joystick, and store the result into
 the two provided timer pointers. If either timer exceeds 500 polls, abort.
 [IDLIB, ReadJoystick()]
 */
@@ -792,10 +794,10 @@ void ReadJoystickTimes(word stick, int *x_time, int *y_time)
 }
 
 /*
-Translate raw data from the joystick into movement commands, taking into account
-the current joystick calibration values and button swap configuration. Returns
-the current state of *just* the joystick buttons -- movement commands are
-changed globally. [IDLIB, ControlJoystick()]
+Translate raw timer data from the joystick into movement commands, taking into
+account the current joystick calibration values and button swap configuration.
+Returns the current state of *just* the joystick buttons -- movement commands
+are changed globally. [IDLIB, ControlJoystick()]
 */
 JoystickState ReadJoystickState(word stick)
 {
@@ -890,7 +892,7 @@ screen.
 Accepts two lines of text, one to be written inside the top edge of the frame,
 and one to be written inside the bottom edge. If `centered` is true, these text
 lines are centered horizontally relative to the *screen*. If `centered` is
-false, these text lines are left-aligned inside the frame.
+false, these text lines are left-aligned relative to the inside of the frame.
 
 Returns the X coordinate of the inside-left edge of the frame.
 */
@@ -1084,7 +1086,7 @@ void ShowJoystickConfiguration(word stick)
         state = ReadJoystickState(stick);
     } while (state.button1 == true || state.button2 == true);
 
-    /* The joystick must be 2/3 of the way to an edge to qualify as a move */
+    /* The joystick must be 2/3 of the way to an edge to trigger a move */
     xthird = (righttime - lefttime) / 6;
     ythird = (bottomtime - toptime) / 6;
     joystickXLow[stick] = lefttime + xthird;
@@ -1129,7 +1131,7 @@ void DrawNumberFlushRight(word x_origin, word y_origin, dword value)
 
     /* Draw digits left-to-right */
     for (x = len - 1; x >= 0; x--) {
-        DrawSpriteTile(fontData + FONT_0 + ((buf[len - x - 1] - '0') * 40), x_origin - x, y_origin);
+        DrawSpriteTile(fontTileData + FONT_0 + ((buf[len - x - 1] - '0') * 40), x_origin - x, y_origin);
     }
 }
 
@@ -1206,14 +1208,15 @@ void DrawStatusBarBombs(word x, word y)
 
     /*
     Draw a blank tile, then overdraw the number. The blanking is not strictly
-    necessary since the font digits have no transparent areas.
+    necessary since the bomb count is fixed-width and the font digits have no
+    transparent areas.
     */
     SelectDrawPage(activePage);
-    DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x, y);
+    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
     DrawNumberFlushRight(x, y, playerBombs);
 
     SelectDrawPage(!activePage);
-    DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x, y);
+    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
     DrawNumberFlushRight(x, y, playerBombs);
 
     EGA_RESET();
@@ -1247,11 +1250,11 @@ void DrawStatusBarHealth(word x, word y)
 
         if (playerHealth - 1 > bar) {
             /* Each bar is made of 2 font characters stacked vertically */
-            DrawSpriteTile(fontData + FONT_UPPER_BAR_1, x - bar, y);
-            DrawSpriteTile(fontData + FONT_LOWER_BAR_1, x - bar, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_1, x - bar, y);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_1, x - bar, y + 1);
         } else {
-            DrawSpriteTile(fontData + FONT_UPPER_BAR_0, x - bar, y);
-            DrawSpriteTile(fontData + FONT_LOWER_BAR_0, x - bar, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_0, x - bar, y);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x - bar, y + 1);
         }
     }
 }
@@ -1469,7 +1472,7 @@ bbool IsAdLibAbsent(void)
 
 /*
 Read music data from the group entry referred to by the music number, and store
-it into the passed music group.
+it into the passed Music pointer.
 */
 Music *LoadMusicData(word music_num, Music *dest)
 {
@@ -2585,7 +2588,7 @@ void ToggleMusic(void)
 
 /*
 Display a menu where all the sound effects can by cycled through and previewed.
-At any point, Up/Down changes the sound number, Enter plays the selected sound,
+At any time, Up/Down changes the sound number, Enter plays the selected sound,
 and Esc leaves the menu. If the sound effects option is disabled, it is
 temporarily re-enabled while this menu remains open.
 */
@@ -2737,7 +2740,7 @@ void GameRedefineMenu(void)
 
 /*
 Attempt to load the configuration file specified by the filename. If the file
-does not exist, create the default configuration where arrow keys move, Ctrl
+does not exist, load the default configuration where arrow keys move, Ctrl
 jumps, and Alt bombs. This is where the default Simpsons high scores are set.
 */
 void LoadConfigurationData(char *filename)
@@ -2808,8 +2811,8 @@ void LoadConfigurationData(char *filename)
 }
 
 /*
-Save the current state of the some global variables to the configuration file
-specified by the fileneme.
+Save the current state of the global configuration variables to the
+configuration file specified by the fileneme.
 */
 void SaveConfigurationData(char *filename)
 {
@@ -3327,8 +3330,8 @@ void AddScoreForSprite(word sprite_type)
 }
 
 /*
-Redraw the status bar from the background image in memory, then redraw all the
-number and health bar areas.
+Clear the screen, redraw the status bar from the background image in memory,
+then redraw all the status bar number and health bar areas.
 */
 void RedrawStaticGameScreen(void)
 {

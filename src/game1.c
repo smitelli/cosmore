@@ -165,8 +165,8 @@ static byte joinPathBuffer[80];
 /*
 Heap storage areas. Space for all of these is allocated on startup.
 */
-byte *fontData, *maskedTileData, *miscData;
-static byte *actorData[3], *playerData, *tileAttributeData;
+byte *fontTileData, *maskedTileData, *miscData;
+static byte *actorTileData[3], *playerTileData, *tileAttributeData;
 static word *actorInfoData, *playerInfoData, *cartoonInfoData;
 static word *soundData1, *soundData2, *soundData3, *soundDataPtr[80];
 static union {byte *b; word *w;} mapData;
@@ -183,7 +183,7 @@ Keyboard and joystick variables. Also includes player immobilization and jump
 lockout flags.
 */
 byte lastScancode;
-bbool isKeyDown[255];
+bbool isKeyDown[BYTE_MAX];
 bool isJoystickReady;
 bbool cmdWest, cmdEast, cmdNorth, cmdSouth, cmdJump, cmdBomb;
 static bbool blockMovementCmds, cmdJumpLatch;
@@ -452,10 +452,16 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
             }
 
             if (text[i] >= 'a') {
-                DrawSpriteTile(fontData + FONT_LOWER_A + ((text[i] - 'a') * 40), x_origin + i, y_origin);
+                DrawSpriteTile(
+                    fontTileData + FONT_LOWER_A + ((text[i] - 'a') * 40),
+                    x_origin + i, y_origin
+                );
             } else {
-                /* '0' character is 24 positions past 'up arrow' */
-                DrawSpriteTile(fontData + FONT_UP_ARROW + ((text[i] - 24) * 40), x_origin + i, y_origin);
+                DrawSpriteTile(
+                    /* '0' character is 24 positions past 'up arrow' */
+                    fontTileData + FONT_UP_ARROW + ((text[i] - 24) * 40),
+                    x_origin + i, y_origin
+                );
             }
 
             i++;
@@ -466,7 +472,7 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
 /*
 Load font data into system memory.
 
-The font data on disk has an inverted transparency mask compared to what the
+The font data on disk has an inverted transparency mask relative to what the
 rest of the game expects, so negate those bits while loading.
 */
 void LoadFontData(char *entry_name, byte *dest, word length)
@@ -576,16 +582,16 @@ void LoadGroupEntryData(char *entry_name, byte *dest, word length)
 }
 
 /*
-Load actor sprite data into system memory.
+Load actor tile data into system memory.
 */
-void LoadActorData(char *entry_name)
+void LoadActorTileData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
-    fread(actorData[0], WORD_MAX, 1, fp);
-    fread(actorData[1], WORD_MAX, 1, fp);
+    fread(actorTileData[0], WORD_MAX, 1, fp);
+    fread(actorTileData[1], WORD_MAX, 1, fp);
     /* CAREFUL: Wraparound. Also, "ACTORS.MNI" should ideally use entry_name. */
-    fread(actorData[2], (word)GroupEntryLength("ACTORS.MNI") + 2, 1, fp);
+    fread(actorTileData[2], (word)GroupEntryLength("ACTORS.MNI") + 2, 1, fp);
     fclose(fp);
 }
 
@@ -796,7 +802,7 @@ Can the player move to x,y considering the direction, and how?
 
 NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the player wants to move into, and *not* the
-location where it currently is.
+location where they currently are.
 */
 word TestPlayerMove(word dir, word x, word y)
 {
@@ -975,7 +981,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
-    src = actorData[*(actorInfoData + offset + 3)] + *(actorInfoData + offset + 2);
+    src = actorTileData[*(actorInfoData + offset + 3)] + *(actorInfoData + offset + 2);
 
     switch (mode) {
     case DRAWMODE_NORMAL:
@@ -1107,7 +1113,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
         drawfn = DrawSpriteTileWhite;
         break;
     case DRAWMODE_TRANSLUCENT:
-        /* never occurs */
+        /* never used in this game */
         drawfn = DrawSpriteTileTranslucent;
         break;
     }
@@ -1124,7 +1130,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     width = *(playerInfoData + offset + 1);
 
     y = (y_origin - height) + 1;
-    src = playerData + *(playerInfoData + offset + 2);
+    src = playerTileData + *(playerInfoData + offset + 2);
 
     /* `mode` would go to ax if this was a switch, which doesn't happen */
     if (mode == DRAWMODE_IN_FRONT) goto infront;
@@ -1253,7 +1259,7 @@ void MovePlayerPlatform(word x_west, word x_east, word x_dir, word y_dir)
 
     if (scooterMounted != 0) return;
 
-    offset = *playerInfoData;  /* read frame 0 regardless of player's state */
+    offset = *playerInfoData;  /* read frame 0 regardless of player's real frame */
     playerx2 = *(playerInfoData + offset + 1) + playerX - 1;
 
     if (
@@ -1343,7 +1349,7 @@ void MovePlatforms(void)
 }
 
 /*
-Perform SetMapTile(), repeated horizontally `count` times.
+Perform SetMapTile(), repeated `count` times horizontally.
 */
 void SetMapTileRepeat(word value, word count, word x_origin, word y_origin)
 {
@@ -1355,7 +1361,7 @@ void SetMapTileRepeat(word value, word count, word x_origin, word y_origin)
 }
 
 /*
-Perform SetMapTile() four times, horizontally, with unique values.
+Perform SetMapTile() four times horizontally, with unique values.
 */
 void SetMapTile4(
     word val1, word val2, word val3, word val4, word x_origin, word y_origin
@@ -1456,7 +1462,7 @@ word GetMapTile(word x, word y)
 Lighten each area of the map that a light touches.
 
 The map defines the top edge of each column of the cone. This function fills all
-tiles south of the defined light actor until a solid south-blocking tile is hit.
+tiles south of the defined light actor until a south-blocking tile is hit.
 */
 void DrawLights(void)
 {
@@ -1640,8 +1646,10 @@ void ActFootSwitch(word index)
 {
     Actor *act = actors + index;
 
-    /* This function is used for a variety of functionless actors, and in those
-       cases it behaves as a no-op. */
+    /*
+    This function is used for a variety of functionless actors, and in those
+    cases it behaves as a no-op.
+    */
     if (act->sprite != SPR_FOOT_SWITCH) return;
 
     if (act->private1 == 0) {
@@ -2149,6 +2157,9 @@ void ActReciprocatingSpear(word index)
 
 /*
 Handle one frame of ged/green slime movement.
+
+The repeat rate of dripping slime actors is directly related to how far they
+have to travel before falling off the bottom of the screen.
 */
 void ActRedGreenSlime(word index)
 {
@@ -2394,7 +2405,7 @@ void ActPyramid(word index)
 {
     Actor *act = actors + index;
 
-    if (act->data5 != 0) {  /* ground spike */
+    if (act->data5 != 0) {  /* floor mounted */
         nextDrawMode = DRAWMODE_FLIPPED;
 
     } else if (act->data1 == 0) {
@@ -2411,7 +2422,7 @@ void ActPyramid(word index)
     }
 
     if (!act->dead) {
-        /* BUG? Non-falling ceiling spikes use different function; don't propagate explosions */
+        /* BUG? Non-falling pyramids use a different function; don't propagate explosions */
         if (IsNearExplosion(act->sprite, act->frame, act->x, act->y)) {
             act->data2 = 3;
         }
@@ -2554,7 +2565,7 @@ void ActBombIdle(word index)
 }
 
 /*
-Set map tile at x,y to value.
+Set map tile at x,y to `value`.
 */
 void SetMapTile(word value, word x, word y)
 {
@@ -3649,7 +3660,7 @@ bbool CanSuctionWalkerFlip(word index, word dir)
 /*
 Handle one frame of suction walker movement.
 
-NOTE: The BlockWest checks should almost certainly be BlockNorth instead.
+NOTE: The _BLOCK_WEST checks should almost certainly be _BLOCK_NORTH instead.
 */
 void ActSuctionWalker(word index)
 {
@@ -4152,8 +4163,10 @@ void ActPinkWorm(word index)
             act->frame = 3;
         }
 
-    /* something below makes the worms willing to fall off west ledges but not
-       east ledges. */
+    /*
+    Something below makes the worms willing to fall off west ledges but not east
+    ledges.
+    */
     } else if (act->data1 == DIR2_WEST) {
         act->frame = !act->frame;
         if (act->frame != 0) {
@@ -5039,6 +5052,8 @@ void ActPedestal(word index)
 
 /*
 Handle one frame of invincibility bubble movement.
+
+As long as this actor is alive, it follows the player and gives invincibility.
 */
 void ActInvincibilityBubble(word index)
 {
@@ -6176,8 +6191,10 @@ Insert the requested shard into the first free spot in the shards array.
 */
 void NewShard(word sprite, word frame, word x, word y)
 {
-    /* INTERESTING: This never gets reset, so shard behavior is different
-    for each run through the demo playback. */
+    /*
+    INTERESTING: This never gets reset, so shard behavior is different for each
+    run through the demo playback.
+    */
     static word inclination = 0;
     word i;
 
@@ -6478,7 +6495,7 @@ void InitializeDecorations(void)
 }
 
 /*
-Insert the requested decoration into the first free spot in the decorations array.
+Insert the given decoration into the first free spot in the decorations array.
 */
 void NewDecoration(
     word sprite, word numframes, word x, word y, word dir, word numtimes
@@ -7616,7 +7633,7 @@ void ProcessActor(word index)
 }
 
 /*
-Reset per-frame global variables, and process each actor in turn.
+Reset per-frame global actor variables, and process each actor in turn.
 */
 void MoveAndDrawActors(void)
 {
@@ -7796,7 +7813,7 @@ void LoadTileAttributeData(char *entry_name)
 }
 
 /*
-Read the tile masked tile data into the designated memory location.
+Read the masked tile data into the designated memory location.
 */
 void LoadMaskedTileData(char *entry_name)
 {
@@ -7809,17 +7826,18 @@ void LoadMaskedTileData(char *entry_name)
 Ensure the system has an EGA adapter, and verify there's enough free memory. If
 either are not true, exit back to DOS.
 
-If execution got this far, one memory check already succeeded. DOS reads the
+If execution got this far, one memory check already succeeded: DOS reads the
 16-bit (little-endian) value at offset Ah in the EXE header, which is the number
 of 16-byte paragraphs that need to be allocated in addition to the total size of
-the executable's load image. This averages around 141 KiB depending on the
-episode, which is already excluded from the amount reported by coreleft() here.
+the executable's load image. The total size of both values averages around 141
+KiB depending on the episode, which is already decucted from the amount reported
+by coreleft() here.
 
 The memory test in this function checks for the *additional* amount that will be
 dynamically allocated during Startup(). There will be up to fifteen total calls
 to malloc(), requesting a maximum total of 389,883 bytes of memory. Each
 separate call for `malloc(bytes)` really subtracts `((bytes + 0x17) >> 4) << 4`
-from what's reported by coreleft(), in case anybody wants to really pinch bytes.
+from what's reported by coreleft(), so the final amount ends up being 390,080.
 
 NOTE: This function assumes the video mode has already been set to Dh.
 */
@@ -7832,9 +7850,9 @@ void ValidateSystem(void)
     x86regs.h.ah = 0x0f;
     int86(0x10, &x86regs, &x86regs);
     if (x86regs.h.al != 0x0d) {
-        /* BUG: AdLib isn't shut down here; hoses DOSBox */
         textmode(3);
         printf("EGA Card not detected!\n");
+        /* BUG: AdLib isn't shut down here; hoses DOSBox */
         exit(EXIT_SUCCESS);
     }
 
@@ -7853,14 +7871,14 @@ void ValidateSystem(void)
 }
 
 /*
-Start with a bang. Sets video mode, initializes the AdLib, installs the keyboard
-service, initializes the PC speaker state, allocates enough memory, then shows
-the pre-title image.
+Start with a bang. Set video mode, initialize the AdLib, install the keyboard
+service, initialize the PC speaker state, allocate enough memory, then show the
+pre-title image.
 
-While the pre-title image is up, loads the config file, then allocates and
-generates/loads a whole slew of data to each arena. This takes a noticable
-amount of time on a slower machine. At the end, move onto displaying the
-copyright screen.
+While the pre-title image is up, load the config file, then allocate and
+generate/load a whole slew of data to each arena. This takes a noticable amount
+of time on a slower machine. At the end, move onto displaying the copyright
+screen.
 
 Nothing allocated here is ever explicitly freed. DOS gets it all back when the
 program eventually exits.
@@ -7913,30 +7931,30 @@ void Startup(void)
     LoadSoundData("SOUNDS2.MNI", soundData2, 23);
     LoadSoundData("SOUNDS3.MNI", soundData3, 46);
 
-    playerData = malloc((word)GroupEntryLength("PLAYERS.MNI"));
+    playerTileData = malloc((word)GroupEntryLength("PLAYERS.MNI"));
 
     mapData.b = malloc(WORD_MAX);
 
     /*
     16-bit nightmare here. Each actor data chunk is limited to 65,535 bytes,
-    the first two are filled, the last one gets the low word remander, plus the
-    two bytes that didn't fit into the first two chunks. If you find yourself
-    asking "hey, what happens if there aren't two-and-a-bit chunks worth of data
-    in the file" you get a shiny gold star.
+    the first two chunks are full, and the last one gets the low word remander
+    plus the two bytes that didn't fit into the first two chunks. If you find
+    yourself asking "hey, what happens if there aren't two-and-a-bit chunks
+    worth of data in the file" you get a shiny gold star.
     */
-    actorData[0] = malloc(WORD_MAX);
-    actorData[1] = malloc(WORD_MAX);
-    actorData[2] = malloc((word)GroupEntryLength("ACTORS.MNI") + 2);
+    actorTileData[0] = malloc(WORD_MAX);
+    actorTileData[1] = malloc(WORD_MAX);
+    actorTileData[2] = malloc((word)GroupEntryLength("ACTORS.MNI") + 2);
 
-    LoadGroupEntryData("STATUS.MNI", actorData[0], 7296);
-    CopyTilesToEGA(actorData[0], 7296 / 4, 0x8000);
+    LoadGroupEntryData("STATUS.MNI", actorTileData[0], 7296);
+    CopyTilesToEGA(actorTileData[0], 7296 / 4, 0x8000);
 
-    LoadGroupEntryData("TILES.MNI", actorData[0], 64000U);
-    CopyTilesToEGA(actorData[0], 64000U / 4, 0x4000);
+    LoadGroupEntryData("TILES.MNI", actorTileData[0], 64000U);
+    CopyTilesToEGA(actorTileData[0], 64000U / 4, 0x4000);
 
-    LoadActorData("ACTORS.MNI");
+    LoadActorTileData("ACTORS.MNI");
 
-    LoadGroupEntryData("PLAYERS.MNI", playerData, (word)GroupEntryLength("PLAYERS.MNI"));
+    LoadGroupEntryData("PLAYERS.MNI", playerTileData, (word)GroupEntryLength("PLAYERS.MNI"));
 
     actorInfoData = malloc((word)GroupEntryLength("ACTRINFO.MNI"));
     LoadInfoData("ACTRINFO.MNI", actorInfoData, (word)GroupEntryLength("ACTRINFO.MNI"));
@@ -7947,8 +7965,8 @@ void Startup(void)
     cartoonInfoData = malloc((word)GroupEntryLength("CARTINFO.MNI"));
     LoadInfoData("CARTINFO.MNI", cartoonInfoData, (word)GroupEntryLength("CARTINFO.MNI"));
 
-    fontData = malloc(4000);
-    LoadFontData("FONTS.MNI", fontData, 4000);
+    fontTileData = malloc(4000);
+    LoadFontData("FONTS.MNI", fontTileData, 4000);
 
     if (isAdLibPresent) {
         tileAttributeData = malloc(7000);
@@ -7995,7 +8013,7 @@ void ClearPlayerPush(void)
 }
 
 /*
-Push the player in a direction, for a maximum number of ticks, at a certain
+Push the player in a direction, for a maximum number of frames, at a certain
 speed. The player sprite can be overridden, and the push can be configured to
 pass through walls. The ability to "jump out" of a push is available, but this
 is never used in the game.
@@ -9355,9 +9373,7 @@ otherwise return false.
 */
 bbool WriteDemoFrame(void)
 {
-    if (demoDataLength > 4998) {
-        return true;
-    }
+    if (demoDataLength > 4998) return true;
 
     /*
     This function runs early enough in the game loop that this assignment
@@ -9564,8 +9580,8 @@ void ShowStarBonus(void)
         WaitHard(15);
 
         for (x = 0; x < 7; x++) {
-            /* clear score area -- not strictly needed, numbers grow and are opaque */
-            DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x + 23, 12);
+            /* Clear score area -- not strictly needed, numbers grow and are opaque */
+            DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 23, 12);
         }
 
         StartSound(SND_BIG_PRIZE);
@@ -9575,20 +9591,22 @@ void ShowStarBonus(void)
 
         for (x = 0; x < 16; x++) {
             if (x < 7) {
-                /* clear x1000 area -- needed as the number of digits shrinks */
-                DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x + 22, 7);
+                /* Clear x1000 area -- needed as the number of digits shrinks */
+                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 22, 7);
             }
 
             if (rank % 8 == 1) {
-                /* clear rank area */
-                DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x + 13, 14);
+                /* Clear rank area */
+                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 13, 14);
             }
         }
 
         DrawNumberFlushRight(27, 7, (stars - 1) * 1000L);
 
-        /* BUG: Due to differences in division (6 vs. 8), "Radical!",
-        "Incredible", and "Towering" never display in the game. */
+        /*
+        BUG: Due to differences in division (6 vs. 8), "Radical!", "Incredible",
+        and "Towering" never display in the game.
+        */
         if (rank % 8 == 1) {
             DrawTextLine(13, 14, starBonusRanks[rank / 6]);
         }
@@ -9754,9 +9772,9 @@ void GameLoop(byte demostate)
 
             /* Dump variable contents into a bar at the edges of the screen. */
             for (x = 0; x < 40; x++) {
-                DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x, 0);
+                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, 0);
                 for (y = 19; y < 25; y++) {
-                    DrawSpriteTile(fontData + FONT_BACKGROUND_GRAY, x, y);
+                    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
                 }
             }
 
@@ -10080,8 +10098,8 @@ void SwitchLevel(word level_num)
     word bdnum;
 
     if (level_num == 0 && isNewGame) {
-        /* All my childhood, I wondered what it was doing here. Bupkis. */
         DrawFullscreenImage(IMAGE_ONE_MOMENT);
+        /* All my childhood, I wondered what it was doing here. It's bupkis. */
         WaitSoft(300);
     } else {
         FadeOut();

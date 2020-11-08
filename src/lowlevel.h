@@ -22,7 +22,7 @@ Common EGA-related inline functions.
 */
 #define EGA_CLEAR_BIT_MASK() { outport(0x03ce, 0xff08); }
 #define EGA_MODE_DIRECT()    { outport(0x03ce, 0x0005); }
-/* enables writing to all map masks, sets mode to allow latched reads */
+/* Enables writing to all map masks, sets mode to allow latched reads */
 #define EGA_RESET()          { outport(0x03c4, 0x0f02); outport(0x03ce, 0x0105); }
 
 /*

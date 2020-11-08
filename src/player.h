@@ -40,4 +40,4 @@ Player sprite frames.
 #define PLAYER_JUMP_LONG        22
 #define PLAYER_DEAD_1           46
 #define PLAYER_DEAD_2           47
-#define PLAYER_HIDDEN           255
+#define PLAYER_HIDDEN           BYTE_MAX

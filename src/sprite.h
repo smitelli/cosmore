@@ -2,9 +2,10 @@
  *                        COSMORE HEADER for SPRITES                         *
  *                                                                           *
  * This is a list of every sprite type number available in the game. These   *
- * are the values that are used in the majority of cases, and these are also *
- * what the actual graphics data is indexed by. To save a bit of compile-    *
- * time memory, sprite types that are never referenced are commented out.    *
+ * are the values that are used in the majority of places in the code, and   *
+ * these are also what the actual graphics data is indexed by. To save a bit *
+ * of compile-time memory, sprite types that are never referenced are        *
+ * commented out.                                                            *
  *****************************************************************************/
 
 #define SPR_BASKET              0

@@ -170,7 +170,7 @@ extern char *musicNames[];
 extern dword totalMemFreeBefore, totalMemFreeAfter;
 extern HighScoreName highScoreNames[];
 extern dword highScoreValues[];
-extern byte *fontData, *maskedTileData, *miscData;
+extern byte *fontTileData, *maskedTileData, *miscData;
 extern dword lastGroupEntryLength;
 extern byte lastScancode;
 extern bbool isKeyDown[];
