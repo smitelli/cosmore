@@ -475,7 +475,7 @@ Load font data into system memory.
 The font data on disk has an inverted transparency mask relative to what the
 rest of the game expects, so negate those bits while loading.
 */
-void LoadFontData(char *entry_name, byte *dest, word length)
+void LoadFontTileData(char *entry_name, byte *dest, word length)
 {
     int i;
     FILE *fp = GroupEntryFp(entry_name);
@@ -7803,7 +7803,7 @@ void ExitClean(void)
 }
 
 /*
-Read the tile attributes data into the designated memory location.
+Read the tile attribute data into the designated memory location.
 */
 void LoadTileAttributeData(char *entry_name)
 {
@@ -7966,7 +7966,7 @@ void Startup(void)
     LoadInfoData("CARTINFO.MNI", cartoonInfoData, (word)GroupEntryLength("CARTINFO.MNI"));
 
     fontTileData = malloc(4000);
-    LoadFontData("FONTS.MNI", fontTileData, 4000);
+    LoadFontTileData("FONTS.MNI", fontTileData, 4000);
 
     if (isAdLibPresent) {
         tileAttributeData = malloc(7000);
