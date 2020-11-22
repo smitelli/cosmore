@@ -1,3 +1,10 @@
+@rem **
+@rem * Copyright (c) 2020 Scott Smitelli
+@rem *
+@rem * This source code is licensed under the MIT license found in the LICENSE
+@rem * file in the root directory of this source tree.
+@rem *
+
 @rem **************************************************************************
 @rem *                          COSMORE BUILD SCRIPT                          *
 @rem *                                                                        *
