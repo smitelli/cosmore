@@ -7796,7 +7796,7 @@ void ExitClean(void)
 
     FadeOut();
 
-    textmode(3);
+    textmode(C80);
 
     outportb(0x0061, inportb(0x0061) & ~0x02);
 
@@ -7857,7 +7857,7 @@ void ValidateSystem(void)
     x86regs.h.ah = 0x0f;
     int86(0x10, &x86regs, &x86regs);
     if (x86regs.h.al != 0x0d) {
-        textmode(3);
+        textmode(C80);
         printf("EGA Card not detected!\n");
         /* BUG: AdLib isn't shut down here; hoses DOSBox */
         exit(EXIT_SUCCESS);
@@ -7871,7 +7871,7 @@ void ValidateSystem(void)
         (!isAdLibPresent && bytesfree < 383792L)
     ) {
         StopAdLib();
-        textmode(3);
+        textmode(C80);
         DrawFullscreenText("NOMEMORY.mni");
         exit(EXIT_SUCCESS);
     }
