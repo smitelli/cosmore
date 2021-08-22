@@ -3459,6 +3459,7 @@ void ShowLevelIntro(word level_num)
     byte displayNums[] = {1, 2, 0, 0, 3, 4, 0, 0, 5, 6, 0, 0, 7, 8, 0, 0, 9, 10};
     word x;
 
+    /* This never occurs */
     if (demoState != DEMOSTATE_NONE) return;
 
     x = UnfoldTextFrame(7, 3, 24, "\xFC""003  Now entering level", "");

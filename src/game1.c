@@ -7798,10 +7798,12 @@ void ExitClean(void)
 
     textmode(C80);
 
+    /* Silence PC speaker */
     outportb(0x0061, inportb(0x0061) & ~0x02);
 
     StopAdLib();
 
+    /* BUG: `writePath` is not considered here! */
     remove(FILENAME_BASE ".SVT");
 
     DrawFullscreenText(EXIT_TEXT_PAGE);
@@ -7924,7 +7926,7 @@ void Startup(void)
 
     LoadConfigurationData(JoinPath(writePath, FILENAME_BASE ".CFG"));
 
-    SetBorderColorRegister(0);
+    SetBorderColorRegister(BLACK);
 
     InitializeBackdropTable();
 
