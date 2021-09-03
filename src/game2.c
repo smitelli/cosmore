@@ -601,6 +601,8 @@ void FadeOutAdLibPlayback(void)
 
 /*
 Wait until `delay` timer ticks have passed, then return.
+
+Delay units are 1/140 of a second.
 */
 void WaitHard(word delay)
 {
@@ -612,6 +614,12 @@ void WaitHard(word delay)
 
 /*
 Wait until `delay` timer ticks have passed, or a key is pressed, then return.
+
+Delay units are 1/140 of a second.
+
+This function responds to "key down" events, and expects the most recent event
+in the keyboard buffer to have been a "key up" event. If a key is already being
+held down during entry to this function, it will return immediately.
 */
 void WaitSoft(word delay)
 {
@@ -1417,6 +1425,7 @@ FILE *GroupEntryFp(char *entry_name)
     found = false;
     fread(header, 1, 960, fp);
 
+    /* Final iteration, if reached, will cause a read out of bounds */
     for (i = 0; i < 980; i += 20) {
         if (header[i] == '\0') break;  /* no more entries */
 
@@ -1435,6 +1444,7 @@ FILE *GroupEntryFp(char *entry_name)
         fp = fopen(volGroupFilename, "rb");
         fread(header, 1, 960, fp);
 
+        /* Final iteration, if reached, will cause a read out of bounds */
         for (i = 0; i < 980; i += 20) {
             if (header[i] == '\0') break;  /* no more entries */
 

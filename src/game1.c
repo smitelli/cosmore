@@ -207,7 +207,7 @@ PC speaker sound effect and AdLib music variables.
 */
 Music *activeMusic;
 static word activeSoundIndex, activeSoundPriority;
-static bool isNewSound, isSpeakerPlaying;
+static bool isNewSound, enableSpeaker;
 
 /*
 Level/map control and global world flags.
@@ -557,7 +557,7 @@ void LoadSoundData(char *entry_name, word *dest, int skip)
 
     for (i = 0; i < 23; i++) {
         soundDataPtr[i + skip] = dest + (*(dest + (i * 8) + 8) >> 1);
-        soundPriority[i + skip + 1] = *(dest + (i * 8) + 9);
+        soundPriority[i + skip + 1] = (byte)*(dest + (i * 8) + 9);
     }
 }
 
@@ -574,7 +574,7 @@ void StartSound(word sound_num)
     activeSoundPriority = soundPriority[sound_num];
     isNewSound = true;
     activeSoundIndex = sound_num - 1;
-    isSpeakerPlaying = false;
+    enableSpeaker = false;
 }
 
 /*
@@ -7736,17 +7736,17 @@ void PCSpeakerService(void)
     if (isNewSound) {
         isNewSound = false;
         soundCursor = 0;
-        isSpeakerPlaying = true;
+        enableSpeaker = true;
     }
 
     if (*(soundDataPtr[activeSoundIndex] + soundCursor) == END_SOUND) {
-        isSpeakerPlaying = false;
+        enableSpeaker = false;
         activeSoundPriority = 0;
 
         outportb(0x0061, inportb(0x0061) & ~0x02);
     }
 
-    if (isSpeakerPlaying) {
+    if (enableSpeaker) {
         word sample = *(soundDataPtr[activeSoundIndex] + soundCursor);
 
         if (sample == 0 && isSoundEnabled) {
@@ -7817,6 +7817,7 @@ Read the tile attribute data into the designated memory location.
 void LoadTileAttributeData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
+
     fread(tileAttributeData, 7000, 1, fp);
     fclose(fp);
 }
@@ -7827,6 +7828,7 @@ Read the masked tile data into the designated memory location.
 void LoadMaskedTileData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
+
     fread(maskedTileData, 40000U, 1, fp);
     fclose(fp);
 }
@@ -7911,7 +7913,7 @@ void Startup(void)
     savedInt9 = getvect(9);
     setvect(9, KeyboardInterruptService);
 
-    isSpeakerPlaying = false;
+    enableSpeaker = false;
     activeSoundPriority = 0;
     gameTickCount = 0;
     isSoundEnabled = true;
@@ -8980,6 +8982,8 @@ char *JoinPath(char *dir, char *file)
         *(joinPathBuffer + dstoff++) = *(file + srcoff);
     }
 
+    /* BUG: Output is not properly null-terminated. */
+
     return joinPathBuffer;
 }
 
@@ -9422,6 +9426,7 @@ void LoadDemoData(void)
     miscDataContents = IMAGE_DEMO;
 
     if (fp == NULL) {
+        /* These were already set in InitializeGame() */
         demoDataLength = 0;
         demoDataPos = 0;
     } else {
