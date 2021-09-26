@@ -110,11 +110,11 @@ a "next due" tick value when the next piece of music data needs to be written.
 static dword musicTickCount, musicNextDue;
 
 /*
-Joystick calibration/button options. Apparently designed with the idea that
-there would be support for 3(!) different joysticks.
+Joystick calibration/button options. Supports two joysticks identified by index
+1 or 2, meaning index 0 is unusable waste space.
 */
-static int joystickXLow[3], joystickXHigh[3];
-static int joystickYLow[3], joystickYHigh[3];
+static int joystickBandLeft[3], joystickBandRight[3];
+static int joystickBandTop[3], joystickBandBottom[3];
 static bool joystickBtn1Bombs;
 
 /*
@@ -829,19 +829,19 @@ JoystickState ReadJoystickState(word stick)
     aborts before either value gets high enough.
     */
     if ((xtime > 500) | (ytime > 500)) {
-        xtime = joystickXLow[stick] + 1;
-        ytime = joystickYLow[stick] + 1;
+        xtime = joystickBandLeft[stick] + 1;
+        ytime = joystickBandTop[stick] + 1;
     }
 
-    if (xtime > joystickXHigh[stick]) {
+    if (xtime > joystickBandRight[stick]) {
         xmove = 1;
-    } else if (xtime < joystickXLow[stick]) {
+    } else if (xtime < joystickBandLeft[stick]) {
         xmove = -1;
     }
 
-    if (ytime > joystickYHigh[stick]) {
+    if (ytime > joystickBandBottom[stick]) {
         ymove = 1;
-    } else if (ytime < joystickYLow[stick]) {
+    } else if (ytime < joystickBandTop[stick]) {
         ymove = -1;
     }
 
@@ -1104,10 +1104,10 @@ void ShowJoystickConfiguration(word stick)
     /* The joystick must be 2/3 of the way to an edge to trigger a move */
     xthird = (righttime - lefttime) / 6;
     ythird = (bottomtime - toptime) / 6;
-    joystickXLow[stick] = lefttime + xthird;
-    joystickXHigh[stick] = righttime - xthird;
-    joystickYLow[stick] = toptime + ythird;
-    joystickYHigh[stick] = bottomtime - ythird;
+    joystickBandLeft[stick] = lefttime + xthird;
+    joystickBandRight[stick] = righttime - xthird;
+    joystickBandTop[stick] = toptime + ythird;
+    joystickBandBottom[stick] = bottomtime - ythird;
 
     DrawTextLine(xframe, 14, " Should button 1 (D)rop");
     DrawTextLine(xframe, 15, " a bomb or (J)ump?");
