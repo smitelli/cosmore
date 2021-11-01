@@ -75,12 +75,12 @@ impacted by the state of any game configuration options. The author decided to
 detect the AdLib twice into two distinct variables for different scopes.
 */
 bbool isAdLibPresent;
-static bool isAdLibPresent2;
+static bool isAdLibPresentPrivate;
 
 /*
 Remaining AdLib state flags.
 */
-static bool skipDetectAdLib, isAdLibStarted, isAdLibEnabled, isAdLibPlaying;
+static bool skipDetectAdLib, isAdLibStarted, isAdLibServiceRunning, enableAdLib;
 
 /*
 Low-level values for profiling and managing interrupts for the Programmable
@@ -91,9 +91,9 @@ static dword pit0Value, timerTickCount;
 static word profCountCPU, profCountPIT;
 
 /*
-Computed ratios for WaitWallclock(). 10 and 25ms are never used.
+Computed ratios for WaitWallclock(). 10 and 25us are never used.
 */
-static word wallclock10ms, wallclock25ms, wallclock100ms;
+static word wallclock10us, wallclock25us, wallclock100us;
 
 /*
 Pointers and offsets to music data. "Length/Head" are fixed values used when the
@@ -139,7 +139,14 @@ Write `value` to the counter on channel 0 of the programmable interval timer.
 */
 void SetPIT0Value(word value)
 {
-    /* 0011 0110 = counter 0 select, r/w little-endian, square wave, 16-bit binary */
+    /*
+    Bit Pattern | Interpretation
+    ------------|---------------
+    00xxxxxx    | Select timer channel 0
+    xx11xxxx    | Access Mode: "Low byte, followed by high byte"
+    xxxx011x    | Mode 3: Square wave generator
+    xxxxxxx0    | 16-bit binary counting mode
+    */
     outportb(0x0043, 0x36);
 
     /* PIT counter 0 divisor (low, high byte) */
@@ -165,70 +172,71 @@ void SetInterruptRate(word ints_second)
 }
 
 /*
-Define a simple test counter to benchmark the CPU against the timer.
+Define a simple test counter to benchmark the CPU against the PIT.
 [ID_SD, SDL_TimingService()]
 */
-void interrupt ProfilePITService(void)
+void interrupt ProfileCPUService(void)
 {
     profCountCPU = _CX;
     profCountPIT++;
 
-    /* Send end-of-interrupt to the 8259 PIC...? */
     outportb(0x0020, 0x20);
 }
 
 /*
-Perform 10 trials to determine the timing of the PIT relative to the speed of
-the processor. [ID_SD, SDL_InitDelay()]
+Perform 10 trials to determine the timing of the CPU relative to the speed of
+the PIT. [ID_SD, SDL_InitDelay()]
 */
-void ProfilePIT(void)
+void ProfileCPU(void)
 {
     int trial;
-    word ratio;
+    word loops_ms;
 
-    setvect(8, ProfilePITService);
+    setvect(8, ProfileCPUService);
     SetInterruptRate(1000);
 
-    for (trial = 0, ratio = 0; trial < 10; trial++) {
-        _DX = 0;
+    for (trial = 0, loops_ms = 0; trial < 10; trial++) {
+        _DX = 0;  /* junk? */
         _CX = 0xffff;
         profCountPIT = _CX;  /* conceptually -1 */
 
 wait4zero:
+        /* Wait until the profile service runs again, which will increment
+        `profCountPIT` and stop this loop. */
         asm or    [profCountPIT],0
         asm jnz   wait4zero
 
 wait4one:
         /*
         CX decrements each iteration of this loop. When the profile service runs
-        again, it will copy a snapshot of CX to profCountCPU and increment
-        profCountPIT, which will stop this loop.
+        again, it will copy a snapshot of CX to `profCountCPU` and increment
+        `profCountPIT`, which will stop this loop.
         */
         asm test  [profCountPIT],1
         asm jnz   done
         asm loop  wait4one
 done:
 
-        /* Hang onto the worst value */
-        if (0xffff - profCountCPU > ratio) {
-            ratio = 0xffff - profCountCPU;
+        /* Hang onto the best-performing value */
+        if (0xffff - profCountCPU > loops_ms) {
+            loops_ms = 0xffff - profCountCPU;
         }
     }
 
-    ratio += ratio / 2;
-    wallclock10ms  = ratio / (1000 / 10);
-    wallclock25ms  = ratio / (1000 / 25);
-    wallclock100ms = ratio / (1000 / 100);
+    loops_ms += loops_ms / 2;
+    wallclock10us  = loops_ms / (1000 / 10);
+    wallclock25us  = loops_ms / (1000 / 25);
+    wallclock100us = loops_ms / (1000 / 100);
 
     SetPIT0Value(0);
-
     setvect(8, savedInt8);
 }
 
 /*
-Wait for a period of time equal to `loops`. This appears to be based on how many
-CPU clocks it takes to perform a pointless test/jnz pair. The loop structure
-here closely matches that in ProfilePIT(). [ID_SD, SDL_Delay()]
+Wait for a period of microseconds equal to `loops`. Valid loop values vary
+depending on the system, and are based on how many CPU clocks it takes to
+perform a busy test/jnz pair. The loop structure here closely matches that in
+ProfileCPU(). [ID_SD, SDL_Delay()]
 */
 void WaitWallclock(word loops)
 {
@@ -245,20 +253,21 @@ done:
 }
 
 /*
-Write `data` to the AdLib register `reg`. The long string of `in`s after each
-`out` is for timing purposes -- that's how long it takes the hardware to process
-the write and become ready for another (potential) write. [ID_SD, alOut()]
+Write `data` to the AdLib register at OPL2 address `addr`. The long string of
+`in`s after each `out` is for timing purposes -- that's how long it takes the
+hardware to process the write and become ready for another (potential) write.
+[ID_SD, alOut()]
 */
-void SetAdLibRegister(byte reg, byte data)
+void SetAdLibRegister(byte addr, byte data)
 {
     asm pushf
 
     disable();
 
     asm mov   dx,0x0388
-    asm mov   al,[reg]
+    asm mov   al,[addr]
     asm out   dx,al
-    asm in    al,dx
+    asm in    al,dx  /* 6 `in` instructions for a 3.4 us delay */
     asm in    al,dx
     asm in    al,dx
     asm in    al,dx
@@ -271,7 +280,7 @@ void SetAdLibRegister(byte reg, byte data)
     asm popf
 
     asm mov   dx,0x0388
-    asm in    al,dx
+    asm in    al,dx  /* 35 `in` instructions for a 23.5 us delay */
     asm in    al,dx
     asm in    al,dx
     asm in    al,dx
@@ -309,23 +318,24 @@ void SetAdLibRegister(byte reg, byte data)
 }
 
 /*
-Update the AdLib with the next music chunk. [ID_SD, SDL_ALService()]
+Update the AdLib with the next music chunk(s) that are due to play at the
+current time. [ID_SD, SDL_ALService()]
 */
 void AdLibService(void)
 {
-    if (!isAdLibPlaying) return;
+    if (!enableAdLib) return;
 
     while (musicDataLeft != 0 && musicNextDue <= musicTickCount) {
-        byte datalow, datahigh;
-        word data = *musicDataPtr++;
+        byte chunkaddr, chunkdata;
+        word chunk = *musicDataPtr++;
 
         musicNextDue = musicTickCount + *musicDataPtr++;
 
-        asm mov   dx,[data]
-        asm mov   [datalow],dl
-        asm mov   [datahigh],dh
+        asm mov   dx,[chunk]
+        asm mov   [chunkaddr],dl
+        asm mov   [chunkdata],dh
 
-        SetAdLibRegister(datalow, datahigh);
+        SetAdLibRegister(chunkaddr, chunkdata);
 
         musicDataLeft -= 4;
     }
@@ -340,38 +350,51 @@ void AdLibService(void)
 }
 
 /*
-Detect and reset the AdLib hardware. Return true if an AdLib or compatible card
-is installed, otherwise return false. [ID_SD, SDL_DetectAdLib()]
+Detect and reset the AdLib hardware. This is accomplished by verifying that I/O
+addresses 388..389h contain something that is behaving like a set of Yamaha OPL2
+timers. Return true if an AdLib or compatible card is installed, otherwise
+return false. [ID_SD, SDL_DetectAdLib()]
 */
 bool DetectAdLib(void)
 {
-    byte status1, status2;
-    int reg;
+    byte oplstatus1, oplstatus2;
+    int addr;
 
-    SetAdLibRegister(0x04, 0x60);  /* timer control, mask timer 1/2 */
-    SetAdLibRegister(0x04, 0x80);  /* timer control, IRQ reset, timers 1/2 */
+    /*
+    Bit Pattern | Interpretation
+    ------------|---------------
+    x1xxxxxx    | Enable T1 MASK
+    xx1xxxxx    | Enable T2 MASK
+    xxxxxx0x    | Disable T2 START
+    xxxxxxx0    | Disable T1 START
+    ------------|---------------
+    1xxxxxxx    | Command IRQ/FLAG bits to reset (must be set in isolation!)
+    */
+    SetAdLibRegister(0x04, 0x60);  /* mask off and disable both OPL2 timers */
+    SetAdLibRegister(0x04, 0x80);  /* reset timer flag state */
 
-    status1 = inportb(0x0388);  /* read adlib status */
+    oplstatus1 = inportb(0x0388);
 
-    SetAdLibRegister(0x02, 0xff);  /* timer 1 counter to 0xff */
-    SetAdLibRegister(0x04, 0x21);  /* timer control, mask timer 2 */
+    SetAdLibRegister(0x02, 0xff);  /* set TIMER 2 preset value (= 12.5 kHz) */
+    SetAdLibRegister(0x04, 0x21);  /* enable T1 START and disable T1 MASK bits */
 
-    WaitWallclock(wallclock100ms);
+    WaitWallclock(wallclock100us);
 
-    status2 = inportb(0x0388);  /* read adlib status */
+    oplstatus2 = inportb(0x0388);
 
-    SetAdLibRegister(0x04, 0x60);  /* timer control, mask timer 1/2 */
-    SetAdLibRegister(0x04, 0x80);  /* timer control, IRQ reset, timers 1/2 */
+    /* Same as above; disable and reset both timers */
+    SetAdLibRegister(0x04, 0x60);
+    SetAdLibRegister(0x04, 0x80);
 
-    /* look at timer1/timer2/both */
-    if ((status1 & 0xe0) == 0 && (status2 & 0xe0) == 0xc0) {
-        /* zero out every register in the adlib */
-        for (reg = 0x01; reg <= 0xf5; reg++) {
-            SetAdLibRegister(reg, 0);
+    /* Compare first and second status to see if T1 (but not T2) FLAG came on */
+    if ((oplstatus1 & 0xe0) == 0 && (oplstatus2 & 0xe0) == 0xc0) {
+        /* We have an AdLib; zero all registers to put it in a pristine state */
+        for (addr = 0x01; addr <= 0xf5; addr++) {
+            SetAdLibRegister(addr, 0);
         }
 
-        SetAdLibRegister(0x01, 0x20);  /* allows the FM chips to control the waveform of each operator */
-        SetAdLibRegister(0x08, 0);  /* zero the CSM Mode/Keyboard Split register */
+        SetAdLibRegister(0x01, 0x20);  /* enable WSE bit, permitting four waveform types */
+        SetAdLibRegister(0x08, 0);  /* redundant: disable CSM; set NOTE_SEL position to 0 */
 
         return true;
     }
@@ -390,7 +413,7 @@ void interrupt TimerInterruptService(void)
 
     junk1++;
 
-    if (isAdLibEnabled == true) {  /* explicit compare against 1 */
+    if (isAdLibServiceRunning == true) {  /* explicit compare against 1 */
         AdLibService();
 
         if (count % 4 == 0) {
@@ -430,7 +453,7 @@ void InitializeInterruptRate(void)
 {
     word rate;
 
-    if (isAdLibEnabled == true) {  /* explicit compare against 1 */
+    if (isAdLibServiceRunning == true) {  /* explicit compare against 1 */
         rate = 560;
     } else {
         rate = 140;
@@ -455,11 +478,11 @@ bool SetMusic(bool state)
         break;
 
     case true:
-        if (isAdLibPresent2) {
+        if (isAdLibPresentPrivate) {
             junk4 = true;
             found = true;
         }
-        /* Possible BUG: `found` will hold garbage here w/ !isAdLibPresent2 */
+        /* Possible BUG: `found` will hold garbage here w/ !isAdLibPresentPrivate */
         break;
 
     default:
@@ -468,7 +491,7 @@ bool SetMusic(bool state)
     }
 
     if (found) {
-        isAdLibEnabled = state;
+        isAdLibServiceRunning = state;
     }
 
     InitializeInterruptRate();
@@ -489,7 +512,7 @@ void StartAdLib(void)
 
     savedInt8 = getvect(8);
 
-    ProfilePIT();
+    ProfileCPU();
 
     setvect(8, TimerInterruptService);
 
@@ -499,7 +522,7 @@ void StartAdLib(void)
 
     /* Useless check; this is always false here */
     if (!skipDetectAdLib) {
-        isAdLibPresent2 = DetectAdLib();
+        isAdLibPresentPrivate = DetectAdLib();
     }
 
     isAdLibStarted = true;
@@ -534,7 +557,7 @@ Activate the AdLib hardware for music playback. [ID_SD, SD_MusicOn()]
 */
 void StartAdLibPlayback(void)
 {
-    isAdLibPlaying = true;
+    enableAdLib = true;
 }
 
 /*
@@ -543,9 +566,9 @@ Stop all note playback, then deactivate the AdLib hardware.
 */
 void StopAdLibPlayback(void)
 {
-    word reg;
+    word addr;
 
-    switch (isAdLibEnabled) {
+    switch (isAdLibServiceRunning) {
     case true:
         junk7 = 0;
 
@@ -553,14 +576,14 @@ void StopAdLibPlayback(void)
         SetAdLibRegister(0xbd, 0);
 
         /* zero all Key On registers */
-        for (reg = 0; reg < 10; reg++) {
-            SetAdLibRegister(reg + 0xb1, 0);
+        for (addr = 0; addr < 10; addr++) {
+            SetAdLibRegister(addr + 0xb1, 0);
         }
 
         break;
     }
 
-    isAdLibPlaying = false;
+    enableAdLib = false;
 }
 
 /*
@@ -574,7 +597,7 @@ void SwitchMusic(Music *music)
 
     disable();
 
-    if (isAdLibEnabled == true) {  /* explicit compare against 1 */
+    if (isAdLibServiceRunning == true) {  /* explicit compare against 1 */
         musicDataPtr = musicDataHead = &music->datahead;
         musicDataLength = musicDataLeft = music->length;
 
@@ -592,7 +615,7 @@ Fade out the music (by switching it off abruptly). [ID_SD, SD_FadeOutMusic()]
 */
 void FadeOutAdLibPlayback(void)
 {
-    switch (isAdLibEnabled) {
+    switch (isAdLibServiceRunning) {
     case true:
         StopAdLibPlayback();
         break;
@@ -1484,7 +1507,7 @@ Return true if there is no AdLib hardware installed, and false otherwise.
 */
 bbool IsAdLibAbsent(void)
 {
-    return !isAdLibPresent2;
+    return !isAdLibPresentPrivate;
 }
 
 /*
