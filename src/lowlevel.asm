@@ -23,7 +23,7 @@
 ;* - [Tischer]: PC System Programming for Developers by Michael Tischer, 1988 *
 ;******************************************************************************
 
-; This game uses the default EGA palette with a few rare exceptions. This
+; This game uses EGA mode Dh's default palette with a few rare exceptions. This
 ; palette has several useful properties: Bits 0,1,2,3 in the palette index
 ; correspond directly to memory planes 0,1,2,3 and to bits 0,1,2,4 in the color
 ; value. When shown on screen, each bit, regardless of the context, affects the

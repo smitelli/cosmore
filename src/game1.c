@@ -7928,6 +7928,10 @@ void Startup(void)
 
     LoadConfigurationData(JoinPath(writePath, FILENAME_BASE ".CFG"));
 
+    /*
+    HACK: Technically the COLORS enum does not follow the numbering convention
+    expected here, but BLACK (and really only BLACK) produces the right color.
+    */
     SetBorderColorRegister(BLACK);
 
     InitializeBackdropTable();
