@@ -610,7 +610,7 @@ void CopyTilesToEGA(byte *source, word length, word offset)
     word i;
     word mask;
     byte *src = source;
-    byte *dest = (byte *)(offset | 0xA0000000L);
+    byte *dest = (byte *)(offset | 0xa0000000L);
 
     for (i = 0; i < length; i++) {
         for (mask = 0x0100; mask < 0x1000; mask = mask << 1) {

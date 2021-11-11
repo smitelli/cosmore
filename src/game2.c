@@ -1963,7 +1963,7 @@ void PrepareBackdropVScroll(byte *p1, byte *p2, byte *p3)
     register word x, A;
     word B, C, y;
 
-    /* Backdrops are 40x18 tiles, 0x5A00 bytes. */
+    /* Backdrops are 40x18 tiles, 0x5a00 bytes. */
 
     B = 0;
     C = 0;
@@ -2016,7 +2016,7 @@ void PrepareBackdropHScroll(byte *p1, byte *p2)
     word A, B;
     byte buf[4];
 
-    /* Backdrops are 40x18 tiles, 0x5A00 bytes. */
+    /* Backdrops are 40x18 tiles, 0x5a00 bytes. */
 
     for (y = 0; y < 0x5a00; y += 0x0500) {  /* 18 times */
         for (B = 0; B < 32; B += 4) {  /* 8 times */
