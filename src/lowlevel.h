@@ -25,12 +25,22 @@ CPU types as returned by GetProcessorType().
 #define CPUTYPE_80386           7
 
 /*
-Common EGA-related inline functions.
+Resets the EGA's bit mask to its default state. Allows writes to all eight pixel
+positions in each written byte.
 */
 #define EGA_CLEAR_BIT_MASK() { outport(0x03ce, 0xff08); }
-#define EGA_MODE_DIRECT()    { outport(0x03ce, 0x0005); }
-/* Enables writing to all map masks, sets mode to allow latched reads */
-#define EGA_RESET()          { outport(0x03c4, 0x0f02); outport(0x03ce, 0x0105); }
+
+/*
+Resets the EGA's read and write modes to their default state. This allows for
+direct (i.e. non-latched) writes from the CPU.
+*/
+#define EGA_MODE_DEFAULT() { outport(0x03ce, 0x0005); }
+
+/*
+Resets the EGA's map mask to its default state (allows writes to all four memory
+planes), sets default read mode, and enables latched writes from the CPU.
+*/
+#define EGA_MODE_LATCHED_WRITE() { outport(0x03c4, 0x0f02); outport(0x03ce, 0x0105); }
 
 /*
 Prototypes for public procedures.

@@ -693,7 +693,7 @@ Draw a solid gray screen tile, to overwrite a former wait spinner location.
 */
 void EraseWaitSpinner(word x, word y)
 {
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     DrawSolidTile(TILE_GRAY, x + (y * 320));
 }
@@ -737,7 +737,7 @@ byte StepWaitSpinner(word x, word y)
     static word frameoff = 0;
     byte scancode = 0;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     if (gameTickCount > 5) {
         frameoff += 8;
@@ -788,7 +788,7 @@ void ClearScreen(void)
 {
     word x, ybase;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     for (ybase = 0; ybase < 8000; ybase += 320) {
         for (x = 0; x < 40; x++) {
@@ -940,7 +940,7 @@ word DrawTextFrame(
 ) {
     register int x, y;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     /* Draw background, implicitly erasing anything behind the frame */
     for (y = 1; height - 1 > y; y++) {
@@ -1162,7 +1162,7 @@ void DrawNumberFlushRight(word x_origin, word y_origin, dword value)
     int x, len;
     byte buf[16];  /* probably 5 bytes longer than it needs to be */
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     ultoa(value, buf, 10);
     len = strlen(buf);
@@ -1192,7 +1192,7 @@ void DrawStatusBarScore(dword add_points, word x, word y)
     SelectDrawPage(!activePage);
     DrawNumberFlushRight(x, y, gameScore);
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 }
 
 /*
@@ -1220,7 +1220,7 @@ void DrawStatusBarStars(word x, word y)
     SelectDrawPage(!activePage);
     DrawNumberFlushRight(x, y, (word)gameStars);
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 }
 
 /*
@@ -1242,7 +1242,7 @@ void DrawStatusBarBombs(word x, word y)
     return;
 #endif  /* DEBUG_BAR */
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     /*
     Draw a blank tile, then overdraw the number. The blanking is not strictly
@@ -1257,7 +1257,7 @@ void DrawStatusBarBombs(word x, word y)
     DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
     DrawNumberFlushRight(x, y, playerBombs);
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 }
 
 /*
@@ -1311,7 +1311,7 @@ Redraw the "Health" area of the status bar with the current global value.
 */
 void UpdateHealth(void)
 {
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     SelectDrawPage(activePage);
     DrawSBarHealthHelper();
@@ -3444,7 +3444,7 @@ void ShowBombHint(void)
 
     if (demoState != DEMOSTATE_NONE) return;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);
     StartSound(SND_HINT_DIALOG_ALERT);
 
@@ -3466,7 +3466,7 @@ void ShowPounceHint(void)
 
     if (demoState != DEMOSTATE_NONE) return;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);
     StartSound(SND_HINT_DIALOG_ALERT);
 
@@ -3515,7 +3515,7 @@ void ShowHealthHint(void)
 
     if (demoState != DEMOSTATE_NONE) return;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);
     StartSound(SND_HINT_DIALOG_ALERT);
 

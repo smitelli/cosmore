@@ -412,7 +412,7 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
     register word delay = 0;
     word delayleft = 0;
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     while (text[i] != '\0') {
         if (text[i] == '\xFE' || text[i] == '\xFB' || text[i] == '\xFD' || text[i] == '\xFC') {
@@ -516,7 +516,7 @@ void DrawFullscreenImage(word image_num)
         fclose(fp);
     }
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
     EGA_CLEAR_BIT_MASK();
     FadeOut();
     SelectDrawPage(0);
@@ -670,7 +670,7 @@ void DrawMapRegion(void)
         (hasVScrollBackdrop ? ((scrollY / 2) % 18) * 80 : 0) +
         (hasHScrollBackdrop ?  (scrollX / 2) % 40       : 0);
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     ymapmax = (scrollY + SCROLLH) << mapYPower;
     ymap = scrollY << mapYPower;
@@ -982,7 +982,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
     byte *src;
     DrawFunction drawfn;
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     offset = *(actorInfoData + sprite) + (frame * 4);
     height = *(actorInfoData + offset);
@@ -1108,7 +1108,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     byte *src;
     DrawFunction drawfn;
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     switch (mode) {
     case DRAWMODE_NORMAL:
@@ -1224,7 +1224,7 @@ void DrawCartoon(byte frame, word x_origin, word y_origin)
     byte *src;
 
     EGA_CLEAR_BIT_MASK();
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     if (isCartoonDataLoaded != true) {  /* explicit compare against 1 */
         isCartoonDataLoaded = true;
@@ -1477,7 +1477,7 @@ void DrawLights(void)
 
     if (!areLightsActive) return;
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
 
     for (i = 0; i < numLights; i++) {
         register word y;
@@ -7665,7 +7665,7 @@ byte ProcessGameInputHelper(word page, byte demo)
 {
     byte status;
 
-    EGA_RESET();
+    EGA_MODE_LATCHED_WRITE();
 
     SelectDrawPage(page);
 
@@ -10027,7 +10027,7 @@ void LoadBackdropData(char *entry_name, byte *scratch)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
-    EGA_MODE_DIRECT();
+    EGA_MODE_DEFAULT();
     EGA_CLEAR_BIT_MASK();
 
     miscDataContents = IMAGE_NONE;
