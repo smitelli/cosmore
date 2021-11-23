@@ -9197,7 +9197,7 @@ loop should run under.
 */
 byte TitleLoop(void)
 {
-    register word hackjunk;  /* only here to tie up the si register */
+    register word junk;  /* only here to tie up the SI register */
     word idlecount;
     byte result;
     byte lastkey;

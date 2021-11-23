@@ -132,7 +132,7 @@ typedef struct {
     word side;
     word x;
     word y;
-    word junk;
+    word junk;  /* unused; required to keep struct padding correct */
 } Light;
 
 typedef struct {
@@ -202,7 +202,7 @@ void InnerMain(int argc, char *argv[]);
 typedef byte KeyName[6];
 
 typedef struct {
-    word junk;
+    word junk;  /* in IDLIBC.C/ControlJoystick(), this is movement direction */
     bool button1;
     bool button2;
 } JoystickState;

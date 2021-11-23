@@ -196,7 +196,7 @@ void ProfileCPU(void)
     SetInterruptRate(1000);
 
     for (trial = 0, loops_ms = 0; trial < 10; trial++) {
-        _DX = 0;  /* junk? */
+        _DX = 0;  /* serves no apparent purpose */
         _CX = 0xffff;
         profCountPIT = _CX;  /* conceptually -1 */
 
@@ -1061,7 +1061,7 @@ joystick can be used in the game. [IDLIB, CalibrateJoy()]
 void ShowJoystickConfiguration(word stick)
 {
     word xframe;
-    word junk;
+    word junk;  /* in IDLIB, this provided an 8-dir spinning arrow */
     word xthird, ythird;
     int lefttime, toptime, righttime, bottomtime;
     byte scancode = 0;
