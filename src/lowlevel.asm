@@ -76,6 +76,85 @@ drawPageSegment dw EGA_SEGMENT  ; EGA memory segment to be written to
 P286
 
 ;
+; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register [EGA, pg.
+; 18].
+;
+MACRO SELECT_EGA_SEQ_MAP_MASK
+        mov   dx,SEQUENCER_ADDR
+        mov   al,SEQ_MAP_MASK
+        out   dx,al
+ENDM
+
+;
+; Set the Color Don't Care [EGA, pg. 53] bits for all four color planes via the
+; Graphics 1 & 2 Address Register [EGA, pg. 46] using the provided `mask` value.
+;
+; The bits in `mask` refer to planes 3-2-1-0. Two different byte-sized registers
+; are being written with a single word-sized OUT; the high byte goes to the
+; GRAPHICS_DATA I/O port.
+;
+MACRO SET_EGA_COLOR_DONT_CARE mask
+        mov   dx,GRAPHICS_1_2_ADDR
+        mov   ax,(mask SHL 8) OR GFX_COLOR_DONT_CARE
+        out   dx,ax
+ENDM
+
+;
+; Load a `mask` into the Bit Mask Register [EGA, pg. 54] via the Graphics 1 & 2
+; Address Register [EGA, pg. 46].
+;
+; Each bit in `mask` refers to one screen pixel positon. Two different byte-
+; sized registers are being written with a single word-sized OUT; the high byte
+; goes to the GRAPHICS_DATA I/O port.
+;
+MACRO SET_EGA_BIT_MASK mask
+        mov   dx,GRAPHICS_1_2_ADDR
+        mov   ax,(mask SHL 8) OR GFX_BIT_MASK
+        out   dx,ax
+ENDM
+
+;
+; Load a `mask` into the Map Mask [EGA, pg. 20] via the Sequencer Address
+; Register [EGA, pg. 18].
+;
+; The bits in `mask` refer to planes 3-2-1-0. Two different byte-sized registers
+; are being written with a single word-sized OUT; the high byte goes to the
+; SEQUENCER_DATA I/O port.
+;
+MACRO SET_EGA_MAP_MASK mask
+        mov   dx,SEQUENCER_ADDR
+        mov   ax,(mask SHL 8) OR SEQ_MAP_MASK
+        out   dx,ax
+ENDM
+
+;
+; Load `map` into the Read Map Select register [EGA, pg. 50] via the Graphics 1
+; & 2 Address Register [EGA, pg. 46] to select one of the four color planes
+; using decimal notation.
+;
+; Plane numbers range from 0 (blue) to 3 (intensity). Two bytes are sent in one
+; word OUT; the high byte goes to the GRAPHICS_DATA I/O port.
+;
+MACRO SET_EGA_READ_MAP map
+        mov   dx,GRAPHICS_1_2_ADDR
+        mov   ax,(map SHL 8) OR GFX_READ_MAP_SELECT
+        out   dx,ax
+ENDM
+
+;
+; Load a `mode` byte into the Mode register [EGA, pg. 50] via the Graphics 1 & 2
+; Address Register [EGA, pg. 46].
+;
+; Two different byte- sized registers are being written with a single word-sized
+; OUT; the high byte goes to the GRAPHICS_DATA I/O port.
+;
+MACRO SET_EGA_GC_MODE mode
+        mov   dx,GRAPHICS_1_2_ADDR
+        mov   ax,(mode SHL 8) OR GFX_MODE
+        out   dx,ax
+ENDM
+
+;
 ; Set the video mode to the specified mode number and initialize the EGA card.
 ;
 ; mode_num (word): The BIOS video mode to enter. Only the low byte is used.
@@ -92,27 +171,19 @@ PROC _SetVideoMode FAR @@mode_num:WORD
         mov   ah,VSVC_SET_VIDEO_MODE
         int   INT_VIDEO_SERVICE
 
-        ; Turn *on* Color Don't Care [EGA, pg. 53] for all four color planes via
-        ; the Graphics 1 & 2 Address Register [EGA, pg. 46]. This appears to be
-        ; an instance where the IBM documentation is either confusing or flat-
-        ; out incorrect -- bit value 1 means the Color Compare register is used
-        ; during applicable memory read operations, and value 0 means the Color
-        ; Compare register is ignored. This only affects memory read operations
-        ; when Read Mode = 1, and the only place these types of reads occur is
-        ; in the DrawSpriteTileWhite procedure. Two different byte-sized
-        ; registers are being written with a single word-sized OUT; the high
-        ; byte goes to the GRAPHICS_DATA I/O port.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(0000b SHL 8) OR GFX_COLOR_DONT_CARE  ; Bits are planes 3210
-        out   dx,ax
+        ; Turn *on* Color Don't Care for all four color planes. This appears to
+        ; be an instance where the IBM documentation is either confusing or
+        ; flat-out incorrect -- bit value 1 means the Color Compare register is
+        ; used during applicable memory read operations, and value 0 means the
+        ; Color Compare register is ignored. This only affects memory read
+        ; operations when Read Mode = 1, and the only place these types of reads
+        ; occur is in the DrawSpriteTileWhite procedure.
+        SET_EGA_COLOR_DONT_CARE 0000b
 
-        ; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register
-        ; [EGA, pg. 18], but don't write anything to it here. This probably
-        ; isn't needed -- _usually_ any further changes to the map mask are
-        ; accompanied by a re-select of this register.
-        mov   dx,SEQUENCER_ADDR
-        mov   al,SEQ_MAP_MASK
-        out   dx,al
+        ; Pre-select the Map Mask, but don't actually write anything to it yet.
+        ; This probably isn't needed -- _usually_ any further changes to the map
+        ; mask are accompanied by a re-select of this register.
+        SELECT_EGA_SEQ_MAP_MASK
 
         pop   bp
         ret
@@ -246,6 +317,7 @@ ENDP
 ;
 ; Source data is read from EGA memory at SOLID_TILE_SEGMENT:src_offset.
 ; The destination address is drawPageSegment:dest_offset.
+; The EGA *must* be in latched write mode for this to work correctly.
 ;
 ; Each tile is an 8x8 pixel square. Each 8-pixel tile row occupies one byte of
 ; EGA address space (1 bit per pixel), for a total of 8 bytes per tile. These 8
@@ -285,7 +357,7 @@ PROC _DrawSolidTile FAR @@src_offset:WORD, @@dst_offset:WORD
         ; Draw eight rows of tile pixels. All four color planes are copied, in
         ; parallel, through the EGA's internal latches. The memory read/write
         ; cycles are doing the actual work here -- the value in AL has no effect
-        ; on the visual result.
+        ; on the visual result. Latched write mode must be enabled here!
         srcoff = 0
         dstoff = 0
 REPT 8
@@ -448,11 +520,8 @@ ENDM
         mov   bx,[@@x]
         add   bx,ax
 
-        ; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register
-        ; [EGA, pg. 18].
-        mov   dx,SEQUENCER_ADDR
-        mov   al,SEQ_MAP_MASK
-        out   dx,al
+        ; Pre-select the Map Mask before the loop is entered.
+        SELECT_EGA_SEQ_MAP_MASK
 
         ; Draw eight rows of tile pixels.
         mov   cx,8
@@ -520,6 +589,10 @@ ENDP
 ; lighten, and light colors to stay the same. The other color planes do not
 ; change. This is usually applied to the "west" (i.e. left) edge of light beams
 ; in maps.
+;
+; NOTE: This assumes port 3C4h has been set to 2h (sequencer index = map mask).
+; This is the only state that the game ever leaves the register in, but it's an
+; unsafe assumption.
 ;
 ; NOTE: This color effect fundamentally changes the pixels, meaning that
 ; "magenta" areas become "bright magenta" and no longer match for palette
@@ -592,7 +665,7 @@ IRP mask,<00000001b,00000011b,00000111b,00001111b,00011111b,00111111b,01111111b,
         ; needs lightening. The mask left in AH conveniently has this property.
         xchg  ah,[es:bx+dstoff]  ; Result in AH is not used again
 
-        ; Advance the destination write position, then the macro repeats.
+        ; Advance the destination write position, then the block repeats.
         dstoff = dstoff + SCREEN_Y_STRIDE
 ENDM
 
@@ -610,6 +683,10 @@ ENDP
 ; turned on. Visually this causes dark colors to lighten, and light colors to
 ; stay the same. The other color planes do not change. This is usually applied
 ; to the main body of light beams in maps.
+;
+; NOTE: This assumes port 3C4h has been set to 2h (sequencer index = map mask).
+; This is the only state that the game ever leaves the register in, but it's an
+; unsafe assumption.
 ;
 ; NOTE: This color effect fundamentally changes the pixels, meaning that
 ; "magenta" areas become "bright magenta" and no longer match for palette
@@ -637,14 +714,9 @@ PROC _LightenScreenTile FAR @@x:WORD, @@y:WORD
         mov   bx,[yOffsetTable+di]
         add   bx,[@@x]
 
-        ; Load a mask containing all 1 bits into the Bit Mask Register [EGA, pg.
-        ; 54] via the Graphics 1 & 2 Address Register [EGA, pg. 46]. This
-        ; permits writing to every pixel in the row. Two different byte-sized
-        ; registers are being written with a single word-sized OUT; the high
-        ; byte goes to the GRAPHICS_DATA I/O port.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(11111111b SHL 8) OR GFX_BIT_MASK
-        out   dx,ax
+        ; Load a mask containing all 1 bits into the Bit Mask Register,
+        ; permitting writes to every pixel in the row.
+        SET_EGA_BIT_MASK 11111111b
 
         ; Program the EGA Map Mask [EGA, pg. 20] to only operate on plane 3 --
         ; the intensity bit in the default game palette. NOTE: This is making an
@@ -663,7 +735,7 @@ PROC _LightenScreenTile FAR @@x:WORD, @@y:WORD
 REPT 8
         mov   [es:bx+dstoff],al
 
-        ; Advance the destination write position, then the macro repeats.
+        ; Advance the destination write position, then the block repeats.
         dstoff = dstoff + SCREEN_Y_STRIDE
 ENDM
 
@@ -691,6 +763,11 @@ ENDP
 ; lighten, and light colors to stay the same. The other color planes do not
 ; change. This is usually applied to the "east" (i.e. right) edge of light beams
 ; in maps.
+;
+; NOTE: This assumes port 3C5h has been set to 1000b (map mask = intensity plane
+; only). LightenScreenTile and LightenScreenTileWest both leave the map mask in
+; the correct state, but there's a chance that, if this procedure runs first,
+; the mask could be incorrectly set.
 ;
 ; NOTE: This color effect fundamentally changes the pixels, meaning that
 ; "magenta" areas become "bright magenta" and no longer match for palette
@@ -734,11 +811,8 @@ PROC _LightenScreenTileEast FAR @@x:WORD, @@y:WORD
         mov   bx,[yOffsetTable+di]
         add   bx,[@@x]
 
-        ; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register
-        ; [EGA, pg. 18].
-        mov   dx,SEQUENCER_ADDR
-        mov   al,SEQ_MAP_MASK
-        out   dx,al
+        ; Pre-select the Map Mask before the repeat block is entered.
+        SELECT_EGA_SEQ_MAP_MASK
 
         ; NOTE: Here we are making an *unsafe* assumption that the value 1000b
         ; has been previously loaded into the SEQUENCER_DATA I/O port, thus
@@ -767,7 +841,7 @@ IRP mask,<10000000b,11000000b,11100000b,11110000b,11111000b,11111100b,11111110b,
         ; needs lightening. The mask left in AH conveniently has this property.
         xchg  ah,[es:bx+dstoff]
 
-        ; Advance the destination write position, then the macro repeats.
+        ; Advance the destination write position, then the block repeats.
         dstoff = dstoff + SCREEN_Y_STRIDE
 ENDM
 
@@ -883,36 +957,24 @@ PROC _DrawSpriteTile FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         mov   cl,[si+10]
         mov   ch,[si+15]
 
-        ; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register
-        ; [EGA, pg. 18] and enable only one of the four color planes. Two
-        ; different byte-sized registers are being written with a single
-        ; word-sized OUT; the high byte goes to the SEQUENCER_DATA I/O port.
-        ; This makes future EGA memory writes only change the blue color plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0001b SHL 8) OR SEQ_MAP_MASK  ; 0001 = only blue plane
-        out   dx,ax
-
-        ; Select the Read Map Select register [EGA, pg. 50] via the Graphics 1 &
-        ; 2 Address Register [EGA, pg. 46] and select one of the four color
-        ; planes using decimal notation. As before, two bytes are sent in one
-        ; word OUT; the high byte goes to the GRAPHICS_DATA I/O port. This makes
-        ; future EGA memory reads only fetch data from the blue color plane.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(0 SHL 8) OR GFX_READ_MAP_SELECT  ; 0 = blue plane
-        out   dx,ax
-
         ; The actual data movement is largely the same across the four color
-        ; planes, so define a macro to handle it.
-        ; plane_pos: The number of bytes to skip in the tile data to align the
-        ;     memory reads with the desired color plane.
-MACRO DRAW_SPRITE_TILE_PLANE plane_pos
+        ; planes, so use a repeating macro to handle it.
+IRP plane_num,<0,1,2,3>  ; 0,1,2,3 = blue,green,red,intensity
+        ; Configure the Map Mask and enable only one of the four color planes.
+        ; This restricts EGA memory writes to only the current color plane.
+        SET_EGA_MAP_MASK <1 SHL plane_num>
+
+        ; Configure the Read Map Select register, which makes future EGA memory
+        ; reads only fetch data from the current color plane.
+        SET_EGA_READ_MAP plane_num
+
         srcoff = 0
         dstoff = 0
 
         ; The first four rows of mask data are in byte registers, and the last
         ; four rows are still in memory at DS:SI+20 and 5-byte intervals beyond.
-        ; The first row of color data is at DS:SI+plane_pos, and subsequent rows
-        ; are also spaced at 5-byte intervals.
+        ; The first row of color data is at DS:SI+plane_num+1, and subsequent
+        ; rows are also spaced at 5-byte intervals.
         ;
         ; For each row of pixels in the tile, read the EGA memory contents for
         ; what's already been drawn on the preselected color plane. AND this
@@ -922,43 +984,12 @@ MACRO DRAW_SPRITE_TILE_PLANE plane_pos
   IRP maskreg,<bl,bh,cl,ch,[si+20],[si+25],[si+30],[si+35]>
         mov   al,[es:di+dstoff]
         and   al,maskreg
-        or    al,[si+(plane_pos + srcoff)]
+        or    al,[si+(plane_num + 1 + srcoff)]
         mov   [es:di+dstoff],al
         srcoff = srcoff + MASKED_TILE_ROW_STRIDE
         dstoff = dstoff + SCREEN_Y_STRIDE
   ENDM
 ENDM
-
-        ; Draw the blue color plane by invoking the macro that was just defined.
-        DRAW_SPRITE_TILE_PLANE 1
-
-        ; Repeat the previous steps, but this time restrict reads/writes to the
-        ; green color plane on the EGA and draw green data.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0010b SHL 8) OR SEQ_MAP_MASK  ; 0010 = only green plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(1 SHL 8) OR GFX_READ_MAP_SELECT  ; 1 = green plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE 2
-
-        ; ... And again, for the red plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0100b SHL 8) OR SEQ_MAP_MASK  ; 0100 = only red plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(2 SHL 8) OR GFX_READ_MAP_SELECT  ; 2 = red plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE 3
-
-        ; ... And one more time, for the intensity plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(1000b SHL 8) OR SEQ_MAP_MASK  ; 1000 = only intensity plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(3 SHL 8) OR GFX_READ_MAP_SELECT  ; 3 = intensity plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE 4
 
         pop   ds
         ASSUME ds:DGROUP
@@ -1026,10 +1057,7 @@ PROC _DrawMaskedTile FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         sub   si,16000
         mov   es,ax
 
-        ; Select the Mode register [EGA, pg. 50] via the Graphics 1 & 2 Address
-        ; Register [EGA, pg. 46] and zero everything out. Two different byte-
-        ; sized registers are being written with a single word-sized OUT; the
-        ; high byte goes to the GRAPHICS_DATA I/O port.
+        ; Configure the Mode register by zeroing everything out.
         ;   Bits     | Meaning
         ;   ---------+--------
         ;   ......00 | Write Mode = Each memory plane is written with the
@@ -1043,9 +1071,7 @@ PROC _DrawMaskedTile FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         ; The only seemingly important bits are those for Write Mode. This
         ; procedure requires memory to be written with processor data (as
         ; opposed to EGA latch data) and the correct mode must be ensured.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(000000b SHL 8) OR GFX_MODE
-        out   dx,ax
+        SET_EGA_GC_MODE 000000b
 
         ; Store first four rows of mask data.
         mov   bl,[si]
@@ -1053,18 +1079,14 @@ PROC _DrawMaskedTile FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         mov   cl,[si+10]
         mov   ch,[si+15]
 
-        ; Set up Map Mask register to isolate blue color plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0001b SHL 8) OR SEQ_MAP_MASK  ; 0001 = only blue plane
-        out   dx,ax
+        ; Repeating macro for data movement.
+IRP plane_num,<0,1,2,3>  ; 0,1,2,3 = blue,green,red,intensity
+        ; Configure the Map Mask and enable only the current color plane.
+        SET_EGA_MAP_MASK <1 SHL plane_num>
 
-        ; Set up Read Map Select register to isolate blue color plane.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(0 SHL 8) OR GFX_READ_MAP_SELECT  ; 0 = blue plane
-        out   dx,ax
+        ; Configure the Read Map Select register to isolate current color plane.
+        SET_EGA_READ_MAP plane_num
 
-        ; Define macro for data movement.
-MACRO DRAW_MASKED_TILE_PLANE plane_pos
         srcoff = 0
         dstoff = 0
 
@@ -1072,47 +1094,15 @@ MACRO DRAW_MASKED_TILE_PLANE plane_pos
   IRP maskreg,<bl,bh,cl,ch,[si+20],[si+25],[si+30],[si+35]>
         mov   al,[es:di+dstoff]
         and   al,maskreg
-        or    al,[si+(plane_pos + srcoff)]
+        or    al,[si+(plane_num + 1 + srcoff)]
         mov   [es:di+dstoff],al
         srcoff = srcoff + MASKED_TILE_ROW_STRIDE
         dstoff = dstoff + SCREEN_Y_STRIDE
   ENDM
 ENDM
 
-        ; Draw blue color plane.
-        DRAW_MASKED_TILE_PLANE 1
-
-        ; Repeat for green plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0010b SHL 8) OR SEQ_MAP_MASK  ; 0010 = only green plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(1 SHL 8) OR GFX_READ_MAP_SELECT  ; 1 = green plane
-        out   dx,ax
-        DRAW_MASKED_TILE_PLANE 2
-
-        ; Repeat for red plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0100b SHL 8) OR SEQ_MAP_MASK  ; 0100 = only red plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(2 SHL 8) OR GFX_READ_MAP_SELECT  ; 2 = red plane
-        out   dx,ax
-        DRAW_MASKED_TILE_PLANE 3
-
-        ; Repeat for intensity plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(1000b SHL 8) OR SEQ_MAP_MASK  ; 1000 = only intensity plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(3 SHL 8) OR GFX_READ_MAP_SELECT  ; 3 = intensity plane
-        out   dx,ax
-        DRAW_MASKED_TILE_PLANE 4
-
         ; Reset the map mask register to write to all four color planes.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(1111b SHL 8) OR SEQ_MAP_MASK  ; Bits are planes 3210
-        out   dx,ax
+        SET_EGA_MAP_MASK 1111b  ; Bits are planes 3210
 
         ; Reset the Write Mode value in the Mode register.
         ;   Bits     | Meaning
@@ -1121,9 +1111,7 @@ ENDM
         ;            |     contents of the processor latches. These latches are
         ;            |     loaded by a processor read operation.
         ; The other bits retain the same value (and meaning) as above.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(000001b SHL 8) OR GFX_MODE
-        out   dx,ax
+        SET_EGA_GC_MODE 000001b
 
         pop   ds
         ASSUME ds:DGROUP
@@ -1195,34 +1183,22 @@ PROC _DrawSpriteTileFlipped FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         ASSUME ds:NOTHING
         mov   es,ax
 
-        ; Select the Map Mask [EGA, pg. 20] via the Sequencer Address Register
-        ; [EGA, pg. 18] and enable only one of the four color planes. Two
-        ; different byte-sized registers are being written with a single
-        ; word-sized OUT; the high byte goes to the SEQUENCER_DATA I/O port.
-        ; This makes future EGA memory writes only change the blue color plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0001b SHL 8) OR SEQ_MAP_MASK  ; 0001 = only blue plane
-        out   dx,ax
-
-        ; Select the Read Map Select register [EGA, pg. 50] via the Graphics 1 &
-        ; 2 Address Register [EGA, pg. 46] and select one of the four color
-        ; planes using decimal notation. As before, two bytes are sent in one
-        ; word OUT; the high byte goes to the GRAPHICS_DATA I/O port. This makes
-        ; future EGA memory reads only fetch data from the blue color plane.
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(0 SHL 8) OR GFX_READ_MAP_SELECT  ; 0 = blue plane
-        out   dx,ax
-
         ; The actual data movement is largely the same across the four color
-        ; planes, so define a macro to handle it.
-        ; plane_pos: The number of bytes to skip in the tile data to align the
-        ;     memory reads with the desired color plane.
-MACRO DRAW_SPRITE_TILE_PLANE_FLIPPED plane_pos
+        ; planes, so use a repeating macro to handle it.
+IRP plane_num,<0,1,2,3>  ; 0,1,2,3 = blue,green,red,intensity
+        ; Configure the Map Mask and enable only one of the four color planes.
+        ; This restricts EGA memory writes to only the current color plane.
+        SET_EGA_MAP_MASK <1 SHL plane_num>
+
+        ; Configure the Read Map Select register, which makes future EGA memory
+        ; reads only fetch data from the current color plane.
+        SET_EGA_READ_MAP plane_num
+
         srcoff = 0
         dstoff = SCREEN_Y_STRIDE * 8
 
         ; The mask data is in memory at DS:SI and 5-byte intervals beyond. The
-        ; first row of color data is at DS:SI+plane_pos, and subsequent rows
+        ; first row of color data is at DS:SI+plane_num+1, and subsequent rows
         ; are also spaced at 5-byte intervals. The destination offset iterates
         ; backwards from the bottom up, while the source offset iterates
         ; forwards. This is what flips the tile vertically. Horizontal pixel
@@ -1237,42 +1213,11 @@ MACRO DRAW_SPRITE_TILE_PLANE_FLIPPED plane_pos
         dstoff = dstoff - SCREEN_Y_STRIDE
         mov   al,[es:di+dstoff]
         and   al,[si+srcoff]
-        or    al,[si+(plane_pos + srcoff)]
+        or    al,[si+(plane_num + 1 + srcoff)]
         mov   [es:di+dstoff],al
         srcoff = srcoff + MASKED_TILE_ROW_STRIDE
   ENDM
 ENDM
-
-        ; Draw the blue color plane by invoking the macro that was just defined.
-        DRAW_SPRITE_TILE_PLANE_FLIPPED 1
-
-        ; Repeat the previous steps, but this time restrict reads/writes to the
-        ; green color plane on the EGA and draw green data.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0010b SHL 8) OR SEQ_MAP_MASK  ; 0010 = only green plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(1 SHL 8) OR GFX_READ_MAP_SELECT  ; 1 = green plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE_FLIPPED 2
-
-        ; ... And again, for the red plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(0100b SHL 8) OR SEQ_MAP_MASK  ; 0100 = only red plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(2 SHL 8) OR GFX_READ_MAP_SELECT  ; 2 = red plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE_FLIPPED 3
-
-        ; ... And one more time, for the intensity plane.
-        mov   dx,SEQUENCER_ADDR
-        mov   ax,(1000b SHL 8) OR SEQ_MAP_MASK  ; 1000 = only intensity plane
-        out   dx,ax
-        mov   dx,GRAPHICS_1_2_ADDR
-        mov   ax,(3 SHL 8) OR GFX_READ_MAP_SELECT  ; 3 = intensity plane
-        out   dx,ax
-        DRAW_SPRITE_TILE_PLANE_FLIPPED 4
 
         pop   ds
         ASSUME ds:DGROUP
@@ -1287,6 +1232,10 @@ ENDP
 ;
 ; This procedure draws tiles as solid white shapes, to represent actors that are
 ; taking damage or to get the player's attention.
+;
+; NOTE: This assumes port 3C4h has been set to 2h (sequencer index = map mask).
+; This is the only state that the game ever leaves the register in, but it's an
+; unsafe assumption.
 ;
 ; The basic theory of operation is as follows.
 ; 1. Program the EGA registers to accept the upcoming drawing technique. This
@@ -1357,10 +1306,11 @@ PROC _DrawSpriteTileWhite FAR @@src:FAR PTR, @@x:WORD, @@y:WORD
         mov   al,1111b          ; Bits are planes 3210
         out   dx,al
 
-        ; Select the Data Rotate register [EGA, pg. 49] via the Graphics 1 & 2
-        ; Address Register [EGA, pg. 46] and set the Function Select bits. Two
-        ; different byte-sized registers are being written with a single word-
-        ; sized OUT; the high byte goes to the GRAPHICS_DATA I/O port.
+        ; Select the Data Rotate (Function Select) register [EGA, pg. 49] via
+        ; the Graphics 1 & 2 Address Register [EGA, pg. 46] and set the Function
+        ; Select bits. Two different byte-sized registers are being written with
+        ; a single word-sized OUT; the high byte goes to the GRAPHICS_DATA I/O
+        ; port.
         ;   Bits     | Meaning
         ;   ---------+--------
         ;   .....000 | Rotate Count = 0
@@ -1436,7 +1386,8 @@ REPT 8
         dstpos = dstpos + SCREEN_Y_STRIDE
 ENDM
 
-        ; Reset the Function Select value in the Data Rotate register.
+        ; Reset the Function Select value in the Data Rotate (Function Select)
+        ; register.
         ;   Bits     | Meaning
         ;   ---------+--------
         ;   ...00... | Function Select = Data written to memory is unmodified.
