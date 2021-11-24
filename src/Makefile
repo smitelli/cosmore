@@ -1,4 +1,5 @@
 #**
+#* Cosmore
 #* Copyright (c) 2020-2021 Scott Smitelli
 #*
 #* This source code is licensed under the MIT license found in the LICENSE file

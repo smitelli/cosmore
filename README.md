@@ -160,4 +160,4 @@ This project includes a few files that are not my own work, but which are requir
 
 ## License
 
-Except for the aforementioned files, MIT.
+Except for the aforementioned files, MIT. All rights and trademarks to this game and its associated assets belongs to Apogee Software.

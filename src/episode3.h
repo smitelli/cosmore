@@ -1,5 +1,9 @@
 /**
+ * Cosmore
  * Copyright (c) 2020-2021 Scott Smitelli
+ *
+ * Based on COSMO3.EXE distributed with "Cosmo's Cosmic Adventure"
+ * Copyright (c) 1992 Apogee Software, Ltd.
  *
  * This source code is licensed under the MIT license found in the LICENSE file
  * in the root directory of this source tree.
