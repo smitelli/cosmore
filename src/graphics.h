@@ -51,6 +51,12 @@ Constant indicating the end of a palette animation array.
 #define END_ANIMATION           BYTE_MAX
 
 /*
+Defines the EGA palette index used as the "key" color for animations. This must
+be one of the COLORS members, *not* MODE1_COLORS!
+*/
+#define PALETTE_KEY_INDEX       MAGENTA
+
+/*
 Palette animation types.
 */
 #define PALANIM_NONE            0

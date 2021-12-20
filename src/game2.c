@@ -664,30 +664,27 @@ SetPaletteRegister() for an explanation of why a skip of 8 is applied.
 */
 void FadeInCustom(word delay)
 {
-    word i;
+    word reg;
     word skip = 0;
 
-    for (i = 0; i < 16; i++) {
-        if (i == 8) {
-            skip = 8;
-        }
+    for (reg = 0; reg < 16; reg++) {
+        if (reg == 8) skip = 8;
 
-        SetPaletteRegister(i, i + skip);
+        SetPaletteRegister(reg, reg + skip);
         WaitHard(delay);
     }
 }
 
 /*
 Fill the screen with white, one palette register at a time. Wait `delay` timer
-ticks between each step. See the comments for SetPaletteRegister() for an
-explanation of why 8 is added to the WHITE constant.
+ticks between each step.
 */
 void FadeToWhite(word delay)
 {
-    word i;
+    word reg;
 
-    for (i = 0; i < 16; i++) {
-        SetPaletteRegister(i, WHITE + 8);
+    for (reg = 0; reg < 16; reg++) {
+        SetPaletteRegister(reg, MODE1_WHITE);
         WaitHard(delay);
     }
 }
@@ -708,11 +705,11 @@ time. Wait `delay` timer ticks between each step.
 */
 void FadeOutCustom(word delay)
 {
-    int i;
+    int reg;
 
-    for (i = 0; i < 16; i++) {
+    for (reg = 0; reg < 16; reg++) {
         WaitHard(delay);
-        SetPaletteRegister(i, BLACK);
+        SetPaletteRegister(reg, MODE1_BLACK);
     }
 }
 
@@ -790,13 +787,13 @@ Clear the screen by drawing a 40x25 page of black tiles.
 */
 void ClearScreen(void)
 {
-    word x, ybase;
+    word x, y;
 
     EGA_MODE_LATCHED_WRITE();
 
-    for (ybase = 0; ybase < 8000; ybase += 320) {
+    for (y = 0; y < 25 * 320; y += 320) {
         for (x = 0; x < 40; x++) {
-            DrawSolidTile(TILE_EMPTY, ybase + x);  /* renders as solid black */
+            DrawSolidTile(TILE_EMPTY, y + x);  /* renders as solid black */
         }
     }
 }

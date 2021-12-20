@@ -50,6 +50,30 @@ planes), sets default read mode, and enables latched writes from the CPU.
 }
 
 /*
+Define the 16 default colors available in EGA "display mode 1" (aka the 200-line
+CGA-compatible mode). Uses the COLORS enum from CONIO.H where possible; see the
+comments for SetPaletteRegister() for information about the skip by 8.
+*/
+enum MODE1_COLORS {
+    MODE1_BLACK = BLACK,
+    MODE1_BLUE,
+    MODE1_GREEN,
+    MODE1_CYAN,
+    MODE1_RED,
+    MODE1_MAGENTA,
+    MODE1_BROWN,
+    MODE1_LIGHTGRAY,
+    MODE1_DARKGRAY = DARKGRAY + 8,
+    MODE1_LIGHTBLUE,
+    MODE1_LIGHTGREEN,
+    MODE1_LIGHTCYAN,
+    MODE1_LIGHTRED,
+    MODE1_LIGHTMAGENTA,
+    MODE1_YELLOW,
+    MODE1_WHITE
+};
+
+/*
 Prototypes for public procedures.
 */
 void SetVideoMode(word mode_num);

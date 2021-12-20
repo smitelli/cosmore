@@ -323,9 +323,10 @@ void StepPalette(byte *pal_table)
     paletteStepCount++;
     if (pal_table[(word)paletteStepCount] == END_ANIMATION) paletteStepCount = 0;
 
+    /* Jump by 8 converts COLORS into MODE1_COLORS */
     SetPaletteRegister(
-        MAGENTA,
-        pal_table[(word)paletteStepCount] < DARKGRAY ?
+        PALETTE_KEY_INDEX,
+        pal_table[(word)paletteStepCount] < 8 ?
             pal_table[(word)paletteStepCount] : pal_table[(word)paletteStepCount] + 8
     );
 }
@@ -336,6 +337,7 @@ Handle palette animation for this frame.
 void AnimatePalette(void)
 {
     static byte lightningState = 0;
+    /* Palette tables must use COLORS, *not* MODE1_COLORS! */
     static byte paltable_r_y_w[] = {
         RED, RED, LIGHTRED, LIGHTRED, YELLOW, YELLOW, WHITE, WHITE, YELLOW,
         YELLOW, LIGHTRED, LIGHTRED, END_ANIMATION
@@ -362,16 +364,16 @@ void AnimatePalette(void)
     case PALANIM_LIGHTNING:
         if (lightningState == 2) {
             lightningState = 0;
-            SetPaletteRegister(MAGENTA, DARKGRAY + 8);
+            SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_DARKGRAY);
         } else if (lightningState == 1) {
             lightningState = 2;
-            SetPaletteRegister(MAGENTA, LIGHTGRAY);
+            SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_LIGHTGRAY);
         } else if (rand() < 1500) {
-            SetPaletteRegister(MAGENTA, WHITE + 8);
+            SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_WHITE);
             StartSound(SND_THUNDER);
             lightningState = 1;
         } else {
-            SetPaletteRegister(MAGENTA, BLACK);
+            SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_BLACK);
             lightningState = 0;
         }
         break;
@@ -609,14 +611,14 @@ void LoadActorTileData(char *entry_name)
 /*
 Load row-planar tile image data into EGA memory.
 */
-void CopyTilesToEGA(byte *source, word length, word offset)
+void CopyTilesToEGA(byte *source, word dest_length, word dest_offset)
 {
     word i;
     word mask;
     byte *src = source;
-    byte *dest = (byte *)(offset | 0xa0000000L);
+    byte *dest = MK_FP(0xa000, dest_offset);
 
-    for (i = 0; i < length; i++) {
+    for (i = 0; i < dest_length; i++) {
         for (mask = 0x0100; mask < 0x1000; mask = mask << 1) {
             outport(0x03c4, mask | 0x0002);
 
@@ -6370,10 +6372,10 @@ void DrawExplosions(void)
 #ifdef EXPLOSION_PALETTE
         if (paletteAnimationNum == PALANIM_EXPLOSIONS) {
             byte paletteColors[] = {
-                WHITE + 8, YELLOW + 8, WHITE + 8, BLACK,
-                YELLOW + 8, WHITE + 8, YELLOW + 8, BLACK, BLACK
+                MODE1_WHITE, MODE1_YELLOW, MODE1_WHITE, MODE1_BLACK, MODE1_YELLOW,
+                MODE1_WHITE, MODE1_YELLOW, MODE1_BLACK, MODE1_BLACK
             };
-            SetPaletteRegister(MAGENTA, paletteColors[ex->age - 1]);
+            SetPaletteRegister(PALETTE_KEY_INDEX, paletteColors[ex->age - 1]);
         }
 #endif  /* EXPLOSION_PALETTE */
 
@@ -7932,11 +7934,7 @@ void Startup(void)
 
     LoadConfigurationData(JoinPath(writePath, FILENAME_BASE ".CFG"));
 
-    /*
-    HACK: Technically the COLORS enum does not follow the numbering convention
-    expected here, but BLACK (and really only BLACK) produces the right color.
-    */
-    SetBorderColorRegister(BLACK);
+    SetBorderColorRegister(MODE1_BLACK);
 
     InitializeBackdropTable();
 
@@ -10200,7 +10198,7 @@ void SwitchLevel(word level_num)
 
 #ifdef EXPLOSION_PALETTE
     if (paletteAnimationNum == PALANIM_EXPLOSIONS) {
-        SetPaletteRegister(MAGENTA, BLACK);
+        SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_BLACK);
     }
 #endif  /* EXPLOSION_PALETTE */
 }
