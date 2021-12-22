@@ -337,24 +337,6 @@ Handle palette animation for this frame.
 void AnimatePalette(void)
 {
     static byte lightningState = 0;
-    /* Palette tables must use COLORS, *not* MODE1_COLORS! */
-    static byte paltable_r_y_w[] = {
-        RED, RED, LIGHTRED, LIGHTRED, YELLOW, YELLOW, WHITE, WHITE, YELLOW,
-        YELLOW, LIGHTRED, LIGHTRED, END_ANIMATION
-    };
-    static byte paltable_r_g_b[] = {
-        BLACK, BLACK, RED, RED, LIGHTRED, RED, RED,
-        BLACK, BLACK, GREEN, GREEN, LIGHTGREEN, GREEN, GREEN,
-        BLACK, BLACK, BLUE, BLUE, LIGHTBLUE, BLUE, BLUE, END_ANIMATION
-    };
-    static byte paltable_mono[] = {
-        BLACK, BLACK, DARKGRAY, LIGHTGRAY, WHITE, LIGHTGRAY, DARKGRAY,
-        END_ANIMATION
-    };
-    static byte paltable_w_r_m[] = {
-        WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, RED, LIGHTMAGENTA,
-        END_ANIMATION
-    };
 
 #ifdef EXPLOSION_PALETTE
     if (paletteAnimationNum == PALANIM_EXPLOSIONS) return;
@@ -378,20 +360,52 @@ void AnimatePalette(void)
         }
         break;
 
-    case PALANIM_R_Y_W:
-        StepPalette(paltable_r_y_w);
+    /*
+    Palette tables passed to StepPalette() must use COLORS, *not* MODE1_COLORS!
+    */
+    case PALANIM_R_Y_W:  /* red-yellow-white */
+        {
+            static byte rywTable[] = {
+                RED, RED, LIGHTRED, LIGHTRED, YELLOW, YELLOW, WHITE, WHITE,
+                YELLOW, YELLOW, LIGHTRED, LIGHTRED, END_ANIMATION
+            };
+
+            StepPalette(rywTable);
+        }
         break;
 
-    case PALANIM_R_G_B:
-        StepPalette(paltable_r_g_b);
+    case PALANIM_R_G_B:  /* red-green-blue */
+        {
+            static byte rgbTable[] = {
+                BLACK, BLACK, RED, RED, LIGHTRED, RED, RED,
+                BLACK, BLACK, GREEN, GREEN, LIGHTGREEN, GREEN, GREEN,
+                BLACK, BLACK, BLUE, BLUE, LIGHTBLUE, BLUE, BLUE, END_ANIMATION
+            };
+
+            StepPalette(rgbTable);
+        }
         break;
 
-    case PALANIM_MONO:
-        StepPalette(paltable_mono);
+    case PALANIM_MONO:  /* monochrome */
+        {
+            static byte monoTable[] = {
+                BLACK, BLACK, DARKGRAY, LIGHTGRAY, WHITE, LIGHTGRAY, DARKGRAY,
+                END_ANIMATION
+            };
+
+            StepPalette(monoTable);
+        }
         break;
 
-    case PALANIM_W_R_M:
-        StepPalette(paltable_w_r_m);
+    case PALANIM_W_R_M:  /* white-red-magenta */
+        {
+            static byte wrmTable[] = {
+                WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, RED, LIGHTMAGENTA,
+                END_ANIMATION
+            };
+
+            StepPalette(wrmTable);
+        }
         break;
     }
 }
@@ -507,7 +521,7 @@ Replace the entire screen contents with a full-size (320x200) image.
 */
 void DrawFullscreenImage(word image_num)
 {
-    byte *destmem = MK_FP(0xa000, 0);
+    byte *destbase = MK_FP(0xa000, 0);
 
     if (image_num != IMAGE_TITLE && image_num != IMAGE_CREDITS) {
         StopMusic();
@@ -523,20 +537,20 @@ void DrawFullscreenImage(word image_num)
     }
 
     EGA_MODE_DEFAULT();
-    EGA_CLEAR_BIT_MASK();
+    EGA_BIT_MASK_DEFAULT();
     FadeOut();
     SelectDrawPage(0);
 
     {  /* for scope */
+        register word srcbase;
         register int i;
-        register word srcoffset;
         word mask = 0x0100;
 
-        for (srcoffset = 0; srcoffset < 32000; srcoffset += 8000) {
+        for (srcbase = 0; srcbase < 32000; srcbase += 8000) {
             outport(0x03c4, 0x0002 | mask);
 
             for (i = 0; i < 8000; i++) {
-                *(destmem + i) = *(miscData + i + srcoffset);
+                *(destbase + i) = *(miscData + i + srcbase);
             }
 
             mask <<= 1;
@@ -1029,7 +1043,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
 
         if ((x_origin + width) - 1 == x) {
             if (y == y_origin) {
-                EGA_CLEAR_BIT_MASK();
+                EGA_BIT_MASK_DEFAULT();
                 break;
             }
             x = x_origin;
@@ -1229,7 +1243,7 @@ void DrawCartoon(byte frame, word x_origin, word y_origin)
     word offset;
     byte *src;
 
-    EGA_CLEAR_BIT_MASK();
+    EGA_BIT_MASK_DEFAULT();
     EGA_MODE_DEFAULT();
 
     if (isCartoonDataLoaded != true) {  /* explicit compare against 1 */
@@ -7778,10 +7792,10 @@ just written.
 void DrawFullscreenText(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
-    byte *videoMem = MK_FP(0xb800, 0);
+    byte *dest = MK_FP(0xb800, 0);
 
     fread(backdropTable, 4000, 1, fp);
-    movmem(backdropTable, videoMem, 4000);
+    movmem(backdropTable, dest, 4000);
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");  /* 22 of these */
 }
 
@@ -10030,7 +10044,7 @@ void LoadBackdropData(char *entry_name, byte *scratch)
     FILE *fp = GroupEntryFp(entry_name);
 
     EGA_MODE_DEFAULT();
-    EGA_CLEAR_BIT_MASK();
+    EGA_BIT_MASK_DEFAULT();
 
     miscDataContents = IMAGE_NONE;
     fread(scratch, 0x5a00, 1, fp);

@@ -32,7 +32,7 @@ CPU types as returned by GetProcessorType().
 Resets the EGA's bit mask to its default state. Allows writes to all eight pixel
 positions in each written byte.
 */
-#define EGA_CLEAR_BIT_MASK() { outport(0x03ce, (0xff << 8) | 0x08); }
+#define EGA_BIT_MASK_DEFAULT() { outport(0x03ce, (0xff << 8) | 0x08); }
 
 /*
 Resets the EGA's read and write modes to their default state. This allows for
@@ -45,8 +45,8 @@ Resets the EGA's map mask to its default state (allows writes to all four memory
 planes), sets default read mode, and enables latched writes from the CPU.
 */
 #define EGA_MODE_LATCHED_WRITE() { \
-    outport(0x03c4, (0x0f << 8) | 0x02); \
-    outport(0x03ce, (0x01 << 8) | 0x05); \
+    outport(0x03c4, (0x0f << 8) | 0x02);  /* map mask: all planes active */ \
+    outport(0x03ce, (0x01 << 8) | 0x05);  /* mode: default w/ latched write */ \
 }
 
 /*
