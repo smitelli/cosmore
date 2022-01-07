@@ -132,6 +132,11 @@ static dword junk3, junk6;
 static bool junk4, junk5;
 
 /*
+Inline functions.
+*/
+#define DRAW_SOLID_TILE_XY(src, x, y) DrawSolidTile((src), (x) + ((y) * 320))
+
+/*
 Prototypes for "private" functions where strictly required.
 */
 void StopAdLibPlayback(void);
@@ -696,7 +701,7 @@ void EraseWaitSpinner(word x, word y)
 {
     EGA_MODE_LATCHED_WRITE();
 
-    DrawSolidTile(TILE_GRAY, x + (y * 320));
+    DRAW_SOLID_TILE_XY(TILE_GRAY, x, y);
 }
 
 /*
@@ -747,7 +752,7 @@ byte StepWaitSpinner(word x, word y)
 
     if (frameoff == 32) frameoff = 0;
 
-    DrawSolidTile(frameoff + TILE_WAIT_SPINNER_1, x + (y * 320));
+    DRAW_SOLID_TILE_XY(TILE_WAIT_SPINNER_1 + frameoff, x, y);
 
     scancode = lastScancode;
 
@@ -944,29 +949,29 @@ word DrawTextFrame(
     EGA_MODE_LATCHED_WRITE();
 
     /* Draw background, implicitly erasing anything behind the frame */
-    for (y = 1; height - 1 > y; y++) {
-        for (x = 1; width - 1 > x; x++) {
-            DrawSolidTile(TILE_GRAY, x + left + ((y + top) * 320));
+    for (y = 1; y < height - 1; y++) {
+        for (x = 1; x < width - 1; x++) {
+            DRAW_SOLID_TILE_XY(TILE_GRAY, x + left, y + top);
         }
     }
 
     /* Draw vertical borders together */
     for (y = 0; y < height; y++) {
-        DrawSolidTile(TILE_TXTFRAME_WEST, left + ((y + top) * 320));
-        DrawSolidTile(TILE_TXTFRAME_EAST, left + width - 1 + ((y + top) * 320));
+        DRAW_SOLID_TILE_XY(TILE_TXTFRAME_WEST, left, y + top);
+        DRAW_SOLID_TILE_XY(TILE_TXTFRAME_EAST, left + width - 1, y + top);
     }
 
-    /* Deaw horizontal borders together */
+    /* Draw horizontal borders together */
     for (x = 0; x < width; x++) {
-        DrawSolidTile(TILE_TXTFRAME_NORTH, x + left + (top * 320));
-        DrawSolidTile(TILE_TXTFRAME_SOUTH, x + left + ((top + height - 1) * 320));
+        DRAW_SOLID_TILE_XY(TILE_TXTFRAME_NORTH, x + left, top);
+        DRAW_SOLID_TILE_XY(TILE_TXTFRAME_SOUTH, x + left, top + height - 1);
     }
 
     /* Draw four corners */
-    DrawSolidTile(TILE_TXTFRAME_NORTHWEST, left + (top * 320));
-    DrawSolidTile(TILE_TXTFRAME_NORTHEAST, width + left - 1 + (top * 320));
-    DrawSolidTile(TILE_TXTFRAME_SOUTHWEST, left + ((top + height - 1) * 320));
-    DrawSolidTile(TILE_TXTFRAME_SOUTHEAST, width + left - 1 + ((top + height - 1) * 320));
+    DRAW_SOLID_TILE_XY(TILE_TXTFRAME_NORTHWEST, left, top);
+    DRAW_SOLID_TILE_XY(TILE_TXTFRAME_NORTHEAST, width + left - 1, top);
+    DRAW_SOLID_TILE_XY(TILE_TXTFRAME_SOUTHWEST, left, top + height - 1);
+    DRAW_SOLID_TILE_XY(TILE_TXTFRAME_SOUTHEAST, width + left - 1, top + height - 1);
 
     /* Draw lines of text at the very top and bottom of the frame */
     if (centered) {
@@ -998,6 +1003,7 @@ word UnfoldTextFrame(
     word ycenter = top + (height >> 1);
     word size = 1;
 
+    /* Expand horizontally... */
     for (i = xcenter; i > left; i--) {
         DrawTextFrame(i, ycenter, 2, size += 2, "", "", false);
         WaitHard(1);
@@ -1005,7 +1011,8 @@ word UnfoldTextFrame(
 
     size = 0;
 
-    for (i = ycenter; top + !(height & 1) < i; i--) {
+    /* ... then expand vertically. */
+    for (i = ycenter; i > top + !(height & 1); i--) {
         DrawTextFrame(left, i, size += 2, width, "", "", false);
         WaitHard(1);
     }
@@ -3383,7 +3390,7 @@ void RedrawStaticGameScreen(void)
 
     for (y = 19; y < 25; y++) {
         for (x = 1; x < 39; x++) {
-            DrawSolidTile(src, x + (y * 320));
+            DRAW_SOLID_TILE_XY(src, x, y);
             src += 8;
         }
     }
