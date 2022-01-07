@@ -701,7 +701,7 @@ void EraseWaitSpinner(word x, word y)
 {
     EGA_MODE_LATCHED_WRITE();
 
-    DRAW_SOLID_TILE_XY(TILE_GRAY, x, y);
+    DRAW_SOLID_TILE_XY(TILE_DARK_GRAY, x, y);
 }
 
 /*
@@ -951,7 +951,7 @@ word DrawTextFrame(
     /* Draw background, implicitly erasing anything behind the frame */
     for (y = 1; y < height - 1; y++) {
         for (x = 1; x < width - 1; x++) {
-            DRAW_SOLID_TILE_XY(TILE_GRAY, x + left, y + top);
+            DRAW_SOLID_TILE_XY(TILE_DARK_GRAY, x + left, y + top);
         }
     }
 

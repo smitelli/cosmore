@@ -103,6 +103,6 @@ how their tile attributes make them behave:
 #define TILE_TXTFRAME_SOUTH     0x3e60
 #define TILE_TXTFRAME_WEST      0x3e68
 #define TILE_TXTFRAME_EAST      0x3e70
-#define TILE_GRAY               0x3e78
+#define TILE_DARK_GRAY          0x3e78
 /* First masked tile value. */
 #define TILE_MASKED_0           0x3e80  /* aka 16,000 */
