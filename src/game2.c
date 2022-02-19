@@ -134,7 +134,7 @@ static bool junk4, junk5;
 /*
 Inline functions.
 */
-#define DRAW_SOLID_TILE_XY(src, x, y) DrawSolidTile((src), (x) + ((y) * 320))
+#define DRAW_SOLID_TILE_XY(src, x, y) { DrawSolidTile((src), (x) + ((y) * 320)); }
 
 /*
 Prototypes for "private" functions where strictly required.
@@ -988,35 +988,36 @@ word DrawTextFrame(
 
 /*
 Animate several successive calls to DrawTextFrame() to create an "unfolding"
-effect. A tiny frame, centered horizontally on the screen, expands horizontally
-until it reaches the final width, then it expands vertically until reaching the
-final height. Arguments work the same as DrawTextFrame(), except `left` is
-determined automatically (to center the frame horizontally) and `centered` is
-forced true. Returns the X coordinate of the inside-left edge of the frame.
+effect. A tiny frame, centered on the screen, expands horizontally until it
+reaches the final width, then it expands vertically until reaching the final
+height. Arguments work the same as DrawTextFrame(), except `left` is determined
+automatically (to center the frame horizontally) and `centered` is forced true.
+Returns the X coordinate of the inside-left edge of the frame.
 */
 word UnfoldTextFrame(
     int top, int height, int width, char *top_text, char *bottom_text
 ) {
-    register int i;
-    register int left = 20 - (width >> 1);
+    int left = 20 - (width >> 1);
     word xcenter = 19;
     word ycenter = top + (height >> 1);
-    word size = 1;
+    word size;  /* current width or height */
+    int i;  /* current left or top position */
 
     /* Expand horizontally... */
+    size = 1;
     for (i = xcenter; i > left; i--) {
         DrawTextFrame(i, ycenter, 2, size += 2, "", "", false);
         WaitHard(1);
     }
 
-    size = 0;
-
     /* ... then expand vertically. */
+    size = 0;
     for (i = ycenter; i > top + !(height & 1); i--) {
         DrawTextFrame(left, i, size += 2, width, "", "", false);
         WaitHard(1);
     }
 
+    /* Finally, draw the frame at its final size */
     return DrawTextFrame(left, top, height, width, top_text, bottom_text, true);
 }
 
@@ -1038,10 +1039,10 @@ void ReadAndEchoText(word x, word y, char *dest, word max_length)
 
         if (scancode == SCANCODE_ENTER) {
             *(dest + pos) = '\0';
-            break;
+            return;
         } else if (scancode == SCANCODE_ESCAPE) {
             *dest = '\0';
-            break;
+            return;
         } else if (scancode == SCANCODE_BACKSPACE) {
             if (pos > 0) pos--;
         } else if (pos < max_length) {
