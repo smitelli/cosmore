@@ -80,7 +80,7 @@ typedef void interrupt (*InterruptFunction)(void);
  * GAME1.C                                                                   *
  *****************************************************************************/
 
-typedef byte HighScoreName[16];
+typedef char HighScoreName[16];
 typedef void (*ActorTickFunction)(word);
 typedef void (*DrawFunction)(byte *, word, word);
 
@@ -203,7 +203,7 @@ void InnerMain(int argc, char *argv[]);
  * GAME2.C                                                                   *
  *****************************************************************************/
 
-typedef byte KeyName[6];
+typedef char KeyName[6];
 
 typedef struct {
     word junk;  /* in IDLIBC.C/ControlJoystick(), this is movement direction */
@@ -226,7 +226,7 @@ byte WaitSpinner(word x, word y);
 void ClearScreen(void);
 JoystickState ReadJoystickState(word stick);
 word UnfoldTextFrame(int top, int height, int width, char *top_text, char *bottom_text);
-void ReadAndEchoText(word x, word y, char *dest, word max_length);
+void ReadAndEchoText(word x_origin, word y_origin, char *dest, word max_length);
 void DrawNumberFlushRight(word x_origin, word y_origin, dword value);
 void AddScore(dword points);
 void UpdateStars(void);

@@ -1029,13 +1029,13 @@ allowed. `dest` should be large enough to hold `max_length + 1` characters.
 
 NOTE: This draws everything 1 tile right of the location specified in `x`.
 */
-void ReadAndEchoText(word x, word y, char *dest, word max_length)
+void ReadAndEchoText(word x_origin, word y_origin, char *dest, word max_length)
 {
     int pos = 0;
 
     for (;;) {
         /* Wait spinner erases itself upon return */
-        byte scancode = WaitSpinner(x + pos + 1, y);
+        byte scancode = WaitSpinner(x_origin + pos + 1, y_origin);
 
         if (scancode == SCANCODE_ENTER) {
             *(dest + pos) = '\0';
@@ -1053,7 +1053,7 @@ void ReadAndEchoText(word x, word y, char *dest, word max_length)
                 (scancode >= SCANCODE_Z && scancode <= SCANCODE_SLASH)
             ) {
                 *(dest + pos++) = keyNames[scancode][0];
-                DrawScancodeCharacter(x + pos, y, scancode);
+                DrawScancodeCharacter(x_origin + pos, y_origin, scancode);
             } else if (scancode == SCANCODE_SPACE) {
                 *(dest + pos++) = ' ';
             }
@@ -1439,7 +1439,7 @@ unsigned. This function uses a bit of a mismash of the two.
 FILE *GroupEntryFp(char *entry_name)
 {
     byte header[1000];
-    byte name[20];
+    char name[20];
     FILE *fp;
     dword offset;
     int i;
@@ -1864,12 +1864,12 @@ the tab key will render as "T", the left shift key will render as "L", etc.
 */
 void DrawScancodeCharacter(word x, word y, byte scancode)
 {
-    byte buf[2];
+    char text[2];
 
-    buf[0] = keyNames[scancode][0];
-    buf[1] = '\0';
+    text[0] = keyNames[scancode][0];
+    text[1] = '\0';
 
-    DrawTextLine(x, y, buf);
+    DrawTextLine(x, y, text);
 }
 
 /*

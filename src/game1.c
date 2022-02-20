@@ -171,7 +171,7 @@ static Decoration decorations[MAX_DECORATIONS];
 /* Holds each decoration's currently displayed frame. Why this isn't in the Decoration struct, who knows. */
 static word decorationFrame[MAX_DECORATIONS];
 static word backdropTable[2880];
-static byte joinPathBuffer[80];
+static char joinPathBuffer[80];
 
 /*
 Heap storage areas. Space for all of these is allocated on startup.
@@ -9190,7 +9190,7 @@ bbool PromptLevelWarp(void)
         2, 3
     };
     int x;
-    byte buffer[4];
+    char buffer[4];
 
     x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-"
 #ifdef HAS_LEVEL_11
@@ -9817,7 +9817,7 @@ void GameLoop(byte demostate)
 
 #ifdef DEBUG_BAR
         {
-            byte debugBar[41];
+            char debugBar[41];
             word x, y;
 
             /* Dump variable contents into a bar at the edges of the screen. */
