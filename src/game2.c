@@ -1163,22 +1163,24 @@ void ShowJoystickConfiguration(word stick)
 }
 
 /*
-Draw a 32-bit unsigned long value using the game font. The rightmost digit is
-anchored at {x,y}_origin, and the leftmost digit ends up "wherever."
+Draw a 32-bit unsigned long value using the game font. The RIGHTmost digit is
+anchored at {x,y}_origin, and the LEFTmost digit ends up "wherever."
 */
 void DrawNumberFlushRight(word x_origin, word y_origin, dword value)
 {
-    int x, len;
-    byte buf[16];  /* probably 5 bytes longer than it needs to be */
+    char text[16];  /* probably 4 bytes longer than it needs to be */
+    int x, length;
 
     EGA_MODE_DEFAULT();
 
-    ultoa(value, buf, 10);
-    len = strlen(buf);
+    ultoa(value, text, 10);
+    length = strlen(text);
 
-    /* Draw digits left-to-right */
-    for (x = len - 1; x >= 0; x--) {
-        DrawSpriteTile(fontTileData + FONT_0 + ((buf[len - x - 1] - '0') * 40), x_origin - x, y_origin);
+    /* Draw digits LEFT-to-RIGHT */
+    for (x = length - 1; x >= 0; x--) {
+        DrawSpriteTile(
+            fontTileData + FONT_0 + ((text[length - x - 1] - '0') * 40), x_origin - x, y_origin
+        );
     }
 }
 

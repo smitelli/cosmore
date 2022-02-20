@@ -411,13 +411,18 @@ void AnimatePalette(void)
 }
 
 /*
-Draw a single line of text at the specified position.
+Draw a single line of text with the first character at the specified X/Y origin.
 
 A primitive form of markup is supported (all values are zero-padded decimal):
 - \xFBnnn: Draw cartoon image nnn at the current position.
-- \xFCnnn: Wait nnn times WaitHard(3) before drawing each character.
+- \xFCnnn: Wait nnn times WaitHard(3) before drawing each character and play a
+  per-character typewriter sound effect.
 - \xFDnnn: Draw player sprite nnn at the current position.
 - \xFEnnniii: Draw sprite type nnn, frame iii at the current position.
+
+The draw position is not adjusted when cartoons/sprites are inserted -- the
+caller must follow each of these sequences with an appropriate number of space
+characters to clear the graphic before writing additional text.
 
 NOTE: C's parser treats strings like "\xFC003" as hex literals with more than
 two digits, resulting in a compile-time error. In calling code, you'll see text
@@ -426,73 +431,84 @@ workaround. (Unless we go octal...)
 */
 void DrawTextLine(word x_origin, word y_origin, char *text)
 {
-    register int i = 0;
-    byte lookahead[4];
-    word escape, escape2;
+    register int x = 0;
     register word delay = 0;
     word delayleft = 0;
 
     EGA_MODE_DEFAULT();
 
-    while (text[i] != '\0') {
-        if (text[i] == '\xFE' || text[i] == '\xFB' || text[i] == '\xFD' || text[i] == '\xFC') {
-            lookahead[0] = text[i + 1];
-            lookahead[1] = text[i + 2];
-            lookahead[2] = text[i + 3];
+    while (text[x] != '\0') {
+        if (text[x] == '\xFE' || text[x] == '\xFB' || text[x] == '\xFD' || text[x] == '\xFC') {
+            char lookahead[4];
+            word sequence1, sequence2;
+
+            lookahead[0] = text[x + 1];
+            lookahead[1] = text[x + 2];
+            lookahead[2] = text[x + 3];
             lookahead[3] = '\0';
-            escape = atoi(lookahead);
+            sequence1 = atoi(lookahead);
 
-            if (text[i] == '\xFD') {  /* draw player sprite */
-                DrawPlayer(escape, x_origin + i, y_origin, DRAWMODE_ABSOLUTE);
+            /*
+            Be careful in here! The base address of the `text` array changes:
+
+                (assume `text` contains the string "demonstrate")
+                text[0] == 'd';  (true)
+                text += 4;
+                text[0] == 'n';  (also true!)
+            */
+            if (text[x] == '\xFD') {  /* draw player sprite */
+                DrawPlayer(sequence1, x_origin + x, y_origin, DRAWMODE_ABSOLUTE);
                 text += 4;
 
-            } else if (text[i] == '\xFB') {  /* draw cartoon image */
-                DrawCartoon(escape, x_origin + i, y_origin);
+            } else if (text[x] == '\xFB') {  /* draw cartoon image */
+                DrawCartoon(sequence1, x_origin + x, y_origin);
                 text += 4;
 
-            } else if (text[i] == '\xFC') {  /* inter-character delay + sound */
+            } else if (text[x] == '\xFC') {  /* inter-character wait + sound */
                 text += 4;
-                /* atoi() here wastefully recalculates the value in `escape` */
+                /* atoi() here wastefully recalculates the value in `sequence1` */
                 delayleft = delay = atoi(lookahead);
 
             } else {  /* \xFE; draw actor sprite */
-                lookahead[0] = text[i + 4];
-                lookahead[1] = text[i + 5];
-                lookahead[2] = text[i + 6];
+                lookahead[0] = text[x + 4];
+                lookahead[1] = text[x + 5];
+                lookahead[2] = text[x + 6];
                 lookahead[3] = '\0';
-                escape2 = atoi(lookahead);
+                sequence2 = atoi(lookahead);
 
-                DrawSprite(escape, escape2, x_origin + i, y_origin, DRAWMODE_ABSOLUTE);
+                DrawSprite(sequence1, sequence2, x_origin + x, y_origin, DRAWMODE_ABSOLUTE);
                 text += 7;
             }
-        } else {
-            if (delay != 0 && lastScancode == SCANCODE_SPACE) {
-                WaitHard(1);
-            } else if (delayleft != 0) {
-                WaitHard(3);
-                delayleft--;
-                if (delayleft != 0) continue;
-                delayleft = delay;
-                if (text[i] != ' ') {
-                    StartSound(SND_TEXT_TYPEWRITER);
-                }
-            }
 
-            if (text[i] >= 'a') {
-                DrawSpriteTile(
-                    fontTileData + FONT_LOWER_A + ((text[i] - 'a') * 40),
-                    x_origin + i, y_origin
-                );
-            } else {
-                DrawSpriteTile(
-                    /* '0' character is 24 positions past 'up arrow' */
-                    fontTileData + FONT_UP_ARROW + ((text[i] - 24) * 40),
-                    x_origin + i, y_origin
-                );
-            }
-
-            i++;
+            continue;
         }
+
+        if (delay != 0 && lastScancode == SCANCODE_SPACE) {
+            WaitHard(1);
+        } else if (delayleft != 0) {
+            WaitHard(3);
+
+            delayleft--;
+            if (delayleft != 0) continue;
+            delayleft = delay;
+
+            if (text[x] != ' ') {
+                StartSound(SND_TEXT_TYPEWRITER);
+            }
+        }
+
+        if (text[x] >= 'a') {
+            DrawSpriteTile(
+                fontTileData + FONT_LOWER_A + ((text[x] - 'a') * 40), x_origin + x, y_origin
+            );
+        } else {
+            DrawSpriteTile(
+                /* '0' character is 24 positions past 'up arrow' */
+                fontTileData + FONT_UP_ARROW + ((text[x] - 24) * 40), x_origin + x, y_origin
+            );
+        }
+
+        x++;
     }
 }
 
