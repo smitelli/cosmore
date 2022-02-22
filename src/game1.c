@@ -1,6 +1,6 @@
 /**
  * Cosmore
- * Copyright (c) 2020-2021 Scott Smitelli
+ * Copyright (c) 2020-2022 Scott Smitelli
  *
  * Based on COSMO{1..3}.EXE distributed with "Cosmo's Cosmic Adventure"
  * Copyright (c) 1992 Apogee Software, Ltd.
@@ -497,14 +497,15 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
             }
         }
 
-        if (text[x] >= 'a') {
+        if (text[x] >= 'a') {  /* lowercase */
             DrawSpriteTile(
+                /* `FONT_LOWER_A` is equal to ASCII 'a' */
                 fontTileData + FONT_LOWER_A + ((text[x] - 'a') * 40), x_origin + x, y_origin
             );
-        } else {
+        } else {  /* uppercase, digits, and symbols */
             DrawSpriteTile(
-                /* '0' character is 24 positions past 'up arrow' */
-                fontTileData + FONT_UP_ARROW + ((text[x] - 24) * 40), x_origin + x, y_origin
+                /* `FONT_UP_ARROW` is equal to ASCII (CP437) "upwards arrow" */
+                fontTileData + FONT_UP_ARROW + ((text[x] - '\x18') * 40), x_origin + x, y_origin
             );
         }
 
