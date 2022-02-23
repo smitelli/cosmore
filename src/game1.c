@@ -269,7 +269,7 @@ void DestroyBarrel(word);
 void ClearPlayerPush(void);
 void SetPlayerPush(word, word, word, word, bool, bool);
 char *JoinPath(char *, char *);
-bbool LoadGameState(byte);
+bbool LoadGameState(char);
 byte ProcessGameInput(byte);
 void SwitchLevel(word);
 void InitializeGame(void);
@@ -9030,7 +9030,7 @@ through '9', or the letter 'T' for the temporary save file. Returns true if the
 load was successful, or false if the specified save file didn't exist. Also
 capable of exiting the game if a manipulated save file is loaded.
 */
-bbool LoadGameState(byte slot_char)
+bbool LoadGameState(char slot_char)
 {
     static char *filename = FILENAME_BASE ".SV ";
     FILE *fp;
@@ -9071,7 +9071,7 @@ bbool LoadGameState(byte slot_char)
 Save the current game state to a save file. The slot number is a single
 character, '1' through '9', or the letter 'T' for the temporary save file.
 */
-void SaveGameState(byte slot_char)
+void SaveGameState(char slot_char)
 {
     static char *filename = FILENAME_BASE ".SV ";
     FILE *fp;

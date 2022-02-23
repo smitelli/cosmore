@@ -2797,7 +2797,7 @@ jumps, and Alt bombs. This is where the default Simpsons high scores are set.
 void LoadConfigurationData(char *filename)
 {
     FILE *fp;
-    byte space;
+    char space;
 
     fp = fopen(filename, "rb");
 
