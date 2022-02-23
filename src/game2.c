@@ -741,7 +741,7 @@ scancode read by the keyboard service. Does not wait.
 byte StepWaitSpinner(word x, word y)
 {
     static word frameoff = 0;
-    byte scancode = 0;
+    byte scancode = SCANCODE_NULL;
 
     EGA_MODE_LATCHED_WRITE();
 
@@ -1040,14 +1040,14 @@ void ReadAndEchoText(word x_origin, word y_origin, char *dest, word max_length)
         if (scancode == SCANCODE_ENTER) {
             *(dest + pos) = '\0';
             return;
-        } else if (scancode == SCANCODE_ESCAPE) {
+        } else if (scancode == SCANCODE_ESC) {
             *dest = '\0';
             return;
         } else if (scancode == SCANCODE_BACKSPACE) {
             if (pos > 0) pos--;
         } else if (pos < max_length) {
             if (
-                (scancode >= SCANCODE_1 && scancode <= SCANCODE_EQUALS) ||
+                (scancode >= SCANCODE_1 && scancode <= SCANCODE_EQUAL) ||
                 (scancode >= SCANCODE_Q && scancode <= SCANCODE_P) ||
                 (scancode >= SCANCODE_A && scancode <= SCANCODE_APOSTROPHE) ||
                 (scancode >= SCANCODE_Z && scancode <= SCANCODE_SLASH)
@@ -1073,7 +1073,7 @@ void ShowJoystickConfiguration(word stick)
     word junk;  /* in IDLIB, this provided an 8-dir spinning arrow */
     word xthird, ythird;
     int lefttime, toptime, righttime, bottomtime;
-    byte scancode = 0;
+    byte scancode = SCANCODE_NULL;
     JoystickState state;
 
     xframe = UnfoldTextFrame(3, 16, 30, "Joystick Config.", "Press ANY key.");
@@ -1149,7 +1149,7 @@ void ShowJoystickConfiguration(word stick)
     BUG: The joystick button flag is inverted in the original game. It's
     slightly more likely the mistake was here as opposed to ReadJoystickState().
     */
-    if (scancode == SCANCODE_ESCAPE) {
+    if (scancode == SCANCODE_ESC) {
         return;
     } else if (scancode == SCANCODE_J) {
         joystickBtn1Bombs = true;
@@ -1887,7 +1887,7 @@ bbool PromptKeyBind(byte *target_var, word x, char *feedback)
     DrawTextLine(x + 4, 13, "Enter new key:");
     scancode = WaitSpinner(x + 18, 13);
 
-    if (scancode == SCANCODE_ESCAPE) {
+    if (scancode == SCANCODE_ESC) {
         return true;
     }
 
@@ -1935,7 +1935,7 @@ void ShowKeyboardConfiguration(void)
         scancode = WaitSpinner(x + 21, 16);
 
         switch (scancode) {
-        case SCANCODE_ESCAPE:
+        case SCANCODE_ESC:
             return;
         case SCANCODE_1:
             if (!PromptKeyBind(&scancodeNorth, x, "Modifying UP.")) break;
@@ -2122,7 +2122,7 @@ void ShowInstructions(void)
     FadeOut();
     ClearScreen();
 
-    /* In this function, you'll see SCANCODE_NUM_8 and _9 tested. On the PC
+    /* In this function, you'll see SCANCODE_KP_8 and _9 tested. On the PC
     keyboard, numpad 8 (with Num Lock off) functions as Up, and numpad 9
     functions as Pg Up. The scancodes mirror this arrangement. */
 
@@ -2143,8 +2143,8 @@ page1:
     /* "Previous page" keys are no-ops here */
     do {
         scancode = WaitSpinner(x + 35, 22);
-    } while (scancode == SCANCODE_NUM_9 || scancode == SCANCODE_NUM_8);
-    if (scancode == SCANCODE_ESCAPE) return;
+    } while (scancode == SCANCODE_KP_9 || scancode == SCANCODE_KP_8);
+    if (scancode == SCANCODE_ESC) return;
 
 page2:
     FadeOutCustom(1);
@@ -2160,8 +2160,8 @@ page2:
     FadeInCustom(1);
 
     scancode = WaitSpinner(x + 35, 22);
-    if (scancode == SCANCODE_ESCAPE) return;
-    if (scancode == SCANCODE_NUM_8 || scancode == SCANCODE_NUM_9) goto page1;
+    if (scancode == SCANCODE_ESC) return;
+    if (scancode == SCANCODE_KP_8 || scancode == SCANCODE_KP_9) goto page1;
 
 page3:
     FadeOutCustom(1);
@@ -2178,8 +2178,8 @@ page3:
     FadeInCustom(1);
 
     scancode = WaitSpinner(x + 35, 22);
-    if (scancode == SCANCODE_ESCAPE) return;
-    if (scancode == SCANCODE_NUM_8 || scancode == SCANCODE_NUM_9) goto page2;
+    if (scancode == SCANCODE_ESC) return;
+    if (scancode == SCANCODE_KP_8 || scancode == SCANCODE_KP_9) goto page2;
 
 page4:
     FadeOutCustom(1);
@@ -2194,8 +2194,8 @@ page4:
     FadeInCustom(1);
 
     scancode = WaitSpinner(x + 35, 22);
-    if (scancode == SCANCODE_ESCAPE) return;
-    if (scancode == SCANCODE_NUM_8 || scancode == SCANCODE_NUM_9) goto page3;
+    if (scancode == SCANCODE_ESC) return;
+    if (scancode == SCANCODE_KP_8 || scancode == SCANCODE_KP_9) goto page3;
 
     FadeOutCustom(1);
 
@@ -2211,8 +2211,8 @@ page4:
     FadeInCustom(1);
 
     scancode = WaitSpinner(x + 35, 22);
-    if (scancode == SCANCODE_ESCAPE) return;
-    if (scancode == SCANCODE_NUM_8 || scancode == SCANCODE_NUM_9) goto page4;
+    if (scancode == SCANCODE_ESC) return;
+    if (scancode == SCANCODE_KP_8 || scancode == SCANCODE_KP_9) goto page4;
 
     ClearScreen();
 
@@ -2655,7 +2655,7 @@ void TestSound(void)
     DrawTextLine(x, 4, " Press \x18 or \x19 to change sound #.");
     DrawTextLine(x, 5, "   Press Enter to hear sound.");
 
-    /* In this function, you'll see SCANCODE_NUM_2 and _8 tested. On the PC
+    /* In this function, you'll see SCANCODE_KP_2 and _8 tested. On the PC
     keyboard, numpad 2 (with Num Lock off) functions as Down, and numpad 8
     functions as Up. The scancodes mirror this arrangement. */
 
@@ -2666,10 +2666,10 @@ void TestSound(void)
         DrawNumberFlushRight(x + 16, 6, soundnum);
         scancode = WaitSpinner(x + 31, 7);
 
-        if (scancode == SCANCODE_NUM_2 && soundnum > 1)  soundnum--;
-        if (scancode == SCANCODE_NUM_8 && soundnum < 65) soundnum++;
+        if (scancode == SCANCODE_KP_2 && soundnum > 1)  soundnum--;
+        if (scancode == SCANCODE_KP_8 && soundnum < 65) soundnum++;
 
-        if (scancode == SCANCODE_ESCAPE) {
+        if (scancode == SCANCODE_ESC) {
             isSoundEnabled = enabled;
             break;
         }
@@ -2768,7 +2768,7 @@ void GameRedefineMenu(void)
         byte scancode = WaitSpinner(29, 13);
 
         switch (scancode) {
-        case SCANCODE_ESCAPE:
+        case SCANCODE_ESC:
             return;
         case SCANCODE_S:
             ToggleSound();
@@ -2802,12 +2802,12 @@ void LoadConfigurationData(char *filename)
     fp = fopen(filename, "rb");
 
     if (fp == NULL) {
-        /* With Num Lock off, SCANCODE_NUM_8, _2, _4, and _6 are Up, Down, Left,
+        /* With Num Lock off, SCANCODE_KP_8, _2, _4, and _6 are Up, Down, Left,
         and Right respectively. */
-        scancodeNorth = SCANCODE_NUM_8;
-        scancodeSouth = SCANCODE_NUM_2;
-        scancodeWest = SCANCODE_NUM_4;
-        scancodeEast = SCANCODE_NUM_6;
+        scancodeNorth = SCANCODE_KP_8;
+        scancodeSouth = SCANCODE_KP_2;
+        scancodeWest = SCANCODE_KP_4;
+        scancodeEast = SCANCODE_KP_6;
         scancodeJump = SCANCODE_CTRL;
         scancodeBomb = SCANCODE_ALT;
         isMusicEnabled = true;

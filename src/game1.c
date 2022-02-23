@@ -7745,7 +7745,7 @@ void interrupt KeyboardInterruptService(void)
     outportb(0x0061, inportb(0x0061) | 0x80);
     outportb(0x0061, inportb(0x0061) & ~0x80);
 
-    if (lastScancode != 0xe0) {
+    if (lastScancode != SCANCODE_EXTENDED) {
         if ((lastScancode & 0x80) != 0) {
             isKeyDown[lastScancode & 0x7f] = false;
         } else {
@@ -8981,7 +8981,7 @@ scancode of that key.
 */
 byte WaitForAnyKey(void)
 {
-    lastScancode = 0;  /* will get modified by the keyboard interrupt service */
+    lastScancode = SCANCODE_NULL;  /* will get modified by the keyboard interrupt service */
 
     while ((lastScancode & 0x80) == 0)
         ;  /* VOID */
@@ -9109,7 +9109,7 @@ byte PromptRestoreGame(void)
     DrawTextLine(x, 14, " What game number (1-9)?");
     lastkey = WaitSpinner(x + 24, 14);
 
-    if (lastkey == SCANCODE_ESCAPE || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
+    if (lastkey == SCANCODE_ESC || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
         /* VOID */
 
     } else if (lastkey >= SCANCODE_1 && lastkey < SCANCODE_0) {
@@ -9145,7 +9145,7 @@ void PromptSaveGame(void)
     DrawTextLine(x, 14, " BEGINNING of level.");
     lastkey = WaitSpinner(x + 24, 11);
 
-    if (lastkey == SCANCODE_ESCAPE || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
+    if (lastkey == SCANCODE_ESC || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
         /* VOID */
 
     } else if (lastkey >= SCANCODE_1 && lastkey < SCANCODE_0) {
@@ -9258,7 +9258,7 @@ title:
     }
 
     lastkey = WaitForAnyKey();
-    if (lastkey == SCANCODE_Q || lastkey == SCANCODE_ESCAPE) {
+    if (lastkey == SCANCODE_Q || lastkey == SCANCODE_ESC) {
         if (PromptQuitConfirm()) ExitClean();
         goto title;
     }
@@ -9315,7 +9315,7 @@ title:
             case SCANCODE_T:
                 goto title;
             case SCANCODE_Q:
-            case SCANCODE_ESCAPE:
+            case SCANCODE_ESC:
                 if (PromptQuitConfirm()) ExitClean();
                 goto bigbreak;
             case SCANCODE_C:
@@ -9388,7 +9388,7 @@ byte ShowGameMenu(void)
         case SCANCODE_H:
             ShowHintsAndKeys(1);
             return GAME_MENU_CONTINUE;
-        case SCANCODE_ESCAPE:
+        case SCANCODE_ESC:
             return GAME_MENU_CONTINUE;
         }
     }
@@ -9486,7 +9486,7 @@ byte ProcessGameInput(byte demostate)
         if (
             isKeyDown[SCANCODE_TAB] &&
             isKeyDown[SCANCODE_F12] &&
-            isKeyDown[SCANCODE_NUM_PERIOD]  /* Del */
+            isKeyDown[SCANCODE_KP_DOT]  /* Del */
         ) {
             isDebugMode = !isDebugMode;
             StartSound(SND_PAUSE_GAME);
@@ -9546,7 +9546,7 @@ byte ProcessGameInput(byte demostate)
             ToggleSound();
         } else if (isKeyDown[SCANCODE_M]) {
             ToggleMusic();
-        } else if (isKeyDown[SCANCODE_ESCAPE] || isKeyDown[SCANCODE_Q]) {
+        } else if (isKeyDown[SCANCODE_ESC] || isKeyDown[SCANCODE_Q]) {
             if (PromptQuitConfirm()) return GAME_INPUT_QUIT;
         } else if (isKeyDown[SCANCODE_F1]) {
             byte result = ShowGameMenu();
