@@ -1058,7 +1058,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) {
                 EGA_BIT_MASK_DEFAULT();
                 break;
@@ -1069,6 +1069,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
             x++;
         }
     }
+
     return;
 
 flipped:
@@ -1084,14 +1085,15 @@ flipped:
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
-            if ((y_origin - height) + 1 == y) break;
+        if (x == x_origin + width - 1) {
+            if (y == (y_origin - height) + 1) break;
             x = x_origin;
             y--;
         } else {
             x++;
         }
     }
+
     return;
 
 infront:
@@ -1106,7 +1108,7 @@ infront:
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
@@ -1114,6 +1116,7 @@ infront:
             x++;
         }
     }
+
     return;
 
 absolute:
@@ -1123,7 +1126,7 @@ absolute:
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
@@ -1191,7 +1194,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
@@ -1199,6 +1202,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
             x++;
         }
     }
+
     return;
 
 absolute:
@@ -1207,7 +1211,7 @@ absolute:
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
@@ -1215,6 +1219,7 @@ absolute:
             x++;
         }
     }
+
     return;
 
 infront:
@@ -1228,7 +1233,7 @@ infront:
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
@@ -1273,7 +1278,6 @@ void DrawCartoon(byte frame, word x_origin, word y_origin)
     width = *(cartoonInfoData + offset + 1);
 
     y = (y_origin - height) + 1;
-
     src = mapData.b + *(cartoonInfoData + offset + 2);
 
     for (;;) {
@@ -1281,7 +1285,7 @@ void DrawCartoon(byte frame, word x_origin, word y_origin)
 
         src += 40;
 
-        if ((x_origin + width) - 1 == x) {
+        if (x == x_origin + width - 1) {
             if (y == y_origin) break;
             x = x_origin;
             y++;
