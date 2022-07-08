@@ -1964,91 +1964,203 @@ void ShowKeyboardConfiguration(void)
 }
 
 /*
-Shuffle around a bunch of memory contents to prepare a vertical-scrolling
-backdrop. How? Dunno.
+Makes a copy of srcImage with all pixels shifted up by 4, with wrap-around
 
-Arguments might be: source, destination, scratch
+srcImage must be a backdrop image.  A copy of the image is written to destImage,
+but with all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows
+of pixels are removed from the top and placed at the bottom instead.
+
+A temporary buffer of at least 640 bytes is needed.
 */
-void PrepareBackdropVScroll(byte *p1, byte *p2, byte *p3)
+void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
 {
-    register word x, A;
-    word B, C, y;
+    register word col, i;
+    word bufferIndex, offset, row;
 
-    /* Backdrops are 40x18 tiles, 0x5a00 bytes. */
 
-    B = 0;
-    C = 0;
-    for (x = 0; x < 40; x++) {
-        for (A = 0; A < 16; A++) {  /* 16 times */
-            *(p3 + B++) = *(p1 + C++);
+    /*
+    Backdrops (and non-masked tilesets) are laid out as a sequence of 8x8 pixel
+    blocks (tiles). A consecutive span of 4 bytes describes a line of 8 pixels.
+    A block has 8 of these, so it occupies 8*4 = 32 consecutive bytes.
+    After that, the next block starts, etc.
+
+    Backdrops are 40x18 tiles, 23040 (0x5a00) bytes.
+    */
+
+    /* First, copy the 4 top lines of pixels into the temp buffer, so that we
+    can place them at the bottom of the image later */
+    bufferIndex = 0;
+    offset = 0;
+    for (col = 0; col < 40; col++) { /* for each column of tiles */
+        /* Copy the first 4 lines of this tile. Each line is 4 bytes, so we need
+         * to copy 4*4 = 16 bytes. */
+        for (i = 0; i < 16; i++) {
+            *(tempBuffer + bufferIndex++) = *(srcImage + offset++);
         }
-        C += 16;
+
+        /* Skip the remaining 4 lines, this puts us at the start of the next
+        tile */
+        offset += 16;
     }
 
-    for (y = 0; y < 18; y++) {
-        C = 0;
-        for (x = 0; x < 40; x++) {
-            for (A = 0; A < 16; A++) {  /* 16 times */
-                /* C in lvalue has the PRE-incremented value */
-                *(p2 + C + (y * 0x0500)) = *(p1 + (y * 0x0500) + C++ + 16);
+    /* Now, copy the source image to the destination, but offset by 4
+    (i.e., starting at y = 4) */
+    for (row = 0; row < 18; row++) {
+        offset = 0;
+
+        /* Copy the lower 4 lines of the source image's current tile row to the
+        upper 4 lines of the destination's current tile row */
+        for (col = 0; col < 40; col++) {
+            for (i = 0; i < 16; i++) {
+                /* Since a tile is 32 bytes, each row of tiles occupies
+                40*32 = 1280 bytes.
+
+                Offset the source by 16 to get to the lower 4 lines of
+                each tile. */
+                *(destImage + offset + (row * 1280)) =
+                  *(srcImage + (row * 1280) + offset++ + 16);
             }
-            C += 16;
+
+            /* Skip 4 lines */
+            offset += 16;
         }
 
-        C = 0;
-        for (x = 0; x < 40; x++) {
-            for (A = 0; A < 16; A++) {  /* 16 times */
-                /* C in lvalue has the PRE-incremented value */
-                *(p2 + C + (y * 0x0500) + 16) = *(p1 + (y * 0x0500) + C++ + 0x0500);
+        /* Copy the upper 4 lines of the next tile row to the lower
+        4 lines of the current destination row */
+        offset = 0;
+        for (col = 0; col < 40; col++) {
+            for (i = 0; i < 16; i++) {
+
+                /*
+                This time, we offset the destination by 16 to get to the lower
+                4 lines. The source is offset by 1280 to skip to the beginning
+                of the next row of tiles.
+
+                This actually ends up reading out of bounds on the last loop
+                iteration, since 17*1280 + 1280 = 23040, which is right after
+                the end of the source image. So the bottom-most lines of the
+                destination are filled with random memory here, but it doesn't
+                matter because they are overwritten again further down when the
+                temp buffer is written to the destination.
+                */
+                *(destImage + offset + (row * 1280) + 16) =
+                  *(srcImage + (row * 1280) + offset++ + 1280);
             }
-            C += 16;
+            offset += 16;
         }
     }
 
-    C = 0;
-    B = 0;
-    for (x = 0; x < 40; x++) {
-        for (A = 0; A < 16; A++) {  /* 16 times */
-            *(p2 + C++ + 0x5510) = *(p3 + B++);
+    /*
+    Finally, copy the contents of the temp buffer to the last 4 lines of the
+    destination, so that the source's upper 4 lines end up at the bottom of the
+    output image, creating the wrap-around. This overwrites the garbage that was
+    written during the last iteration of the loop above.
+
+    I actually don't know why the temp buffer is used. The source image is
+    never modified, so we could just read directly from the source here, and
+    remove the temp buffer (as well as the copy at the beginning). One theory
+    is that the function used to operate in place at one point, which would
+    necessitate a temp buffer. This was later changed to make a copy of the
+    image instead, but the temp buffer wasn't removed.
+    */
+    offset = 0;
+    bufferIndex = 0;
+    for (col = 0; col < 40; col++) {
+        /* 17*1280 skips over 17 rows of tiles, adding 16 gets us to the
+        bottom 4 lines of the tile. */
+        for (i = 0; i < 16; i++) {
+            *(destImage + offset++ + (17*1280 + 16)) =
+              *(tempBuffer + bufferIndex++);
         }
-        C += 16;
+        offset += 16;
     }
 }
 
 /*
-Shuffle around a bunch of memory contents to prepare a horizontal-scrolling
-backdrop. How? Dunno.
+Makes a copy of srcImage with all pixels shifted left by 4, with wrap-around
 
-Arguments might be: source, destination
+srcImage must be a backdrop image. A copy of the image is written to destImage,
+but with all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most
+pixels are removed from the left side and placed on the right instead.
 */
-void PrepareBackdropHScroll(byte *p1, byte *p2)
+void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
 {
-    register word y, x;
-    word A, B;
+    register word rowStart, colStart;
+    word plane, lineStart;
     byte buf[4];
 
-    /* Backdrops are 40x18 tiles, 0x5a00 bytes. */
+    /*
+    Backdrops (and non-masked tilesets) are laid out as a sequence of 8x8 pixel
+    blocks (tiles). A consecutive span of 4 bytes describes a line of 8 pixels.
+    A block has 8 of these, so it occupies 8*4 = 32 consecutive bytes.
+    After that, the next block starts, etc.
 
-    for (y = 0; y < 0x5a00; y += 0x0500) {  /* 18 times */
-        for (B = 0; B < 32; B += 4) {  /* 8 times */
-            for (A = 0; A < 4; A++) {  /* 4 times */
-                buf[A] = *(p1 + A + B + y) >> 4;
+    Pixels are arranged in planar order. The first byte of each 8-pixel row
+    holds the first plane, the next one the 2nd plane etc.  This means that each
+    byte holds the bits for 8 pixels. Since we want to move pixels around
+    horizontally by less than 8, this means we need to address individual bits.
+    Left-shifting a byte by 4 will move pixels to the left within the byte,
+    opening up the right-most pixel positions to be replaced with the left-most
+    pixels of the next tile. To extract those from the corresponding tile's
+    byte, we need to shift down by the "inverse" amount, which happens to also
+    be 4.
+
+    Backdrops are 40x18 tiles, 23040 (0x5a00) bytes.
+    */
+
+    /* Go through the image's tiles row by row. A new row of tiles starts every
+    40*32 = 1280 bytes. */
+    for (rowStart = 0; rowStart < 18 * 1280; rowStart += 1280) {
+        /* Go through the lines within the tile row. A new line starts every 4
+         bytes. */
+        for (lineStart = 0; lineStart < 8 * 4; lineStart += 4) {
+            /* Copy the left-most pixels of the left-most tile into our temp
+            buffer */
+            for (plane = 0; plane < 4; plane++) {
+                /* Downshift to extract the 4 left-most pixels */
+                buf[plane] = *(srcImage + plane + lineStart + rowStart) >> 4;
             }
 
-            for (x = 0; x < 0x0500; x += 32) {  /* 40 times */
-                for (A = 0; A < 4; A++) {  /* 4 times */
-                    *(p2 + x + A + B + y) = *(p1 + x + A + B + y) << 4;
+            /* Now go through all tiles within the current row, at the current
+            line */
+            for (colStart = 0; colStart < 40 * 32; colStart += 32) {
+                for (plane = 0; plane < 4; plane++) {
+                    /*
+                    Copy pixels to destination, but shifted left by 4. The
+                    left-shift moves the pixels in the line to the left, erasing
+                    the left-most pixels and leaving 0-bits in the right-most
+                    pixel positions.
+                    */
+                    *(destImage + colStart + plane + lineStart + rowStart) =
+                      *(srcImage + colStart + plane + lineStart + rowStart) << 4;
                 }
 
-                if (x != 0x04e0) {  /* not the last iteration */
-                    for (A = 0; A < 4; A++) {  /* 4 times */
-                        *(p2 + x + A + B + y) = *(p2 + A + B + y + x) | (*(p1 + A + B + y + x + 32) >> 4);
+                if (colStart != 39*32) {  /* not the last iteration */
+                    for (plane = 0; plane < 4; plane++) {
+                        /*
+                        Take the left-most pixels from the next source tile, and
+                        place them into the 0-bits left at the destination by
+                        the previous loop.  Offsetting the source by 32 gets us
+                        to the next tile, down-shifting by 4 extracts the
+                        left-most pixels.
+                        */
+                        *(destImage + colStart + plane + lineStart + rowStart) =
+                          *(destImage + plane + lineStart + rowStart + colStart) |
+                          (*(srcImage + plane + lineStart + rowStart + colStart + 32) >> 4);
                     }
                 }
             }
 
-            for (A = 0; A < 4; A++) {  /* 4 times */
-                *(p2 + A + y + B + 0x04e0) = *(p2 + A + y + B + 0x04e0) | buf[A];
+            /*
+            Finally, place the contents of the temp buffer at the very end of
+            the line. This makes the original image's left-most pixels appear at
+            the end of the destination, creating the wrap-around.
+            */
+            for (plane = 0; plane < 4; plane++) {
+                /* Offset destination by 39*32 = 1248 to get to the last tile in
+                a row */
+                *(destImage + plane + rowStart + lineStart + 39*32) =
+                  *(destImage + plane + rowStart + lineStart + 39*32) | buf[plane];
             }
         }
     }

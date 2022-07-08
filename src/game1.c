@@ -10073,15 +10073,15 @@ void LoadBackdropData(char *entry_name, byte *scratch)
     CopyTilesToEGA(scratch, 0x1680, 0xa300);
 
     if (hasHScrollBackdrop) {
-        PrepareBackdropHScroll(scratch, scratch + 0x5a00);
+        ShiftPixelsHorizontally(scratch, scratch + 0x5a00);
         CopyTilesToEGA(scratch + 0x5a00, 0x1680, 0xb980);
     }
 
     if (hasVScrollBackdrop) {
-        PrepareBackdropVScroll(scratch, miscData + 0x1388, scratch + 0xb400);
+        ShiftPixelsVertically(scratch, miscData + 0x1388, scratch + 0xb400);
         CopyTilesToEGA(miscData + 0x1388, 0x1680, 0xd000);
 
-        PrepareBackdropVScroll(scratch + 0x5a00, miscData + 0x1388, scratch + 0xb400);
+        ShiftPixelsVertically(scratch + 0x5a00, miscData + 0x1388, scratch + 0xb400);
         CopyTilesToEGA(miscData + 0x1388, 0x1680, 0xe680);
     }
 
