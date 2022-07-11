@@ -1,6 +1,6 @@
 # Cosmore: _Cosmo_ Reconstructed
 
-by [Scott Smitelli](mailto:scott@smitelli.com)
+by [Scott Smitelli](mailto:scott@smitelli.com) and [contributors](AUTHORS.md)
 
 Cosmore is a reconstruction of the source code of _Cosmo's Cosmic Adventure_ version 1.20, using the original DOS compiler and toolchain. Its goal is to duplicate every detail, quirk, and bug of the original game as faithfully as possible. A player should not be able to distinguish a Cosmore binary from the original.
 
