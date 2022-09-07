@@ -57,7 +57,7 @@ static word playerX, playerY, scrollX, scrollY;
 static word playerFaceDir, playerBombDir;
 static word playerBaseFrame = PLAYER_BASE_WEST;
 static word playerFrame = PLAYER_WALK_1;
-static word playerForceFrame;
+static word playerPushFrame;
 static byte playerClingDir;
 static bool canPlayerCling, isPlayerNearHintGlobe, isPlayerNearTransporter;
 
@@ -1341,7 +1341,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     }
 
     if (mode != DRAWMODE_ABSOLUTE && (
-        playerForceFrame == PLAYER_HIDDEN ||
+        playerPushFrame == PLAYER_HIDDEN ||
         activeTransporter != 0 ||
         playerHurtCooldown % 2 != 0 ||
         blockActionCmds
@@ -8253,7 +8253,7 @@ void ClearPlayerPush(void)
     playerPushMaxTime = 0;
     playerPushTime = 0;
     playerPushSpeed = 0;
-    playerForceFrame = PLAYER_WALK_1;
+    playerPushFrame = PLAYER_WALK_1;
     isPlayerRecoiling = false;
     playerMomentumNorth = 0;
     canCancelPlayerPush = false;
@@ -8275,7 +8275,7 @@ void SetPlayerPush(
     playerPushMaxTime = max_count;
     playerPushTime = 0;
     playerPushSpeed = speed;
-    playerForceFrame = force_frame;
+    playerPushFrame = force_frame;
     canCancelPlayerPush = can_cancel;
     isPlayerPushed = true;
     scooterMounted = 0;
@@ -9141,7 +9141,7 @@ bbool DrawPlayerHelper(void)
             if (!isPlayerPushed) {
                 DrawPlayer(playerBaseFrame + playerFrame, playerX, playerY, DRAWMODE_NORMAL);
             } else {
-                DrawPlayer(playerForceFrame, playerX, playerY, DRAWMODE_NORMAL);
+                DrawPlayer(playerPushFrame, playerX, playerY, DRAWMODE_NORMAL);
             }
         }
 
