@@ -248,6 +248,7 @@ static bbool isPlayerInPipe;
 Inline functions.
 */
 #define MAP_CELL_ADDR(x, y)   (mapData.w + ((y) << mapYPower) + x)
+#define MAP_CELL_DATA(x, y)   (*(mapData.w + (x) + ((y) << mapYPower)))
 #define SET_PLAYER_DIZZY()    { queuePlayerDizzy = true; }
 #define TILE_BLOCK_SOUTH(val) (*(tileAttributeData + ((val) / 8)) & 0x01)
 #define TILE_BLOCK_NORTH(val) (*(tileAttributeData + ((val) / 8)) & 0x02)
@@ -1225,7 +1226,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
         if (
             x >= scrollX && scrollX + SCROLLW > x &&
             y >= scrollY && scrollY + SCROLLH > y &&
-            !TILE_IN_FRONT(*(mapData.w + x + (y << mapYPower)))
+            !TILE_IN_FRONT(MAP_CELL_DATA(x, y))
         ) {
             drawfn(src, (x - scrollX) + 1, (y - scrollY) + 1);
         }
@@ -1252,7 +1253,7 @@ flipped:
         if (
             x >= scrollX && scrollX + SCROLLW > x &&
             y >= scrollY && scrollY + SCROLLH > y &&
-            !TILE_IN_FRONT(*(mapData.w + x + (y << mapYPower)))
+            !TILE_IN_FRONT(MAP_CELL_DATA(x, y))
         ) {
             DrawSpriteTileFlipped(src, (x - scrollX) + 1, (y - scrollY) + 1);
         }
@@ -1361,7 +1362,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
         if (
             x >= scrollX && scrollX + SCROLLW > x &&
             y >= scrollY && scrollY + SCROLLH > y &&
-            !TILE_IN_FRONT(*(mapData.w + x + (y << mapYPower)))
+            !TILE_IN_FRONT(MAP_CELL_DATA(x, y))
         ) {
             drawfn(src, (x - scrollX) + 1, (y - scrollY) + 1);
         }
@@ -1677,7 +1678,7 @@ Return the map tile value at the passed x,y position.
 */
 word GetMapTile(word x, word y)
 {
-    return *(mapData.w + x + (y << mapYPower));
+    return MAP_CELL_DATA(x, y);
 }
 
 /*
@@ -2791,7 +2792,7 @@ Set map tile at x,y to `value`.
 */
 void SetMapTile(word value, word x, word y)
 {
-    *(mapData.w + x + (y << mapYPower)) = value;
+    MAP_CELL_DATA(x, y) = value;
 }
 
 /*
