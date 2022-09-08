@@ -9466,81 +9466,81 @@ title:
     for (;;) {
         ShowMainMenu();
 
-        for (;;) {
-            lastkey = WaitSpinner(28,
+getkey:
+        lastkey = WaitSpinner(28,
 #ifdef FOREIGN_ORDERS
-            21
+        21
 #else
-            20
+        20
 #endif  /* FOREIGN_ORDERS */
-            );
-            switch (lastkey) {
-            case SCANCODE_B:
-            case SCANCODE_ENTER:
-            case SCANCODE_SPACE:
-                InitializeGame();
-                isNewGame = true;
-                pounceHintState = POUNCE_HINT_UNSEEN;
-                StartSound(SND_NEW_GAME);
-                return DEMOSTATE_NONE;
-            case SCANCODE_O:
-                ShowOrderingInformation();
-                goto bigbreak;
-            case SCANCODE_I:
-                ShowInstructions();
-                goto bigbreak;
-            case SCANCODE_A:
-                ShowPublisherBBS();
-                goto bigbreak;
-            case SCANCODE_R:
-                {  /* for scope */
-                    byte result = PromptRestoreGame();
-                    if (result == RESTORE_GAME_SUCCESS) {
-                        return DEMOSTATE_NONE;
-                    } else if (result == RESTORE_GAME_NOT_FOUND) {
-                        ShowRestoreGameError();
-                    }
-                    goto bigbreak;
+        );
+        switch (lastkey) {
+        case SCANCODE_B:
+        case SCANCODE_ENTER:
+        case SCANCODE_SPACE:
+            InitializeGame();
+            isNewGame = true;
+            pounceHintState = POUNCE_HINT_UNSEEN;
+            StartSound(SND_NEW_GAME);
+            return DEMOSTATE_NONE;
+        case SCANCODE_O:
+            ShowOrderingInformation();
+            break;
+        case SCANCODE_I:
+            ShowInstructions();
+            break;
+        case SCANCODE_A:
+            ShowPublisherBBS();
+            break;
+        case SCANCODE_R:
+            {  /* for scope */
+                byte result = PromptRestoreGame();
+                if (result == RESTORE_GAME_SUCCESS) {
+                    return DEMOSTATE_NONE;
+                } else if (result == RESTORE_GAME_NOT_FOUND) {
+                    ShowRestoreGameError();
                 }
-            case SCANCODE_S:
-                ShowStory();
-                goto bigbreak;
-            case SCANCODE_F11:
-                if (isDebugMode) {
-                    InitializeGame();
-                    return DEMOSTATE_RECORD;
-                }
-                goto bigbreak;
-            case SCANCODE_D:
-                InitializeGame();
-                return DEMOSTATE_PLAY;
-            case SCANCODE_T:
-                goto title;
-            case SCANCODE_Q:
-            case SCANCODE_ESC:
-                if (PromptQuitConfirm()) ExitClean();
-                goto bigbreak;
-            case SCANCODE_C:
-                DrawFullscreenImage(IMAGE_CREDITS);
-                WaitForAnyKey();
-                goto bigbreak;
-            case SCANCODE_G:
-                GameRedefineMenu();
-                goto bigbreak;
-#ifdef FOREIGN_ORDERS
-            case SCANCODE_F:
-                ShowForeignOrders();
-                goto bigbreak;
-#endif  /* FOREIGN_ORDERS */
-            case SCANCODE_H:
-                FadeOut();
-                ClearScreen();
-                ShowHighScoreTable();
-                goto bigbreak;
             }
+            break;
+        case SCANCODE_S:
+            ShowStory();
+            break;
+        case SCANCODE_F11:
+            if (isDebugMode) {
+                InitializeGame();
+                return DEMOSTATE_RECORD;
+            }
+            break;
+        case SCANCODE_D:
+            InitializeGame();
+            return DEMOSTATE_PLAY;
+        case SCANCODE_T:
+            goto title;
+        case SCANCODE_Q:
+        case SCANCODE_ESC:
+            if (PromptQuitConfirm()) ExitClean();
+            break;
+        case SCANCODE_C:
+            DrawFullscreenImage(IMAGE_CREDITS);
+            WaitForAnyKey();
+            break;
+        case SCANCODE_G:
+            GameRedefineMenu();
+            break;
+#ifdef FOREIGN_ORDERS
+        case SCANCODE_F:
+            ShowForeignOrders();
+            break;
+#endif  /* FOREIGN_ORDERS */
+        case SCANCODE_H:
+            FadeOut();
+            ClearScreen();
+            ShowHighScoreTable();
+            break;
+        default:
+            goto getkey;
         }
 
-bigbreak:
         DrawFullscreenImage(IMAGE_TITLE);
     }
 #pragma warn -use
