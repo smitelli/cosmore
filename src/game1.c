@@ -9431,10 +9431,9 @@ loop should run under.
 */
 byte TitleLoop(void)
 {
-    register word junk;  /* only here to tie up the SI register */
     word idlecount;
-    byte result;
     byte lastkey;
+    register word junk;  /* only here to tie up the SI register */
 
     isNewGame = false;
 
@@ -9494,13 +9493,15 @@ title:
                 ShowPublisherBBS();
                 goto bigbreak;
             case SCANCODE_R:
-                result = PromptRestoreGame();
-                if (result == RESTORE_GAME_SUCCESS) {
-                    return DEMOSTATE_NONE;
-                } else if (result == RESTORE_GAME_NOT_FOUND) {
-                    ShowRestoreGameError();
+                {  /* for scope */
+                    byte result = PromptRestoreGame();
+                    if (result == RESTORE_GAME_SUCCESS) {
+                        return DEMOSTATE_NONE;
+                    } else if (result == RESTORE_GAME_NOT_FOUND) {
+                        ShowRestoreGameError();
+                    }
+                    goto bigbreak;
                 }
-                goto bigbreak;
             case SCANCODE_S:
                 ShowStory();
                 goto bigbreak;
@@ -9542,7 +9543,6 @@ title:
 bigbreak:
         DrawFullscreenImage(IMAGE_TITLE);
     }
-
 #pragma warn -use
 }
 #pragma warn .use
