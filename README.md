@@ -139,7 +139,7 @@ Cosmore is a meticulous reconstruction of _Cosmo_, but it is not perfect. Compar
 
 * **No perceptible difference in gameplay.** As stated in the introduction, a player should not be able to distinguish a Cosmore binary from the original.
 * **Fully compatible with original demo, save, and configuration files.** Any data file that works correctly with the original game will work correctly with Cosmore, and vice versa. All demo files should play perfectly, without any desynchronization.
-* **Same file size.** The reconstructed executable takes the exact same amount of space on disk, and the same amount in memory, as the original. *(TODO: Not precisely. Episode 2, after LZEXE, is 32 bytes smaller than the original.)*
+* **Same file size.** The reconstructed executable takes the exact same amount of space on disk, and the same amount in memory, as the original. *(TODO: Not precisely. Episode 2, after LZEXE, is 48 bytes smaller than the original.)*
 * **Same segment alignment and size.** The position of the C startup code, assembly routines, code segments, library functions, and data segments all match.
 * **Same function alignment and size.** All of the functions appear in the same order as the original, each beginning and ending at the same addresses as the original.
 * **Same instruction sequence.** All of the x86 instructions appear in the same order as the original. The CPU is performing the same steps in the same sequence, presumably taking the same number of clock cycles as the original.
