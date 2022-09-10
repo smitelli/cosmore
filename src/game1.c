@@ -9316,7 +9316,7 @@ byte PromptRestoreGame(void)
     } else if (lastkey >= SCANCODE_1 && lastkey < SCANCODE_0) {
         DrawScancodeCharacter(x + 24, 14, lastkey);
 
-        if (!LoadGameState(lastkey + 47)) {
+        if (!LoadGameState('1' + (lastkey - SCANCODE_1))) {
             return RESTORE_GAME_NOT_FOUND;
         } else {
             return RESTORE_GAME_SUCCESS;
@@ -9360,7 +9360,7 @@ void PromptSaveGame(void)
         tmpscore = gameScore;
 
         LoadGameState('T');
-        SaveGameState(lastkey + 47);
+        SaveGameState('1' + (lastkey - SCANCODE_1));
 
         playerHealth = tmphealth;
         playerBombs = tmpbombs;
