@@ -34,6 +34,8 @@
 /* Enable this to add vanity text inside the game */
 /*#define VANITY*/
 
+#define GAME_VERSION "1.20"
+
 #include <alloc.h>  /* for coreleft() only */
 #include <conio.h>
 #include <dos.h>
@@ -260,7 +262,7 @@ void ToggleMusic(void);
 void PauseMessage(void);
 void GodModeToggle(void);
 void MemoryUsage(void);
-void GameRedefineMenu(void);
+void ShowGameRedefineMenu(void);
 void LoadConfigurationData(char *filename);
 void SaveConfigurationData(char *filename);
 void ShowEnding(void);

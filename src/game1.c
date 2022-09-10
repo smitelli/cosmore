@@ -9303,10 +9303,9 @@ Present a UI for restoring a saved game, and return the result of the prompt.
 */
 byte PromptRestoreGame(void)
 {
-    word x;
     byte lastkey;
+    word x = UnfoldTextFrame(11, 7, 28, "Restore a game.", "Press ESC to quit.");
 
-    x = UnfoldTextFrame(11, 7, 28, "Restore a game.", "Press ESC to quit.");
     DrawTextLine(x, 14, " What game number (1-9)?");
     lastkey = WaitSpinner(x + 24, 14);
 
@@ -9335,12 +9334,11 @@ written with the state of the game when the level was last started.
 */
 void PromptSaveGame(void)
 {
-    word x;
     byte lastkey;
     word tmphealth, tmpbombs, tmplevel, tmpstars, tmpbars;
     dword tmpscore;
+    word x = UnfoldTextFrame(8, 10, 28, "Save a game.", "Press ESC to quit.");
 
-    x = UnfoldTextFrame(8, 10, 28, "Save a game.", "Press ESC to quit.");
     DrawTextLine(x, 11, " What game number (1-9)?");
     DrawTextLine(x, 13, " NOTE: Game is saved at");
     DrawTextLine(x, 14, " BEGINNING of level.");
@@ -9384,36 +9382,23 @@ if the request was acceptable, or false if the input was bad or Esc was pressed.
 */
 bbool PromptLevelWarp(void)
 {
-    word levels[] = {
-        0, 1, 4, 5, 8, 9, 12, 13, 16, 17,
 #ifdef HAS_LEVEL_11
-        20,
-#endif  /* HAS_LEVEL_11 */
-        2, 3
-    };
-    int x;
-    char buffer[4];
-
-    x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-"
-#ifdef HAS_LEVEL_11
-    "13"
+#   define MAXLEV "13"
+    word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 2, 3};
 #else
-    "12"
+#   define MAXLEV "12"
+    word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 2, 3};
 #endif  /* HAS_LEVEL_11 */
-    "):");
+    char buffer[4];
+    int x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-" MAXLEV "):");
+#undef MAXLEV
+
     ReadAndEchoText(x + 21, 4, buffer, 2);
 
     /* Repurposing x here to hold the level index */
     x = atoi(buffer) - 1;
 
-    if (
-        x >= 0 &&
-#ifdef HAS_LEVEL_11
-        x <= 12
-#else
-        x <= 11
-#endif  /* HAS_LEVEL_11 */
-    ) {
+    if (x >= 0 && x <= (sizeof levels / 2) - 1) {
         levelNum = x;  /* no effect, next two calls both clobber this */
         LoadGameState('T');
         SwitchLevel(levels[x]);
@@ -9525,7 +9510,7 @@ getkey:
             WaitForAnyKey();
             break;
         case SCANCODE_G:
-            GameRedefineMenu();
+            ShowGameRedefineMenu();
             break;
 #ifdef FOREIGN_ORDERS
         case SCANCODE_F:
@@ -9566,7 +9551,7 @@ byte ShowGameMenu(void)
 
         switch (lastkey) {
         case SCANCODE_G:
-            GameRedefineMenu();
+            ShowGameRedefineMenu();
             return GAME_MENU_CONTINUE;
         case SCANCODE_S:
             PromptSaveGame();

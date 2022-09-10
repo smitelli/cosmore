@@ -1193,9 +1193,7 @@ void DrawStatusBarScore(dword add_points, word x, word y)
 {
     gameScore += add_points;
 
-#ifdef DEBUG_BAR
-    return;
-#endif  /* DEBUG_BAR */
+#ifndef DEBUG_BAR
 
     SelectDrawPage(activePage);
     DrawNumberFlushRight(x, y, gameScore);
@@ -1204,7 +1202,12 @@ void DrawStatusBarScore(dword add_points, word x, word y)
     DrawNumberFlushRight(x, y, gameScore);
 
     EGA_MODE_LATCHED_WRITE();
+
+#else
+#   pragma warn -par
+#endif  /* DEBUG_BAR */
 }
+#pragma warn .par
 
 /*
 Add `points` to the player's score, then redraw that area of the status bar.
@@ -1221,9 +1224,7 @@ to be passed in.
 */
 void DrawStatusBarStars(word x, word y)
 {
-#ifdef DEBUG_BAR
-    return;
-#endif  /* DEBUG_BAR */
+#ifndef DEBUG_BAR
 
     SelectDrawPage(activePage);
     DrawNumberFlushRight(x, y, (word)gameStars);
@@ -1232,7 +1233,12 @@ void DrawStatusBarStars(word x, word y)
     DrawNumberFlushRight(x, y, (word)gameStars);
 
     EGA_MODE_LATCHED_WRITE();
+
+#else
+#   pragma warn -par
+#endif  /* DEBUG_BAR */
 }
+#pragma warn .par
 
 /*
 Redraw the "Stars" area of the status bar with the current global value.
@@ -1249,9 +1255,7 @@ to be passed in.
 */
 void DrawStatusBarBombs(word x, word y)
 {
-#ifdef DEBUG_BAR
-    return;
-#endif  /* DEBUG_BAR */
+#ifndef DEBUG_BAR
 
     EGA_MODE_DEFAULT();
 
@@ -1269,7 +1273,12 @@ void DrawStatusBarBombs(word x, word y)
     DrawNumberFlushRight(x, y, playerBombs);
 
     EGA_MODE_LATCHED_WRITE();
+
+#else
+#   pragma warn -par
+#endif  /* DEBUG_BAR */
 }
+#pragma warn .par
 
 /*
 Redraw the "Bombs" area of the status bar with the current global value.
@@ -1287,11 +1296,9 @@ called twice -- once for each page.
 */
 void DrawStatusBarHealth(word x, word y)
 {
-    word bar;
+#ifndef DEBUG_BAR
 
-#ifdef DEBUG_BAR
-    return;
-#endif  /* DEBUG_BAR */
+    word bar;
 
     for (bar = 0; bar < playerMaxHealth; bar++) {
         /* Why 8 if there are only 5 health bar spaces? Go replay DUKE1. */
@@ -1306,7 +1313,12 @@ void DrawStatusBarHealth(word x, word y)
             DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x - bar, y + 1);
         }
     }
+
+#else
+#   pragma warn -par
+#endif  /* DEBUG_BAR */
 }
+#pragma warn .par
 
 /*
 Redraw the "Health" area of the status bar with the current global value, on the
@@ -1548,10 +1560,6 @@ Music *LoadMusicData(word music_num, Music *dest)
 Maintain parity with the original game.
 */
 void Junk1(void) {}
-
-/*
-Maintain parity with the original game.
-*/
 void Junk2(void) {}
 #endif  /* EPISODE == 1 */
 
@@ -1641,8 +1649,7 @@ void ShowOrderingInformation(void)
     FadeOutCustom(1);
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 20, 38, "About Apogee Software", "Press ANY key.");
-    x += 2;
+    x = UnfoldTextFrame(1, 20, 38, "About Apogee Software", "Press ANY key.") + 2;
     DrawTextLine(x, 4,  "Our goal is to establish Apogee");
     DrawTextLine(x, 5,  "  as the leader in commercial");
     DrawTextLine(x, 6,  " quality shareware games. With");
@@ -1687,8 +1694,7 @@ void ShowCongratulations(void)
     FadeOut();
     ClearScreen();
 
-    x = UnfoldTextFrame(0, 23, 38, "CONGRATULATIONS!", "Press ANY key.");
-    x += 2;
+    x = UnfoldTextFrame(0, 23, 38, "CONGRATULATIONS!", "Press ANY key.") + 2;
     DrawTextLine(x, 3,  "You saved Cosmo's parents and");
     DrawTextLine(x, 4,  "landed at Disney World for the");
     DrawTextLine(x, 5,  "best birthday of your life.");
@@ -2343,8 +2349,7 @@ void ShowPublisherBBS(void)
     FadeOut();
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 22, 38, "THE OFFICIAL APOGEE BBS", "Press ANY key.");
-    x += 3;
+    x = UnfoldTextFrame(1, 22, 38, "THE OFFICIAL APOGEE BBS", "Press ANY key.") + 3;
     DrawTextLine(x, 3,  "    -----------------------");
     DrawTextLine(x, 5,  "The SOFTWARE CREATIONS BBS is");
     DrawTextLine(x, 6,  " the home BBS for the latest");
@@ -2395,8 +2400,7 @@ void ShowForeignOrders(void)
     FadeOut();
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 19, 38, "FOREIGN CUSTOMERS", "Press ANY key.");
-    x += 2;
+    x = UnfoldTextFrame(1, 19, 38, "FOREIGN CUSTOMERS", "Press ANY key.") + 2;
     DrawTextLine(x, 3,  "        -----------------");
     DrawTextLine(x, 5,  " The following screens list our");
     DrawTextLine(x, 6,  "   dealers outside the United");
@@ -2414,8 +2418,7 @@ void ShowForeignOrders(void)
     FadeOutCustom(1);
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 19, 38, "AUSTRALIAN CUSTOMERS", "Press ANY key.");
-    x += 3;
+    x = UnfoldTextFrame(1, 19, 38, "AUSTRALIAN CUSTOMERS", "Press ANY key.") + 3;
     DrawTextLine(x, 4,  "PRICE: $45 + $5 shipping.");
     DrawTextLine(x, 6,  "BudgetWare");
     DrawTextLine(x, 7,  "P.O. Box 496");
@@ -2432,8 +2435,7 @@ void ShowForeignOrders(void)
     FadeOutCustom(1);
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 20, 38, "CANADIAN CUSTOMERS", "Press ANY key.");
-    x += 3;
+    x = UnfoldTextFrame(1, 20, 38, "CANADIAN CUSTOMERS", "Press ANY key.") + 3;
     DrawTextLine(x, 4,  "PRICE: $42 Canadian.       \xFE""146000");
     DrawTextLine(x, 6,  "Distant Markets");
     DrawTextLine(x, 7,  "Box 1149");
@@ -2451,8 +2453,7 @@ void ShowForeignOrders(void)
     FadeOutCustom(1);
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 20, 38, "GERMAN CUSTOMERS", "Press ANY key.");
-    x += 3;
+    x = UnfoldTextFrame(1, 20, 38, "GERMAN CUSTOMERS", "Press ANY key.") + 3;
     DrawTextLine(x, 4,  "Price: 49,-- DM plus 10,-- DM");
     DrawTextLine(x, 5,  "Total: 59,-- DM (Deutsche Mark)");
     DrawTextLine(x, 7,  "CDV-Software");
@@ -2470,8 +2471,7 @@ void ShowForeignOrders(void)
     FadeOutCustom(1);
     ClearScreen();
 
-    x = UnfoldTextFrame(1, 20, 38, "UNITED KINGDOM CUSTOMERS", "Press ANY key.");
-    x += 3;
+    x = UnfoldTextFrame(1, 20, 38, "UNITED KINGDOM CUSTOMERS", "Press ANY key.") + 3;
     /* The game font renders the symbol for pound sterling instead of `/`. */
     DrawTextLine(x, 4,  "Price: /29 + VAT + 2 P&P     \xFE""085000");
     DrawTextLine(x, 6,  "Precision Software Applications");
@@ -2495,7 +2495,6 @@ Show a simple "saved game not found" error and wait for any key to be pressed.
 void ShowRestoreGameError(void)
 {
     word x = UnfoldTextFrame(5, 4, 20, "Can't find that", "game to restore! ");
-
     WaitSpinner(x + 17, 7);
 }
 
@@ -2505,14 +2504,13 @@ Show the copyright year, version number, and abbreviated credits during startup.
 void ShowCopyright(void)
 {
     word x = UnfoldTextFrame(4, 13, 26, "A game by", "Copyright (c) 1992");
-
     DrawTextLine(x,      7,  "     Todd J Replogle");
     DrawTextLine(x + 11, 9,  "and");
     DrawTextLine(x,      11, "\xFD""027   Stephen A Hornback\xFD""004");
 #ifdef VANITY
-    DrawTextLine(x,      13, "  Cosmore version 1.20");
+    DrawTextLine(x,      15, "Cosmore version " GAME_VERSION);
 #else
-    DrawTextLine(x,      13, "      Version 1.20");
+    DrawTextLine(x,      13, "      Version " GAME_VERSION);
 #endif  /* VANITY */
 
     WaitSoft(700);
@@ -2525,7 +2523,6 @@ Show a simple "altered file error" and wait for any key to be pressed.
 void ShowAlteredFileError(void)
 {
     word x = UnfoldTextFrame(2, 4, 28, "Altered file error!!", "Now exiting game!");
-
     WaitSpinner(x + 25, 4);
 }
 
@@ -2689,11 +2686,8 @@ is confirmed by pressing Y, or false otherwise.
 */
 bbool PromptQuitConfirm(void)
 {
-    word x;
-    byte scancode;
-
-    x = UnfoldTextFrame(11, 4, 18, "Are you sure you", "want to quit? ");
-    scancode = WaitSpinner(x + 14, 13);
+    word x = UnfoldTextFrame(11, 4, 18, "Are you sure you", "want to quit? ");
+    byte scancode = WaitSpinner(x + 14, 13);
 
     if (scancode == SCANCODE_Y) {
         return true;
@@ -2804,7 +2798,6 @@ resume the game.
 void PauseMessage(void)
 {
     word x = UnfoldTextFrame(2, 4, 18, "Game Paused.", "Press ANY key.");
-
     StopAdLibPlayback();
     WaitSpinner(x + 15, 4);
 
@@ -2851,7 +2844,6 @@ Display memory statistics for the game.
 void MemoryUsage(void)
 {
     word x = UnfoldTextFrame(2, 8, 30, "- Memory Usage -", "Press ANY key.");
-
     DrawTextLine(x + 6,  4, "Memory free:");
     DrawTextLine(x + 10, 5, "Take Up:");
     DrawTextLine(x + 1,  6, "Total Map Memory:  65049");
@@ -2866,10 +2858,9 @@ void MemoryUsage(void)
 Display the Game Redefine menu and call the appropriate function based on the
 key pressed.
 */
-void GameRedefineMenu(void)
+void ShowGameRedefineMenu(void)
 {
     word x = UnfoldTextFrame(4, 11, 22, "Game Redefine", "Press ESC to quit.");
-
     DrawTextLine(x, 7,  " K)eyboard redefine");
     DrawTextLine(x, 8,  " J)oystick redefine");
     DrawTextLine(x, 9,  " S)ound toggle");
@@ -3396,7 +3387,6 @@ Display a text frame informing the player that they have cheated.
 void ShowCheatMessage(void)
 {
     word x = UnfoldTextFrame(3, 9, 32, "You are now cheating!", "Press ANY key.");;
-
     DrawTextLine(x, 6, "  You have been awarded full");
     DrawTextLine(x, 7, " health and maximum amount of");
     DrawTextLine(x, 8, "            bombs!");
