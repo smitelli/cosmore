@@ -3510,41 +3510,30 @@ Draw the main menu frame and text options, but don't wait or process any input.
 */
 void DrawMainMenu(void)
 {
-    word x;
-
-    x = UnfoldTextFrame(2,
 #ifdef FOREIGN_ORDERS
-    21,
+#   define YSHIFT 1
 #else
-    20,
+#   define YSHIFT 0
 #endif  /* FOREIGN_ORDERS */
-    20, "MAIN MENU", "");
 
-    DrawTextLine(x, 5,  " B)egin New Game");
-    DrawTextLine(x, 6,  " R)estore A Game");
-    DrawTextLine(x, 7,  " S)tory");
-    DrawTextLine(x, 8,  " I)nstructions");
-    DrawTextLine(x, 9,  " H)igh Scores");
-    DrawTextLine(x, 10, " G)ame Redefine");
-
-    DrawTextLine(x, 12, " O)rdering Info.");
-
+    word x = UnfoldTextFrame(2, 20 + YSHIFT, 20, "MAIN MENU", "");
+    DrawTextLine(x, 5,           " B)egin New Game");
+    DrawTextLine(x, 6,           " R)estore A Game");
+    DrawTextLine(x, 7,           " S)tory");
+    DrawTextLine(x, 8,           " I)nstructions");
+    DrawTextLine(x, 9,           " H)igh Scores");
+    DrawTextLine(x, 10,          " G)ame Redefine");
+    DrawTextLine(x, 12,          " O)rdering Info.");
 #ifdef FOREIGN_ORDERS
-    DrawTextLine(x, 14, " F)oreign Orders");
-    DrawTextLine(x, 15, " A)pogee's BBS");
-    DrawTextLine(x, 16, " D)emo");
-    DrawTextLine(x, 17, " C)redits");
-    DrawTextLine(x, 18, " T)itle Screen");
-
-    DrawTextLine(x, 20, " Q)uit Game");
-#else
-    DrawTextLine(x, 14, " A)pogee's BBS");
-    DrawTextLine(x, 15, " D)emo");
-    DrawTextLine(x, 16, " C)redits");
-    DrawTextLine(x, 17, " T)itle Screen");
-
-    DrawTextLine(x, 19, " Q)uit Game");
+    DrawTextLine(x, 14,          " F)oreign Orders");
 #endif  /* FOREIGN_ORDERS */
+    DrawTextLine(x, 14 + YSHIFT, " A)pogee's BBS");
+    DrawTextLine(x, 15 + YSHIFT, " D)emo");
+    DrawTextLine(x, 16 + YSHIFT, " C)redits");
+    DrawTextLine(x, 17 + YSHIFT, " T)itle Screen");
+    DrawTextLine(x, 19 + YSHIFT, " Q)uit Game");
+
+#undef YSHIFT
 }
 
 /*

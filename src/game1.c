@@ -3579,6 +3579,14 @@ void ActBoss(word index)
     Actor *act = actors + index;
 
 #ifdef HAS_ACT_BOSS
+#   ifdef HARDER_BOSS
+#       define WIN_VAR winGame
+#       define D5_VALUE 18
+#   else
+#       define WIN_VAR winLevel
+#       define D5_VALUE 12
+#   endif
+
     nextDrawMode = DRAWMODE_HIDDEN;
 
     if (!sawBossBubble) {
@@ -3604,11 +3612,7 @@ void ActBoss(word index)
 #endif  /* HARDER_BOSS */
             (!IsSpriteVisible(SPR_BOSS, 0, act->x, act->y) && act->private2 < 30)
         ) {
-#ifdef HARDER_BOSS
-            winGame = true;
-#else
-            winLevel = true;
-#endif  /* HARDER_BOSS */
+            WIN_VAR = true;
             AddScore(100000L);
         }
 
@@ -3635,13 +3639,7 @@ void ActBoss(word index)
         return;
     }
 
-    if (
-#ifdef HARDER_BOSS
-        act->data5 == 18
-#else
-        act->data5 == 12
-#endif  /* HARDER_BOSS */
-    ) {
+    if (act->data5 == D5_VALUE) {
         if (TestSpriteMove(DIR4_SOUTH, SPR_BOSS, 0, act->x, act->y + 1) == MOVE_FREE) {
             act->y++;
             if (act->y % 2 != 0) {
@@ -3817,6 +3815,8 @@ void ActBoss(word index)
         }
     }
 
+#   undef WIN_VAR
+#   undef D5_VALUE
 #else
 #   pragma warn -aus
 #endif  /* ACT_BOSS */
@@ -7291,14 +7291,16 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_BOSS:
+#ifdef HARDER_BOSS
+#    define D5_VALUE 20  /* why isn't this 18, like in ActBoss()? */
+#else
+#    define D5_VALUE 12
+#endif  /* HARDER_BOSS */
+
         if (
             act->private2 == 0
 #ifdef HAS_ACT_BOSS
-#   ifdef HARDER_BOSS
-            && act->data5 != 20  /* why isn't this 18, like in ActBoss()? */
-#   else
-            && act->data5 != 12
-#   endif  /* HARDER_BOSS */
+            && act->data5 != D5_VALUE
 #endif  /* ACT_BOSS */
         ) {
             if (act->damagecooldown == 0 && PounceHelper(7)) {
@@ -7325,6 +7327,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             }
         }
         return true;
+#undef D5_VALUE
     }
 
     if (!IsTouchingPlayer(sprite, frame, x, y)) {
@@ -9416,6 +9419,12 @@ loop should run under.
 */
 byte TitleLoop(void)
 {
+#ifdef FOREIGN_ORDERS
+#   define YSHIFT 1
+#else
+#   define YSHIFT 0
+#endif  /* FOREIGN_ORDERS */
+
     word idlecount;
     byte lastkey;
     register word junk;  /* only here to tie up the SI register */
@@ -9452,13 +9461,8 @@ title:
         DrawMainMenu();
 
 getkey:
-        lastkey = WaitSpinner(28,
-#ifdef FOREIGN_ORDERS
-        21
-#else
-        20
-#endif  /* FOREIGN_ORDERS */
-        );
+        lastkey = WaitSpinner(28, 20 + YSHIFT);
+
         switch (lastkey) {
         case SCANCODE_B:
         case SCANCODE_ENTER:
@@ -9528,6 +9532,8 @@ getkey:
 
         DrawFullscreenImage(IMAGE_TITLE);
     }
+
+#undef YSHIFT
 #pragma warn -use
 }
 #pragma warn .use
