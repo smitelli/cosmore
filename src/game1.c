@@ -9562,7 +9562,6 @@ byte ShowGameMenu(void)
     DrawTextLine(x, 10, " Q)uit Game");
 
     for (;;) {
-        byte result;
         byte lastkey = WaitSpinner(29, 12);
 
         switch (lastkey) {
@@ -9573,12 +9572,14 @@ byte ShowGameMenu(void)
             PromptSaveGame();
             return GAME_MENU_CONTINUE;
         case SCANCODE_R:
-            result = PromptRestoreGame();
-            if (result == RESTORE_GAME_SUCCESS) {
-                SwitchLevel(levelNum);
-                return GAME_MENU_RESTART;
-            } else if (result == RESTORE_GAME_NOT_FOUND) {
-                ShowRestoreGameError();
+            {  /* for scope */
+                byte result = PromptRestoreGame();
+                if (result == RESTORE_GAME_SUCCESS) {
+                    SwitchLevel(levelNum);
+                    return GAME_MENU_RESTART;
+                } else if (result == RESTORE_GAME_NOT_FOUND) {
+                    ShowRestoreGameError();
+                }
             }
             return GAME_MENU_CONTINUE;
         case SCANCODE_V:
