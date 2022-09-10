@@ -8237,10 +8237,10 @@ Clear the screen, then redraw the in-game status bar onto both video pages.
 void ClearGameScreen(void)
 {
     SelectDrawPage(0);
-    RedrawStaticGameScreen();
+    DrawStaticGameScreen();
 
     SelectDrawPage(1);
-    RedrawStaticGameScreen();
+    DrawStaticGameScreen();
 }
 
 /*
@@ -9449,7 +9449,7 @@ title:
     }
 
     for (;;) {
-        ShowMainMenu();
+        DrawMainMenu();
 
 getkey:
         lastkey = WaitSpinner(28,
@@ -9536,7 +9536,7 @@ getkey:
 Display the slimmed-down in-game menu. Returns a status byte that indicates if
 the game should continue, restart on a different level, or exit.
 */
-byte ShowGameMenu(void)
+byte ShowHelpMenu(void)
 {
     word x = UnfoldTextFrame(2, 12, 22, "HELP MENU", "Press ESC to quit.");
     DrawTextLine(x, 5,  " S)ave your game");
@@ -9682,7 +9682,7 @@ byte ProcessGameInput(byte demostate)
 
         if (isKeyDown[SCANCODE_F10] && isDebugMode) {
             if (isKeyDown[SCANCODE_G]) {
-                GodModeToggle();
+                ToggleGodMode();
             }
 
             if (isKeyDown[SCANCODE_W] && PromptLevelWarp()) {
@@ -9700,7 +9700,7 @@ byte ProcessGameInput(byte demostate)
             }
 
             if (isKeyDown[SCANCODE_M]) {
-                MemoryUsage();
+                ShowMemoryUsage();
             }
 
             if (
@@ -9736,7 +9736,7 @@ byte ProcessGameInput(byte demostate)
         } else if (isKeyDown[SCANCODE_ESC] || isKeyDown[SCANCODE_Q]) {
             if (PromptQuitConfirm()) return GAME_INPUT_QUIT;
         } else if (isKeyDown[SCANCODE_F1]) {
-            byte result = ShowGameMenu();
+            byte result = ShowHelpMenu();
             if (result == GAME_MENU_RESTART) {
                 return GAME_INPUT_RESTART;
             } else if (result == GAME_MENU_QUIT) {
@@ -9744,7 +9744,7 @@ byte ProcessGameInput(byte demostate)
             }
         } else if (isKeyDown[SCANCODE_P]) {
             StartSound(SND_PAUSE_GAME);
-            PauseMessage();
+            ShowPauseMessage();
         }
     } else if ((inportb(0x0060) & 0x80) == 0) {
         return GAME_INPUT_QUIT;

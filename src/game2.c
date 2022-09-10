@@ -1970,19 +1970,18 @@ void ShowKeyboardConfiguration(void)
 }
 
 /*
-Makes a copy of srcImage with all pixels shifted up by 4, with wrap-around
+Makes a copy of src with all pixels shifted up by 4, with wrap-around.
 
-srcImage must be a backdrop image.  A copy of the image is written to destImage,
-but with all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows
-of pixels are removed from the top and placed at the bottom instead.
+src must be a backdrop image.  A copy of the image is written to dest, but with
+all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows of pixels
+are removed from the top and placed at the bottom instead.
 
 A temporary buffer of at least 640 bytes is needed.
 */
-void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
+void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
 {
     register word col, i;
     word bufferIndex, offset, row;
-
 
     /*
     Backdrops (and non-masked tilesets) are laid out as a sequence of 8x8 pixel
@@ -2001,7 +2000,7 @@ void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
         /* Copy the first 4 lines of this tile. Each line is 4 bytes, so we need
          * to copy 4*4 = 16 bytes. */
         for (i = 0; i < 16; i++) {
-            *(tempBuffer + bufferIndex++) = *(srcImage + offset++);
+            *(temp + bufferIndex++) = *(src + offset++);
         }
 
         /* Skip the remaining 4 lines, this puts us at the start of the next
@@ -2023,8 +2022,8 @@ void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
 
                 Offset the source by 16 to get to the lower 4 lines of
                 each tile. */
-                *(destImage + offset + (row * 1280)) =
-                  *(srcImage + (row * 1280) + offset++ + 16);
+                *(dest + offset + (row * 1280)) =
+                  *(src + (row * 1280) + offset++ + 16);
             }
 
             /* Skip 4 lines */
@@ -2049,8 +2048,8 @@ void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
                 matter because they are overwritten again further down when the
                 temp buffer is written to the destination.
                 */
-                *(destImage + offset + (row * 1280) + 16) =
-                  *(srcImage + (row * 1280) + offset++ + 1280);
+                *(dest + offset + (row * 1280) + 16) =
+                  *(src + (row * 1280) + offset++ + 1280);
             }
             offset += 16;
         }
@@ -2075,21 +2074,21 @@ void ShiftPixelsVertically(byte *srcImage, byte *destImage, byte *tempBuffer)
         /* 17*1280 skips over 17 rows of tiles, adding 16 gets us to the
         bottom 4 lines of the tile. */
         for (i = 0; i < 16; i++) {
-            *(destImage + offset++ + (17*1280 + 16)) =
-              *(tempBuffer + bufferIndex++);
+            *(dest + offset++ + (17*1280 + 16)) =
+              *(temp + bufferIndex++);
         }
         offset += 16;
     }
 }
 
 /*
-Makes a copy of srcImage with all pixels shifted left by 4, with wrap-around
+Makes a copy of src with all pixels shifted left by 4, with wrap-around.
 
-srcImage must be a backdrop image. A copy of the image is written to destImage,
-but with all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most
-pixels are removed from the left side and placed on the right instead.
+src must be a backdrop image. A copy of the image is written to dest, but with
+all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most pixels are
+removed from the left side and placed on the right instead.
 */
-void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
+void ShiftPixelsHorizontally(byte *src, byte *dest)
 {
     register word rowStart, colStart;
     word plane, lineStart;
@@ -2124,7 +2123,7 @@ void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
             buffer */
             for (plane = 0; plane < 4; plane++) {
                 /* Downshift to extract the 4 left-most pixels */
-                buf[plane] = *(srcImage + plane + lineStart + rowStart) >> 4;
+                buf[plane] = *(src + plane + lineStart + rowStart) >> 4;
             }
 
             /* Now go through all tiles within the current row, at the current
@@ -2137,8 +2136,8 @@ void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
                     the left-most pixels and leaving 0-bits in the right-most
                     pixel positions.
                     */
-                    *(destImage + colStart + plane + lineStart + rowStart) =
-                      *(srcImage + colStart + plane + lineStart + rowStart) << 4;
+                    *(dest + colStart + plane + lineStart + rowStart) =
+                      *(src + colStart + plane + lineStart + rowStart) << 4;
                 }
 
                 if (colStart != 39*32) {  /* not the last iteration */
@@ -2150,9 +2149,9 @@ void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
                         to the next tile, down-shifting by 4 extracts the
                         left-most pixels.
                         */
-                        *(destImage + colStart + plane + lineStart + rowStart) =
-                          *(destImage + plane + lineStart + rowStart + colStart) |
-                          (*(srcImage + plane + lineStart + rowStart + colStart + 32) >> 4);
+                        *(dest + colStart + plane + lineStart + rowStart) =
+                          *(dest + plane + lineStart + rowStart + colStart) |
+                          (*(src + plane + lineStart + rowStart + colStart + 32) >> 4);
                     }
                 }
             }
@@ -2165,8 +2164,8 @@ void ShiftPixelsHorizontally(byte *srcImage, byte *destImage)
             for (plane = 0; plane < 4; plane++) {
                 /* Offset destination by 39*32 = 1248 to get to the last tile in
                 a row */
-                *(destImage + plane + rowStart + lineStart + 39*32) =
-                  *(destImage + plane + rowStart + lineStart + 39*32) | buf[plane];
+                *(dest + plane + rowStart + lineStart + 39*32) =
+                  *(dest + plane + rowStart + lineStart + 39*32) | buf[plane];
             }
         }
     }
@@ -2749,7 +2748,7 @@ At any time, Up/Down changes the sound number, Enter plays the selected sound,
 and Esc leaves the menu. If the sound effects option is disabled, it is
 temporarily re-enabled while this menu remains open.
 */
-void TestSound(void)
+void ShowSoundTest(void)
 {
     bool enabled = isSoundEnabled;
     dword soundnum = 1;
@@ -2795,7 +2794,7 @@ Pause the game with a visible message and stop the music. When the message is
 dismissed by pressing any key, restart the music if it was playing before, and
 resume the game.
 */
-void PauseMessage(void)
+void ShowPauseMessage(void)
 {
     word x = UnfoldTextFrame(2, 4, 18, "Game Paused.", "Press ANY key.");
     StopAdLibPlayback();
@@ -2811,7 +2810,7 @@ void PauseMessage(void)
 Invert the state of the god mode debug flag, then show a confirmation message
 indicating the new state.
 */
-void GodModeToggle(void)
+void ToggleGodMode(void)
 {
     word x;
 
@@ -2841,7 +2840,7 @@ Display memory statistics for the game.
   the current level (re)started. This does not decrease when actors die, nor
   does it increase when a new actor occupies a dead actor's slot.
 */
-void MemoryUsage(void)
+void ShowMemoryUsage(void)
 {
     word x = UnfoldTextFrame(2, 8, 30, "- Memory Usage -", "Press ANY key.");
     DrawTextLine(x + 6,  4, "Memory free:");
@@ -2883,7 +2882,7 @@ void ShowGameRedefineMenu(void)
             ShowKeyboardConfiguration();
             return;
         case SCANCODE_T:
-            TestSound();
+            ShowSoundTest();
             return;
         case SCANCODE_M:
             ToggleMusic();
@@ -3486,7 +3485,7 @@ void AddScoreForSprite(word sprite_type)
 Clear the screen, redraw the status bar from the background image in memory,
 then redraw all the status bar number and health bar areas.
 */
-void RedrawStaticGameScreen(void)
+void DrawStaticGameScreen(void)
 {
     word x, y;
     word src = 0x4000;
@@ -3509,7 +3508,7 @@ void RedrawStaticGameScreen(void)
 /*
 Draw the main menu frame and text options, but don't wait or process any input.
 */
-void ShowMainMenu(void)
+void DrawMainMenu(void)
 {
     word x;
 
