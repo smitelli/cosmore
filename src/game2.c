@@ -1351,10 +1351,10 @@ file would -- they get totally blanked.
 void ShowHighScoreTable(void)
 {
     for (;;) {
-        word x, i;
         byte scancode;
+        word i;
+        word x = UnfoldTextFrame(2, 17, 30, "Hall of Fame", "any other key to exit.");
 
-        x = UnfoldTextFrame(2, 17, 30, "Hall of Fame", "any other key to exit.");
         for (i = 0; i < 10; i++) {
             /* _1. ___1234 NAME */
             DrawNumberFlushRight(x + 2, i + 5, i + 1);
@@ -1369,11 +1369,12 @@ void ShowHighScoreTable(void)
         }
 
         scancode = WaitSpinner(x + 27, 17);
+
         if (scancode != SCANCODE_F10) break;
 
         x = UnfoldTextFrame(5, 4, 28, "Are you sure you want to", "ERASE High Scores?");
-
         scancode = WaitSpinner(x + 22, 7);
+
         if (scancode == SCANCODE_Y) {
             for (i = 0; i < 10; i++) {
                 highScoreValues[i] = 0;
@@ -1393,7 +1394,7 @@ Check if the player's current score qualifies for insertion into the high score
 table, and if so, prompt for a name to go along with it. Display the high score
 table at the end whether the prompt was displayed or not.
 */
-void CheckHighScore(void)
+void CheckHighScoreAndShow(void)
 {
     int i;
 
@@ -1422,7 +1423,11 @@ void CheckHighScore(void)
         FadeIn();
         StartSound(SND_HIGH_SCORE_SET);
 
-        ReadAndEchoText(x + 16, 8, highScoreNames[i], 14);
+        /*
+        Name length is likely constrained to prevent hitting the frame edge when
+        viewing the table.
+        */
+        ReadAndEchoText(x + 16, 8, highScoreNames[i], sizeof(HighScoreName) - 2);
 
         break;
     }

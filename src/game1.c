@@ -6615,14 +6615,12 @@ bool IsNearExplosion(word sprite, word frame, word x, word y)
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        Explosion *ex;
+        if (*explosions[i] != 0) {
+            Explosion *ex = (Explosion *) explosions[i];
 
-        if (*explosions[i] == 0) continue;
-
-        ex = (Explosion *) explosions[i];
-
-        if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x, y)) {
-            return true;
+            if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x, y)) {
+                return true;
+            }
         }
     }
 
@@ -9401,7 +9399,7 @@ bbool PromptLevelWarp(void)
     /* Repurposing x here to hold the level index */
     x = atoi(buffer) - 1;
 
-    if (x >= 0 && x <= (sizeof levels / 2) - 1) {
+    if (x >= 0 && x <= (sizeof levels / sizeof levels[0]) - 1) {
         levelNum = x;  /* no effect, next two calls both clobber this */
         LoadGameState('T');
         SwitchLevel(levels[x]);
@@ -10503,7 +10501,7 @@ void InnerMain(int argc, char *argv[])
         StopMusic();
 
         if (demoState != DEMOSTATE_PLAY && demoState != DEMOSTATE_RECORD) {
-            CheckHighScore();
+            CheckHighScoreAndShow();
         }
 
         if (demoState == DEMOSTATE_RECORD) {

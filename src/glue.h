@@ -235,7 +235,7 @@ void UpdateStars(void);
 void UpdateBombs(void);
 void UpdateHealth(void);
 void ShowHighScoreTable(void);
-void CheckHighScore(void);
+void CheckHighScoreAndShow(void);
 FILE *GroupEntryFp(char *entry_name);
 void ShowOrderingInformation(void);
 void ShowStory(void);
