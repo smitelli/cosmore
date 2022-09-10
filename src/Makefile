@@ -19,21 +19,23 @@
 EPISODE=0
 !endif
 
-# MODEL | LONGMODEL | Description
-# ------+-----------+------------
-# t     | TINY      | CS=DS=ES=SS; near pointers; NOTE: Set CLIBFILE to CS.LIB!
-# s     | SMALL     | DS=ES=SS; near pointers
-# c     | COMPACT   | Code uses near pointers; data uses far pointers
-# m     | MEDIUM    | Code uses far pointers; data uses near pointers
-# l     | LARGE     | Far pointers
-# h     | HUGE      | Far pointers; static data can exceed 64k
-MODEL=l
-LONGMODEL=LARGE
-
 # Configure these lines to match your Turbo C installation
-CLIBFILE=C:\TC20\LIB\C$(MODEL).LIB
-INCLUDEDIR=C:\TC20\INCLUDE
-STARTUPDIR=C:\TC20\STARTUP
+TCDIR=C:\TC20
+INCLUDEDIR=$(TCDIR)\INCLUDE
+LIBDIR=$(TCDIR)\LIB
+STARTUPDIR=$(TCDIR)\STARTUP
+
+# MODEL | LIBMODEL | LONGMODEL | Description
+# ------+----------+-----------+------------
+# t     | S        | TINY      | CS=DS=ES=SS; near pointers
+# s     | S        | SMALL     | DS=ES=SS; near pointers
+# c     | C        | COMPACT   | Code uses near pointers; data uses far pointers
+# m     | M        | MEDIUM    | Code uses far pointers; data uses near pointers
+# l     | L        | LARGE     | Far pointers
+# h     | H        | HUGE      | Far pointers; static data can exceed 64k
+MODEL=l
+LIBMODEL=L
+LONGMODEL=LARGE
 
 OBJS=c0$(MODEL).obj main.obj game1.obj game2.obj
 OUTEXE=cosmore$(EPISODE).exe
@@ -42,24 +44,24 @@ all: $(OUTEXE)
 
 clean:
 	@del cosmore*.exe
-	@del *.map
+	@del cosmore*.map
 	@del *.obj
 
-$(OUTEXE): $(OBJS)
-	tlink /c /d /s $(OBJS), $<, , $(CLIBFILE)
-
 c0$(MODEL).obj: c0.asm lowlevel.asm
-	# $* instead of $< avoids weird overwrite misbehavior if the target exists
+	# NOTE: Don't include extension in last arg; overwrite behavior is weird
 	tasm /d__$(LONGMODEL)__ /i$(STARTUPDIR) c0.asm, $*
 
 main.obj: main.c
 	# main() function requires 8086-compatible code generation (-1-)
-	tcc -m$(MODEL) -I$(INCLUDEDIR) -DEPISODE=$(EPISODE) -1- -c main.c
+	tcc -m$(MODEL) -I$(INCLUDEDIR) -DEPISODE=$(EPISODE) -1- -c $*.c
 
 game2.obj: game2.c
 	# Original GAME2 was compiled with string deduplication disabled (-d-), and
 	# needs the inline assembly hint (-B) to avoid a wasteful compile restart.
-	tcc -m$(MODEL) -I$(INCLUDEDIR) -DEPISODE=$(EPISODE) -d- -B -c game2.c
+	tcc -m$(MODEL) -I$(INCLUDEDIR) -DEPISODE=$(EPISODE) -d- -B -c $*.c
 
 .c.obj:
 	tcc -m$(MODEL) -I$(INCLUDEDIR) -DEPISODE=$(EPISODE) -c $<
+
+$(OUTEXE): $(OBJS)
+	tlink /c /d /s $(OBJS), $<, , $(LIBDIR)\C$(LIBMODEL).LIB
