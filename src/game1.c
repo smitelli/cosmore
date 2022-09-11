@@ -3566,7 +3566,7 @@ void ActRedJumper(word index)
 
 #else
 #   pragma warn -aus
-#endif  /* ACT_RED_JUMPER */
+#endif  /* HAS_ACT_RED_JUMPER */
 }
 #pragma warn .aus
 
@@ -3585,7 +3585,7 @@ void ActBoss(word index)
 #   else
 #       define WIN_VAR winLevel
 #       define D5_VALUE 12
-#   endif
+#   endif  /* HARDER_BOSS */
 
     nextDrawMode = DRAWMODE_HIDDEN;
 
@@ -3819,7 +3819,7 @@ void ActBoss(word index)
 #   undef D5_VALUE
 #else
 #   pragma warn -aus
-#endif  /* ACT_BOSS */
+#endif  /* HAS_ACT_BOSS */
 }
 #pragma warn .aus
 
@@ -5503,7 +5503,7 @@ void ActFrozenDN(word index)
     }
 #else
 #   pragma warn -aus
-#endif  /* ACT_FROZEN_DN */
+#endif  /* HAS_ACT_FROZEN_DN */
 }
 #pragma warn .aus
 
@@ -7300,7 +7300,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             act->private2 == 0
 #ifdef HAS_ACT_BOSS
             && act->data5 != D5_VALUE
-#endif  /* ACT_BOSS */
+#endif  /* HAS_ACT_BOSS */
         ) {
             if (act->damagecooldown == 0 && PounceHelper(7)) {
                 StartSound(SND_PLAYER_POUNCE);
@@ -7775,7 +7775,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             isPlayerFalling = false;
         }
         return false;
-#endif  /* ACT_E2L1_EXIT_MOUTH */
+#endif  /* HAS_ACT_EXIT_MONSTER_N */
     }
 
     return false;

@@ -2546,7 +2546,7 @@ word UnfoldPlayerFrame(void)
 #else
 #   pragma warn -rvl
 #   pragma warn -use
-#endif  /* ACT_FROZEN_DN */
+#endif  /* HAS_ACT_FROZEN_DN */
 }
 #pragma warn .rvl
 #pragma warn .use
@@ -2567,7 +2567,7 @@ word UnfoldDNFrame(void)
 #else
 #   pragma warn -rvl
 #   pragma warn -use
-#endif  /* ACT_FROZEN_DN */
+#endif  /* HAS_ACT_FROZEN_DN */
 }
 #pragma warn .rvl
 #pragma warn .use
@@ -2638,7 +2638,7 @@ void ShowRescuedDNMessage(void)
     SelectDrawPage(!activePage);
 #else
 #   pragma warn -use
-#endif  /* ACT_FROZEN_DN */
+#endif  /* HAS_ACT_FROZEN_DN */
 }
 #pragma warn .use
 
