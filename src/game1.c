@@ -174,7 +174,7 @@ static Fountain fountains[MAX_FOUNTAINS];
 static Light lights[MAX_LIGHTS];
 static Actor actors[MAX_ACTORS];
 static Shard shards[MAX_SHARDS];
-static word explosions[MAX_EXPLOSIONS][sizeof(Explosion) / sizeof(word)];  /* this one's weird */
+static Explosion explosions[MAX_EXPLOSIONS];
 static Spawner spawners[MAX_SPAWNERS];
 static Decoration decorations[MAX_DECORATIONS];
 /* Holds each decoration's currently displayed frame. Why this isn't in the Decoration struct, who knows. */
@@ -6541,7 +6541,7 @@ void InitializeExplosions(void)
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        explosions[i][0] = 0;
+        explosions[i].age = 0;
     }
 }
 
@@ -6553,7 +6553,7 @@ void NewExplosion(word x, word y)
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        Explosion *ex = (Explosion *) explosions[i];
+        Explosion *ex = explosions + i;
 
         if (ex->age != 0) continue;
 
@@ -6575,7 +6575,7 @@ void DrawExplosions(void)
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        Explosion *ex = (Explosion *) explosions[i];
+        Explosion *ex = explosions + i;
 
         if (ex->age == 0) continue;
 
@@ -6615,8 +6615,9 @@ bool IsNearExplosion(word sprite, word frame, word x, word y)
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        if (*explosions[i] != 0) {
-            Explosion *ex = (Explosion *) explosions[i];
+        /* Basically explosions[i].age; had to write this garbage for parity */
+        if (**((word (*)[3]) explosions + i) != 0) {
+            Explosion *ex = explosions + i;
 
             if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x, y)) {
                 return true;
