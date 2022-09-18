@@ -2755,9 +2755,9 @@ temporarily re-enabled while this menu remains open.
 */
 void ShowSoundTest(void)
 {
+    word x;
     bool enabled = isSoundEnabled;
     dword soundnum = 1;
-    word x;
 
     isSoundEnabled = true;
 
@@ -2789,7 +2789,7 @@ void ShowSoundTest(void)
         }
 
         for (i = 0; i < 3; i++) {
-            EraseWaitSpinner(x + i + 14, 6);
+            EraseWaitSpinner(x + 14 + i, 6);
         }
     }
 }
