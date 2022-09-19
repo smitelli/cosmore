@@ -9336,7 +9336,7 @@ written with the state of the game when the level was last started.
 */
 void PromptSaveGame(void)
 {
-    byte lastkey;
+    byte scancode;
     word tmphealth, tmpbombs, tmplevel, tmpstars, tmpbars;
     dword tmpscore;
     word x = UnfoldTextFrame(8, 10, 28, "Save a game.", "Press ESC to quit.");
@@ -9344,13 +9344,14 @@ void PromptSaveGame(void)
     DrawTextLine(x, 11, " What game number (1-9)?");
     DrawTextLine(x, 13, " NOTE: Game is saved at");
     DrawTextLine(x, 14, " BEGINNING of level.");
-    lastkey = WaitSpinner(x + 24, 11);
+    scancode = WaitSpinner(x + 24, 11);
 
-    if (lastkey == SCANCODE_ESC || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
-        /* VOID */
+    if (scancode == SCANCODE_ESC || scancode == SCANCODE_SPACE || scancode == SCANCODE_ENTER) {
+        return;
+    }
 
-    } else if (lastkey >= SCANCODE_1 && lastkey < SCANCODE_0) {
-        DrawScancodeCharacter(x + 24, 11, lastkey);
+    if (scancode >= SCANCODE_1 && scancode < SCANCODE_0) {
+        DrawScancodeCharacter(x + 24, 11, scancode);
 
         tmphealth = playerHealth;
         tmpbombs = playerBombs;
@@ -9360,7 +9361,7 @@ void PromptSaveGame(void)
         tmpscore = gameScore;
 
         LoadGameState('T');
-        SaveGameState('1' + (lastkey - SCANCODE_1));
+        SaveGameState('1' + (scancode - SCANCODE_1));
 
         playerHealth = tmphealth;
         playerBombs = tmpbombs;
