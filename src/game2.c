@@ -763,6 +763,16 @@ byte StepWaitSpinner(word x, word y)
 Draw an animated wait spinner on the screen at x,y and wait indefinitely for a
 key to become pressed. When that happens, return the scancode of the key that is
 now down.
+
+NOTE: In most cases, this is a single-shot function, meaning that if a key is
+held down, its scancode will only be returned once here even though the keyboard
+is repeatedly sending the "make" code for the held key. An exception is the
+extended keys on the 101-key layout, which *can* repeat.
+
+The extended keys are sent as two bytes - E0h followed by the "make"/"break"
+scancode of the key it duplicates from the 84-key layout. This two-byte sequence
+repeats as long as the key is held down. This function erroneously reads each
+E0h byte as a "break" code and interprets the next <80h value as a new "make."
 */
 byte WaitSpinner(word x, word y)
 {
