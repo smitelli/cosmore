@@ -1908,9 +1908,7 @@ bbool PromptKeyBind(byte *target_var, word x, char *feedback)
     DrawTextLine(x + 4, 13, "Enter new key:");
     scancode = WaitSpinner(x + 18, 13);
 
-    if (scancode == SCANCODE_ESC) {
-        return true;
-    }
+    if (scancode == SCANCODE_ESC) return true;
 
     *target_var = scancode;
 
@@ -2703,11 +2701,9 @@ bbool PromptQuitConfirm(void)
     word x = UnfoldTextFrame(11, 4, 18, "Are you sure you", "want to quit? ");
     byte scancode = WaitSpinner(x + 14, 13);
 
-    if (scancode == SCANCODE_Y) {
-        return true;
-    } else {
-        return false;
-    }
+    if (scancode == SCANCODE_Y) return true;
+
+    return false;
 }
 
 /*

@@ -9305,19 +9305,20 @@ Present a UI for restoring a saved game, and return the result of the prompt.
 */
 byte PromptRestoreGame(void)
 {
-    byte lastkey;
+    byte scancode;
     word x = UnfoldTextFrame(11, 7, 28, "Restore a game.", "Press ESC to quit.");
 
     DrawTextLine(x, 14, " What game number (1-9)?");
-    lastkey = WaitSpinner(x + 24, 14);
+    scancode = WaitSpinner(x + 24, 14);
 
-    if (lastkey == SCANCODE_ESC || lastkey == SCANCODE_SPACE || lastkey == SCANCODE_ENTER) {
-        /* VOID */
+    if (scancode == SCANCODE_ESC || scancode == SCANCODE_SPACE || scancode == SCANCODE_ENTER) {
+        return RESTORE_GAME_ABORT;
+    }
 
-    } else if (lastkey >= SCANCODE_1 && lastkey < SCANCODE_0) {
-        DrawScancodeCharacter(x + 24, 14, lastkey);
+    if (scancode >= SCANCODE_1 && scancode < SCANCODE_0) {
+        DrawScancodeCharacter(x + 24, 14, scancode);
 
-        if (!LoadGameState('1' + (lastkey - SCANCODE_1))) {
+        if (!LoadGameState('1' + (scancode - SCANCODE_1))) {
             return RESTORE_GAME_NOT_FOUND;
         } else {
             return RESTORE_GAME_SUCCESS;
@@ -9602,9 +9603,7 @@ bbool ReadDemoFrame(void)
     winLevel =  (bool)(*(miscData + demoDataPos) & 0x40);
 
     demoDataPos++;
-    if (demoDataPos > demoDataLength) {
-        return true;
-    }
+    if (demoDataPos > demoDataLength) return true;
 
     return false;
 }
@@ -9691,9 +9690,7 @@ byte ProcessGameInput(byte demostate)
                 ToggleGodMode();
             }
 
-            if (isKeyDown[SCANCODE_W] && PromptLevelWarp()) {
-                return GAME_INPUT_RESTART;
-            }
+            if (isKeyDown[SCANCODE_W] && PromptLevelWarp()) return GAME_INPUT_RESTART;
 
             if (isKeyDown[SCANCODE_P]) {
                 StartSound(SND_PAUSE_GAME);
@@ -9774,9 +9771,7 @@ byte ProcessGameInput(byte demostate)
         }
 
         if (demostate == DEMOSTATE_RECORD) {
-            if (WriteDemoFrame()) {
-                return GAME_INPUT_QUIT;
-            }
+            if (WriteDemoFrame()) return GAME_INPUT_QUIT;
         }
     } else if (ReadDemoFrame()) {
         return GAME_INPUT_QUIT;
