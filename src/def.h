@@ -87,12 +87,12 @@ quitting the game or restarting the game loop on a new level.
 #define GAME_INPUT_RESTART      2
 
 /*
-In-game menu return states. Same idea as GAME_INPUT_*, except the values don't
-match up.
+In-game help menu return states. Same idea as GAME_INPUT_*, except the values
+don't match up.
 */
-#define GAME_MENU_CONTINUE      0
-#define GAME_MENU_RESTART       1
-#define GAME_MENU_QUIT          2
+#define HELP_MENU_CONTINUE      0
+#define HELP_MENU_RESTART       1
+#define HELP_MENU_QUIT          2
 
 /*
 Joystick identifiers. This game doesn't use joystick B, but some functionality

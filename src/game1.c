@@ -7874,7 +7874,7 @@ void MoveAndDrawActors(void)
 }
 
 /*
-Prepare the video hardware for the possibility of showing the in-game menu.
+Prepare the video hardware for the possibility of showing the in-game help menu.
 
 Eventually handles keyboard/joystick input, returning a status byte that
 indicates if the game should end or if a level change is needed.
@@ -9540,8 +9540,8 @@ getkey:
 #pragma warn .use
 
 /*
-Display the slimmed-down in-game menu. Returns a status byte that indicates if
-the game should continue, restart on a different level, or exit.
+Display the slimmed-down in-game help menu. Returns a status byte that indicates
+if the game should continue, restart on a different level, or exit.
 */
 byte ShowHelpMenu(void)
 {
@@ -9559,31 +9559,31 @@ byte ShowHelpMenu(void)
         switch (lastkey) {
         case SCANCODE_G:
             ShowGameRedefineMenu();
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         case SCANCODE_S:
             PromptSaveGame();
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         case SCANCODE_R:
             {  /* for scope */
                 byte result = PromptRestoreGame();
                 if (result == RESTORE_GAME_SUCCESS) {
                     SwitchLevel(levelNum);
-                    return GAME_MENU_RESTART;
+                    return HELP_MENU_RESTART;
                 } else if (result == RESTORE_GAME_NOT_FOUND) {
                     ShowRestoreGameError();
                 }
             }
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         case SCANCODE_V:
             ShowHighScoreTable();
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         case SCANCODE_Q:
-            return GAME_MENU_QUIT;
+            return HELP_MENU_QUIT;
         case SCANCODE_H:
             ShowHintsAndKeys(1);
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         case SCANCODE_ESC:
-            return GAME_MENU_CONTINUE;
+            return HELP_MENU_CONTINUE;
         }
     }
 }
@@ -9740,9 +9740,9 @@ byte ProcessGameInput(byte demostate)
             if (PromptQuitConfirm()) return GAME_INPUT_QUIT;
         } else if (isKeyDown[SCANCODE_F1]) {
             byte result = ShowHelpMenu();
-            if (result == GAME_MENU_RESTART) {
+            if (result == HELP_MENU_RESTART) {
                 return GAME_INPUT_RESTART;
-            } else if (result == GAME_MENU_QUIT) {
+            } else if (result == HELP_MENU_QUIT) {
                 if (PromptQuitConfirm()) return GAME_INPUT_QUIT;
             }
         } else if (isKeyDown[SCANCODE_P]) {
