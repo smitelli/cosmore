@@ -9386,13 +9386,13 @@ if the request was acceptable, or false if the input was bad or Esc was pressed.
 */
 bbool PromptLevelWarp(void)
 {
-#ifdef HAS_LEVEL_11
+#ifdef HAS_MAP_11
 #   define MAXMAP "13"
     word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 2, 3};
 #else
 #   define MAXMAP "12"
     word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 2, 3};
-#endif  /* HAS_LEVEL_11 */
+#endif  /* HAS_MAP_11 */
     char buffer[3];
     int x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-" MAXMAP "):");
 #undef MAXMAP

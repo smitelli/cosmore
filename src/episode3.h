@@ -40,5 +40,5 @@
 /* #define HAS_ACT_EXIT_MONSTER_N */
 /* #define HAS_ACT_FROZEN_DN */
 #define HAS_ACT_RED_JUMPER
-/* #define HAS_LEVEL_11 */
+/* #define HAS_MAP_11 */
 /* #define SHAREWARE */

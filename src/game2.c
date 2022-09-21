@@ -3601,7 +3601,7 @@ Present a text frame containing the "now entering level n" animation.
 */
 void ShowLevelIntro(word level_num)
 {
-    byte displayNums[] = {1, 2, 0, 0, 3, 4, 0, 0, 5, 6, 0, 0, 7, 8, 0, 0, 9, 10};
+    byte mapnums[] = {1, 2, 0, 0, 3, 4, 0, 0, 5, 6, 0, 0, 7, 8, 0, 0, 9, 10};
     word x;
 
     /* This never occurs */
@@ -3611,10 +3611,10 @@ void ShowLevelIntro(word level_num)
     WaitHard(20);
     StartSound(SND_ENTERING_LEVEL_NUM);
 
-    if (displayNums[level_num] == 10) {
-        DrawNumberFlushRight(x + 21, 8, (dword)displayNums[level_num]);
+    if (mapnums[level_num] == 10) {
+        DrawNumberFlushRight(x + 21, 8, (dword)mapnums[level_num]);
     } else {
-        DrawNumberFlushRight(x + 20, 8, (dword)displayNums[level_num]);
+        DrawNumberFlushRight(x + 20, 8, (dword)mapnums[level_num]);
     }
 }
 
