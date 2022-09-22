@@ -173,7 +173,7 @@ extern bbool isInGame;
 extern bool winGame;
 extern dword gameScore, gameStars;
 extern word miscDataContents;
-extern word playerHealth, playerMaxHealth, playerBombs;
+extern word playerHealth, playerHealthCells, playerBombs;
 extern byte demoState;
 extern word activePage;
 extern word gameTickCount;

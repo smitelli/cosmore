@@ -52,7 +52,7 @@ word miscDataContents = IMAGE_NONE;
 Player position and game interaction variables. Most of these are under direct
 or almost-direct control of the player.
 */
-word playerHealth, playerMaxHealth, playerBombs;
+word playerHealth, playerHealthCells, playerBombs;
 static word playerX, playerY, scrollX, scrollY;
 static word playerFaceDir, playerBombDir;
 static word playerBaseFrame = PLAYER_BASE_WEST;
@@ -7426,7 +7426,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             sawHealthHint = true;
             ShowHealthHint();
         }
-        if (playerHealth <= playerMaxHealth) {
+        if (playerHealth <= playerHealthCells) {
             playerHealth++;
             UpdateHealth();
             AddScore(100);
@@ -7488,7 +7488,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         NewActor(SPR_SCORE_EFFECT_12800, x, y);
         NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
         StartSound(SND_PRIZE);
-        if (playerMaxHealth < 5) playerMaxHealth++;
+        if (playerHealthCells < 5) playerHealthCells++;
         if (!sawHamburgerBubble) {
             NewActor(ACT_SPEECH_WHOA, playerX - 1, playerY - 5);
             sawHamburgerBubble = true;
@@ -9253,13 +9253,13 @@ bbool LoadGameState(char slot_char)
     gameStars = getw(fp);
     levelNum = getw(fp);
     playerBombs = getw(fp);
-    playerMaxHealth = getw(fp);
+    playerHealthCells = getw(fp);
     usedCheatCode = getw(fp);
     sawBombHint = getw(fp);
     pounceHintState = getw(fp);
     sawHealthHint = getw(fp);
 
-    checksum = playerHealth + (word)gameStars + levelNum + playerBombs + playerMaxHealth;
+    checksum = playerHealth + (word)gameStars + levelNum + playerBombs + playerHealthCells;
     if (getw(fp) != checksum) {
         ShowAlteredFileError();
         ExitClean();
@@ -9289,12 +9289,12 @@ void SaveGameState(char slot_char)
     putw((word)gameStars, fp);
     putw(levelNum, fp);
     putw(playerBombs, fp);
-    putw(playerMaxHealth, fp);
+    putw(playerHealthCells, fp);
     putw(usedCheatCode, fp);
     putw(true, fp);  /* bomb hint */
     putw(POUNCE_HINT_SEEN, fp);
     putw(true, fp);  /* health hint */
-    checksum = playerHealth + (word)gameStars + levelNum + playerBombs + playerMaxHealth;
+    checksum = playerHealth + (word)gameStars + levelNum + playerBombs + playerHealthCells;
     putw(checksum, fp);
 
     fclose(fp);
@@ -9358,7 +9358,7 @@ void PromptSaveGame(void)
         tmpbombs = playerBombs;
         tmpstars = (word)gameStars;
         tmplevel = levelNum;
-        tmpbars = playerMaxHealth;
+        tmpbars = playerHealthCells;
         tmpscore = gameScore;
 
         LoadGameState('T');
@@ -9369,7 +9369,7 @@ void PromptSaveGame(void)
         gameStars = tmpstars;
         levelNum = tmplevel;
         gameScore = tmpscore;
-        playerMaxHealth = tmpbars;
+        playerHealthCells = tmpbars;
 
         x = UnfoldTextFrame(7, 4, 20, "Game Saved.", "Press ANY key.");
         WaitSpinner(x + 17, 9);
@@ -9427,7 +9427,7 @@ byte TitleLoop(void)
 #endif  /* FOREIGN_ORDERS */
 
     word idlecount;
-    byte lastkey;
+    byte scancode;
     register word junk;  /* only here to tie up the SI register */
 
     isNewGame = false;
@@ -9452,8 +9452,8 @@ title:
         }
     }
 
-    lastkey = WaitForAnyKey();
-    if (lastkey == SCANCODE_Q || lastkey == SCANCODE_ESC) {
+    scancode = WaitForAnyKey();
+    if (scancode == SCANCODE_Q || scancode == SCANCODE_ESC) {
         if (PromptQuitConfirm()) ExitClean();
         goto title;
     }
@@ -9462,9 +9462,9 @@ title:
         DrawMainMenu();
 
 getkey:
-        lastkey = WaitSpinner(28, 20 + YSHIFT);
+        scancode = WaitSpinner(28, 20 + YSHIFT);
 
-        switch (lastkey) {
+        switch (scancode) {
         case SCANCODE_B:
         case SCANCODE_ENTER:
         case SCANCODE_SPACE:
@@ -9554,9 +9554,9 @@ byte ShowHelpMenu(void)
     DrawTextLine(x, 10, " Q)uit Game");
 
     for (;;) {
-        byte lastkey = WaitSpinner(29, 12);
+        byte scancode = WaitSpinner(29, 12);
 
-        switch (lastkey) {
+        switch (scancode) {
         case SCANCODE_G:
             ShowGameRedefineMenu();
             return HELP_MENU_CONTINUE;
@@ -9724,7 +9724,7 @@ byte ProcessGameInput(byte demostate)
             StartSound(SND_PAUSE_GAME);
             usedCheatCode = true;
             ShowCheatMessage();
-            playerMaxHealth = 5;
+            playerHealthCells = 5;
             playerBombs = 9;
             sawBombHint = true;
             playerHealth = 6;
@@ -10023,7 +10023,7 @@ void GameLoop(byte demostate)
             DrawTextLine(0, 0, debugBar);
             sprintf(debugBar,
                 "Score=%07lu Health=%u:%u Bomb=%u Star=%02lu",
-                gameScore, playerHealth - 1, playerMaxHealth, playerBombs, gameStars);
+                gameScore, playerHealth - 1, playerHealthCells, playerBombs, gameStars);
             DrawTextLine(0, 19, debugBar);
             sprintf(debugBar,
                 "CJ=%d CJL=%d iF=%d FT=%02d iR=%u iLJ=%u MN=%02u",
@@ -10455,7 +10455,7 @@ void InitializeGame(void)
 {
     gameScore = 0;
     playerHealth = 4;
-    playerMaxHealth = 3;
+    playerHealthCells = 3;
     levelNum = 0;
     playerBombs = 0;
     gameStars = 0;

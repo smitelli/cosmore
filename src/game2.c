@@ -1308,19 +1308,19 @@ void DrawStatusBarHealth(word x, word y)
 {
 #ifndef DEBUG_BAR
 
-    word bar;
+    word cell;
 
-    for (bar = 0; bar < playerMaxHealth; bar++) {
-        /* Why 8 if there are only 5 health bar spaces? Go replay DUKE1. */
-        if (bar >= 8) continue;
+    for (cell = 0; cell < playerHealthCells; cell++) {
+        /* Why 8 if there are only 5 health cell spaces? Go replay DUKE1. */
+        if (cell >= 8) continue;
 
-        if (playerHealth - 1 > bar) {
+        if (playerHealth - 1 > cell) {
             /* Each bar is made of 2 font characters stacked vertically */
-            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_1, x - bar, y);
-            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_1, x - bar, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_1, x - cell, y);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_1, x - cell, y + 1);
         } else {
-            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_0, x - bar, y);
-            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x - bar, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_0, x - cell, y);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x - cell, y + 1);
         }
     }
 
@@ -1895,16 +1895,16 @@ void DrawScancodeCharacter(word x, word y, byte scancode)
 
 /*
 Draw UI text (without frame) instructing the user to enter a new key to bind to
-the action described in the `feedback` text. `x` is used to position the text
+the action described in the `message` text. `x` is used to position the text
 horizontally. The typed scancode is written into `target_var` and *false* is
 returned. If the user cancels by pressing Esc, *true* is returned with no change
 to the target variable.
 */
-bbool PromptKeyBind(byte *target_var, word x, char *feedback)
+bbool PromptKeyBind(byte *target_var, word x, char *message)
 {
     byte scancode;
 
-    DrawTextLine(x + 4, 12, feedback);
+    DrawTextLine(x + 4, 12, message);
     DrawTextLine(x + 4, 13, "Enter new key:");
     scancode = WaitSpinner(x + 18, 13);
 
@@ -3494,7 +3494,7 @@ void AddScoreForSprite(word sprite_type)
 
 /*
 Clear the screen, redraw the status bar from the background image in memory,
-then redraw all the status bar number and health bar areas.
+then redraw all the status bar number and health areas.
 */
 void DrawStaticGameScreen(void)
 {
