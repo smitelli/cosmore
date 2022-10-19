@@ -29,6 +29,17 @@ OBJS=c0$(MODEL).obj main.obj game1.obj game2.obj lowlevel.obj
 The actual C implementation of all the assembly procedures is below:
 
 ```c
+/**
+ * Cosmore
+ * Copyright (c) 2020-2022 Scott Smitelli
+ *
+ * Based on COSMO{1..3}.EXE distributed with "Cosmo's Cosmic Adventure"
+ * Copyright (c) 1992 Apogee Software, Ltd.
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 #include "glue.h"
 
 static word drawPageNumber;
