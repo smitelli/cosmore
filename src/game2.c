@@ -2297,11 +2297,11 @@ page3:
     FadeOutCustom(1);
 
     x = UnfoldTextFrame(0, 24, 38, "Instructions  Page Three of Five", "Press PgUp or PgDn.  Esc to Exit.");
-    DrawTextLine(x,   4,  " Cosmo can jump onto attacking");
-    DrawTextLine(x,   6,  " creatures without being harmed.");
-    DrawTextLine(x,   8,  " This is also Cosmo's way of");
-    DrawTextLine(x,   10, " defending himself.");
-    DrawTextLine(x,   13, " Cosmo can also find and use bombs.");
+    DrawTextLine(x,     4,  " Cosmo can jump onto attacking");
+    DrawTextLine(x,     6,  " creatures without being harmed.");
+    DrawTextLine(x,     8,  " This is also Cosmo's way of");
+    DrawTextLine(x,     10, " defending himself.");
+    DrawTextLine(x,     13, " Cosmo can also find and use bombs.");
     DrawTextLine(x + 5, 18, "   \xFD""036");
     DrawTextLine(x + 5, 20, "         \xFD""024          \xFD""037");
     DrawTextLine(x + 5, 20, "   \xFE""118000         \xFE""057000         \xFE""024000");
@@ -2315,12 +2315,12 @@ page4:
     FadeOutCustom(1);
 
     x = UnfoldTextFrame(0, 24, 38, "Instructions  Page Four of Five", "Press PgUp or PgDn.  Esc to Exit.");
-    DrawTextLine(x,   5,  " Use the up and down arrow keys to");
-    DrawTextLine(x,   7,  " make Cosmo look up and down,");
-    DrawTextLine(x,   9,  " enabling him to see areas that");
-    DrawTextLine(x,   11, " might be off the screen.");
+    DrawTextLine(x,     5,  " Use the up and down arrow keys to");
+    DrawTextLine(x,     7,  " make Cosmo look up and down,");
+    DrawTextLine(x,     9,  " enabling him to see areas that");
+    DrawTextLine(x,     11, " might be off the screen.");
     DrawTextLine(x + 4, 18, "   \xFD""028                  \xFD""029");
-    DrawTextLine(x,   19, "      Up Key           Down Key");
+    DrawTextLine(x,     19, "      Up Key           Down Key");
     FadeInCustom(1);
 
     scancode = WaitSpinner(x + 35, 22);
