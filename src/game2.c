@@ -2519,8 +2519,9 @@ void ShowCopyright(void)
     DrawTextLine(x,      7,  "     Todd J Replogle");
     DrawTextLine(x + 11, 9,  "and");
     DrawTextLine(x,      11, "\xFD""027   Stephen A Hornback\xFD""004");
+
 #ifdef VANITY
-    DrawTextLine(x,      15, "Cosmore version " GAME_VERSION);
+    DrawTextLine(x,      13, "      Cosmore " GAME_VERSION);
 #else
     DrawTextLine(x,      13, "      Version " GAME_VERSION);
 #endif  /* VANITY */
