@@ -245,7 +245,7 @@ void StopMusic(void);
 void DrawScancodeCharacter(word x, word y, byte scancode);
 void ShiftPixelsVertically(byte *src, byte *dest, byte *temp);
 void ShiftPixelsHorizontally(byte *src, byte *dest);
-void ShowHintsAndKeys(word y);
+void ShowHintsAndKeys(word top);
 void ShowInstructions(void);
 void ShowPublisherBBS(void);
 #ifdef FOREIGN_ORDERS

@@ -2191,44 +2191,44 @@ change the vertical position on the screen. The in-game menu shows hints higher
 up so they clear the status bar, saving a redraw of that area when the hints are
 dismissed.
 */
-void ShowHintsAndKeys(word y)
+void ShowHintsAndKeys(word top)
 {
     word x;
-    word y1 = y - 1;
+    word y = top - 1;
 
-    x = UnfoldTextFrame(y, 18, 38, "Cosmic Hints", "Press ANY key.");
-    DrawTextLine(x, y1 + 4,  " * Usually jumping in the paths of");
-    DrawTextLine(x, y1 + 5,  "   bonus objects will lead you in");
-    DrawTextLine(x, y1 + 6,  "   the right direction.");
-    DrawTextLine(x, y1 + 8,  " * There are many secret bonuses in");
-    DrawTextLine(x, y1 + 9,  "   this game, such as bombing 15 of");
-    DrawTextLine(x, y1 + 10, "   the Eye Plants.  (Registered");
-    DrawTextLine(x, y1 + 11, "   players will get the full list.)");
-    DrawTextLine(x, y1 + 13, " * When clinging to a wall, tap the");
-    DrawTextLine(x, y1 + 14, "   jump key to let go and fall.  To");
-    DrawTextLine(x, y1 + 15, "   re-cling to the wall, push");
-    DrawTextLine(x, y1 + 16, "   yourself into the wall again.");
-    WaitSpinner(x + 35, y1 + 17);
+    x = UnfoldTextFrame(top, 18, 38, "Cosmic Hints", "Press ANY key.");
+    DrawTextLine(x, y + 4,  " * Usually jumping in the paths of");
+    DrawTextLine(x, y + 5,  "   bonus objects will lead you in");
+    DrawTextLine(x, y + 6,  "   the right direction.");
+    DrawTextLine(x, y + 8,  " * There are many secret bonuses in");
+    DrawTextLine(x, y + 9,  "   this game, such as bombing 15 of");
+    DrawTextLine(x, y + 10, "   the Eye Plants.  (Registered");
+    DrawTextLine(x, y + 11, "   players will get the full list.)");
+    DrawTextLine(x, y + 13, " * When clinging to a wall, tap the");
+    DrawTextLine(x, y + 14, "   jump key to let go and fall.  To");
+    DrawTextLine(x, y + 15, "   re-cling to the wall, push");
+    DrawTextLine(x, y + 16, "   yourself into the wall again.");
+    WaitSpinner(x + 35, y + 17);
 
-    x = UnfoldTextFrame(y, 18, 38, "Key Definition Screen", "");
-    DrawTextLine(x,      y1 + 4,  "                     Look");
-    DrawTextLine(x,      y1 + 5,  "                      UP");
-    DrawTextLine(x,      y1 + 7,  "              Walk            Walk");
-    DrawTextLine(x,      y1 + 8,  "  Jump  Drop  LEFT            RIGHT");
-    DrawTextLine(x,      y1 + 9,  "   UP   BOMB");
-    DrawTextLine(x,      y1 + 10, "                     \xFD""028");
-    DrawTextLine(x,      y1 + 11, "                     Look");
-    DrawTextLine(x,      y1 + 12, "                     DOWN");
-    DrawTextLine(x,      y1 + 13, "              \xFD""001                 \xFD""023");
-    DrawTextLine(x,      y1 + 14, "  \xFD""030      \xFD""037   \xFE""024000");
-    DrawTextLine(x,      y1 + 17, "                     \xFD""029");
-    DrawTextLine(x + 24, y1 + 7,  keyNames[scancodeNorth]);
-    DrawTextLine(x + 24, y1 + 14, keyNames[scancodeSouth]);
-    DrawTextLine(x + 14, y1 + 14, keyNames[scancodeWest]);
-    DrawTextLine(x + 30, y1 + 14, keyNames[scancodeEast]);
-    DrawTextLine(x + 2,  y1 + 15, keyNames[scancodeJump]);
-    DrawTextLine(x + 8,  y1 + 15, keyNames[scancodeBomb]);
-    WaitSpinner(x + 35, y1 + 17);
+    x = UnfoldTextFrame(top, 18, 38, "Key Definition Screen", "");
+    DrawTextLine(x,      y + 4,  "                     Look");
+    DrawTextLine(x,      y + 5,  "                      UP");
+    DrawTextLine(x,      y + 7,  "              Walk            Walk");
+    DrawTextLine(x,      y + 8,  "  Jump  Drop  LEFT            RIGHT");
+    DrawTextLine(x,      y + 9,  "   UP   BOMB");
+    DrawTextLine(x,      y + 10, "                     \xFD""028");
+    DrawTextLine(x,      y + 11, "                     Look");
+    DrawTextLine(x,      y + 12, "                     DOWN");
+    DrawTextLine(x,      y + 13, "              \xFD""001                 \xFD""023");
+    DrawTextLine(x,      y + 14, "  \xFD""030      \xFD""037   \xFE""024000");
+    DrawTextLine(x,      y + 17, "                     \xFD""029");
+    DrawTextLine(x + 24, y + 7,  keyNames[scancodeNorth]);
+    DrawTextLine(x + 24, y + 14, keyNames[scancodeSouth]);
+    DrawTextLine(x + 14, y + 14, keyNames[scancodeWest]);
+    DrawTextLine(x + 30, y + 14, keyNames[scancodeEast]);
+    DrawTextLine(x + 2,  y + 15, keyNames[scancodeJump]);
+    DrawTextLine(x + 8,  y + 15, keyNames[scancodeBomb]);
+    WaitSpinner(x + 35, y + 17);
 
     x = UnfoldTextFrame(4, 11, 34, "During the game, you can...", "Press ANY key.");
     DrawTextLine(x, 7,  " Press 'P' to PAUSE GAME");
