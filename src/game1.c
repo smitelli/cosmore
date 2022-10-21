@@ -9790,7 +9790,7 @@ player's score.
 void ShowStarBonus(void)
 {
     register word stars;
-    word rank = 0;
+    word i = 0;
 
     StopMusic();
 
@@ -9832,7 +9832,8 @@ void ShowStarBonus(void)
         StartSound(SND_BIG_PRIZE);
         DrawNumberFlushRight(29, 12, gameScore);
 
-        if (rank / 6 < 13) rank++;
+        /* Increment i for each star collected, stopping at 78 */
+        if (i / 6 < 13) i++;
 
         for (x = 0; x < 16; x++) {
             if (x < 7) {
@@ -9840,7 +9841,7 @@ void ShowStarBonus(void)
                 DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, 22 + x, 7);
             }
 
-            if (rank % 8 == 1) {
+            if (i % 8 == 1) {
                 /* Clear rank area -- needed because letter chars have transparency */
                 DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, 13 + x, 14);
             }
@@ -9851,9 +9852,13 @@ void ShowStarBonus(void)
         /*
         BUG: Due to differences in division (6 vs. 8), "Radical!", "Incredible",
         and "Towering" never display in the game.
+
+        NOTE: If the player collected 78 or more stars, `i / 6` indexes past the
+        end of `starBonusRanks[]`. This doesn't cause trouble because `i` is
+        capped at 78, and 78 % 8 is never 1.
         */
-        if (rank % 8 == 1) {
-            DrawTextLine(13, 14, starBonusRanks[rank / 6]);
+        if (i % 8 == 1) {
+            DrawTextLine(13, 14, starBonusRanks[i / 6]);
         }
     }
 
