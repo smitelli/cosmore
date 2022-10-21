@@ -3233,55 +3233,70 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 8, "\xFC""003 key to reread them.");
         WaitSpinner(x + 25, 11);
         break;
+
     case 1:
         DrawTextLine(x, 5, "\xFC""003 Bump head into switch");
         DrawTextLine(x, 6, "\xFC""003 above!");
         break;
+
     case 2:
         DrawTextLine(x, 5, "\xFC""003 The ice in this cave is");
         DrawTextLine(x, 6, "\xFC""003 very, very slippery.");
         break;
+
     case 3:
         DrawTextLine(x, 5, "\xFC""003 Use this shield for");
         DrawTextLine(x, 6, "\xFC""003 temporary invincibility.");
         break;
+
     case 4:
         DrawTextLine(x, 5, "\xFC""003 You found a secret");
         DrawTextLine(x, 6, "\xFC""003 area!!!  Good job!");
         break;
+
     case 5:
         DrawTextLine(x, 5, "\xFC""003 In high places look up");
         DrawTextLine(x, 6, "\xFC""003 to find bonus objects.");
         break;
+
     case 6:
         DrawTextLine(x, 5, "\xFC""003      Out of Order...");
         break;
+
     case 7:
         DrawTextLine(x, 5, "\xFC""003 This might be a good");
         DrawTextLine(x, 6, "\xFC""003 time to save your game!");
         break;
+
     case 8:
         DrawTextLine(x, 5, "\xFC""003 Press your up key to");
         DrawTextLine(x, 6, "\xFC""003 use the transporter.");
         break;
+
     case 9:
         DrawTextLine(x, 5, "\xFC""003  (1) FOR...");
         break;
+
     case 10:
         DrawTextLine(x, 5, "\xFC""003  (2) EXTRA...");
         break;
+
     case 11:
         DrawTextLine(x, 5, "\xFC""003  (3) POINTS,...");
         break;
+
     case 12:
         DrawTextLine(x, 5, "\xFC""003  (4) DESTROY...");
         break;
+
     case 13:
         DrawTextLine(x, 5, "\xFC""003  (5) HINT...");
         break;
+
     case 14:
         DrawTextLine(x, 5, "\xFC""003  (6) GLOBES!!!");
         break;
+
     case 15:
         x = UnfoldTextFrame(2, 11, 28, "COSMIC HINT!", "Press any key to exit.");
         DrawTextLine(x + 22, 8, "\xFE""083000");
@@ -3291,6 +3306,7 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 7, "\xFC""003  mouths are closed.");
         WaitSpinner(x + 25, 11);
         break;
+
     case 16:
         x = UnfoldTextFrame(2, 10, 28, "COSMIC HINT!", "Press any key to exit.");
         DrawTextLine(x, 9, " Press SPACE to hurry or");
@@ -3300,6 +3316,7 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 7, "\xFC""003  STAGES.");
         WaitSpinner(x + 25, 10);
         break;
+
     case 17:
         x = UnfoldTextFrame(2, 10, 28, "COSMIC HINT!", "Press any key to exit.");
         DrawTextLine(x, 9, " Press SPACE to hurry or");
@@ -3308,6 +3325,7 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 7, "\xFC""003  to defeat!");
         WaitSpinner(x + 25, 10);
         break;
+
     case 18:
         x = UnfoldTextFrame(2, 9, 30, "COSMIC HINT!", "Press any key to exit.");
         DrawTextLine(x + 25, 8, "\xFD""032");
@@ -3331,26 +3349,33 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 5, "\xFC""003 Look out for enemies");
         DrawTextLine(x, 6, "\xFC""003 from above!");
         break;
+
     case 1:
         DrawTextLine(x, 5, "\xFC""003    Don't...");
         break;
+
     case 2:
         DrawTextLine(x, 5, "\xFC""003    step...");
         break;
+
     case 3:
         DrawTextLine(x, 5, "\xFC""003    on...");
         break;
+
     case 4:
         DrawTextLine(x, 5, "\xFC""003    worms...");
         break;
+
     case 5:
         DrawTextLine(x, 5, "\xFC""003 There is a secret area");
         DrawTextLine(x, 6, "\xFC""003 in this level!");
         break;
+
     case 6:
         DrawTextLine(x, 5, "\xFC""003 You found the secret");
         DrawTextLine(x, 6, "\xFC""003 area.  Well done.");
         break;
+
     case 7:
         DrawTextLine(x, 5, "\xFC""003    Out of order.");
         break;
@@ -3366,24 +3391,30 @@ void ShowHintGlobeMessage(word hint_num)
         DrawTextLine(x, 5, "\xFC""003 Did you find the");
         DrawTextLine(x, 6, "\xFC""003 hamburger in this level?");
         break;
+
     case 1:
         DrawTextLine(x, 5, "\xFC""003 This hint globe being");
         DrawTextLine(x, 6, "\xFC""003 upgraded to a 80986.");
         break;
+
     case 2:
         DrawTextLine(x, 5, "\xFC""003 WARNING:  Robots shoot");
         DrawTextLine(x, 6, "\xFC""003 when the lights are on!");
         break;
+
     case 3:
         DrawTextLine(x, 5, "\xFC""003 There is a hidden scooter");
         DrawTextLine(x, 6, "\xFC""003 in this level.");
         break;
+
     case 4:
         DrawTextLine(x, 5, "\xFC""003 Did you find the");
         DrawTextLine(x, 6, "\xFC""003 hamburger in level 8!");
         break;
+
     case 5:
         DrawTextLine(x, 5, "\xFC""003   Out of order...!");
+        break;
     }
 
     WaitSpinner(x + 25, 9);
@@ -3599,6 +3630,7 @@ void ShowPounceHint(void)
 
 /*
 Present a text frame containing the "now entering level n" animation.
+NOTE: It is not safe to call this function with level_num > 17.
 */
 void ShowLevelIntro(word level_num)
 {

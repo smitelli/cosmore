@@ -1912,6 +1912,7 @@ void ActFootSwitch(word index)
             case ACT_SWITCH_PLATFORMS:
                 arePlatformsActive = true;
                 break;
+
             case ACT_SWITCH_MYSTERY_WALL:
                 mysteryWallTime = 4;  /* no significance; could've been bool */
                 if (!sawMysteryWallBubble) {
@@ -1919,9 +1920,11 @@ void ActFootSwitch(word index)
                     NewActor(ACT_SPEECH_WHOA, playerX - 1, playerY - 5);
                 }
                 break;
+
             case ACT_SWITCH_LIGHTS:
                 areLightsActive = true;
                 break;
+
             case ACT_SWITCH_FORCE_FIELD:
                 areForceFieldsActive = false;
                 break;
@@ -9859,7 +9862,7 @@ void ShowStarBonus(void)
 /*
 Show the intermission screen that bookends every bonus stage.
 */
-void ShowSectionIntermission(char *topline, char *bottomline)
+void ShowSectionIntermission(char *top_text, char *bottom_text)
 {
     word x;
 
@@ -9868,7 +9871,7 @@ void ShowSectionIntermission(char *topline, char *bottomline)
     SelectActivePage(0);
     ClearScreen();
 
-    x = UnfoldTextFrame(6, 4, 30, topline, bottomline);
+    x = UnfoldTextFrame(6, 4, 30, top_text, bottom_text);
     FadeIn();
     WaitSpinner(x + 27, 8);
 
@@ -9900,58 +9903,65 @@ void NextLevel(void)
             levelNum = 16;
             break;
         }
-    } else {
-        switch (levelNum) {
-        case 2:
-        case 6:
-        case 10:
-        case 14:
-        case 18:
-        case 22:
-        case 26:
-            levelNum++;
-            /* fall through! */
-        case 3:
-        case 7:
-        case 11:
-        case 15:
-        case 19:
-        case 23:
-        case 27:
-            ShowSectionIntermission("Bonus Level Completed!!", "Press ANY key.");
-            /* fall through! */
-        case 0:
-        case 4:
-        case 8:
-        case 12:
-        case 16:
-        case 20:
-        case 24:
-            levelNum++;
-            break;
-        case 1:
-        case 5:
-        case 9:
-        case 13:
-        case 17:
-        case 21:
-        case 25:
-            ShowSectionIntermission("Section Completed!", "Press ANY key.");
-            if (stars > 24) {
-                FadeOutCustom(0);
-                ClearScreen();
-                DrawFullscreenImage(IMAGE_BONUS);
-                StartSound(SND_BONUS_STAGE);
-                if (stars > 49) {
-                    levelNum++;
-                }
+
+        return;
+    }
+
+    switch (levelNum) {
+    case 2:
+    case 6:
+    case 10:
+    case 14:
+    case 18:
+    case 22:
+    case 26:
+        levelNum++;
+        /* fall through! */
+
+    case 3:
+    case 7:
+    case 11:
+    case 15:
+    case 19:
+    case 23:
+    case 27:
+        ShowSectionIntermission("Bonus Level Completed!!", "Press ANY key.");
+        /* fall through! */
+
+    case 0:
+    case 4:
+    case 8:
+    case 12:
+    case 16:
+    case 20:
+    case 24:
+        levelNum++;
+        break;
+
+    case 1:
+    case 5:
+    case 9:
+    case 13:
+    case 17:
+    case 21:
+    case 25:
+        ShowSectionIntermission("Section Completed!", "Press ANY key.");
+
+        if (stars > 24) {
+            FadeOutCustom(0);
+            ClearScreen();
+            DrawFullscreenImage(IMAGE_BONUS);
+            StartSound(SND_BONUS_STAGE);
+            if (stars > 49) {
                 levelNum++;
-                WaitHard(150);
-            } else {
-                levelNum += 3;
             }
-            break;
+            levelNum++;
+            WaitHard(150);
+        } else {
+            levelNum += 3;
         }
+
+        break;
     }
 }
 
