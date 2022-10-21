@@ -2743,7 +2743,7 @@ void ToggleMusic(void)
         x = UnfoldTextFrame(2, 4, 24, "Music Toggle", "The music is now ON!");
 
         SwitchMusic(activeMusic);
-        StartAdLibPlayback();
+        StartAdLibPlayback();  /* already happened in SwitchMusic() */
     } else {
         /* Minor BUG: last char gets cut off by the wait spinner */
         x = UnfoldTextFrame(2, 4, 24, "Music Toggle", "The music is now OFF!");
@@ -2814,7 +2814,7 @@ void ShowPauseMessage(void)
 
     if (isMusicEnabled) {
         SwitchMusic(activeMusic);
-        StartAdLibPlayback();
+        StartAdLibPlayback();  /* already happened in SwitchMusic() */
     }
 }
 
