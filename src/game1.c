@@ -9790,18 +9790,19 @@ player's score.
 void ShowStarBonus(void)
 {
     register word stars;
-    register word x;
     word rank = 0;
 
     StopMusic();
 
     if (gameStars == 0) {
+        /* Fade-out is desired when we're coming from ShowEnding().
+        From ShowSectionIntermission() it's not needed because the caller fades
+        out on return. */
         FadeOut();
         return;
     }
 
     FadeToWhite(3);
-
     SelectDrawPage(0);
     SelectActivePage(0);
     ClearScreen();
@@ -9810,20 +9811,22 @@ void ShowStarBonus(void)
     DrawSprite(SPR_STAR, 2, 8, 8, DRAWMODE_ABSOLUTE);
     DrawTextLine(14, 7, "X 1000 =");
     DrawNumberFlushRight(27, 7, gameStars * 1000);
-    WaitHard(50);
+    WaitHard(50);  /* nothing is visible during this delay! */
     DrawTextLine(10, 12, "YOUR SCORE =  ");
     DrawNumberFlushRight(29, 12, gameScore);
     FadeIn();
     WaitHard(100);
 
     for (stars = (word)gameStars; stars > 0; stars--) {
+        register word x;
+
         gameScore += 1000;
 
         WaitHard(15);
 
         for (x = 0; x < 7; x++) {
             /* Clear score area -- not strictly needed, numbers grow and are opaque */
-            DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 23, 12);
+            DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, 23 + x, 12);
         }
 
         StartSound(SND_BIG_PRIZE);
@@ -9834,12 +9837,12 @@ void ShowStarBonus(void)
         for (x = 0; x < 16; x++) {
             if (x < 7) {
                 /* Clear x1000 area -- needed as the number of digits shrinks */
-                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 22, 7);
+                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, 22 + x, 7);
             }
 
             if (rank % 8 == 1) {
-                /* Clear rank area */
-                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x + 13, 14);
+                /* Clear rank area -- needed because letter chars have transparency */
+                DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, 13 + x, 14);
             }
         }
 
