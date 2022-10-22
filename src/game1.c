@@ -9795,9 +9795,7 @@ void ShowStarBonus(void)
     StopMusic();
 
     if (gameStars == 0) {
-        /* Fade-out is desired when we're coming from ShowEnding().
-        From ShowSectionIntermission() it's not needed because the caller fades
-        out on return. */
+        /* Fade-out is not necessary; every caller fades after this returns. */
         FadeOut();
         return;
     }
