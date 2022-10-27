@@ -3428,7 +3428,7 @@ Display a text frame informing the player that they have cheated.
 */
 void ShowCheatMessage(void)
 {
-    word x = UnfoldTextFrame(3, 9, 32, "You are now cheating!", "Press ANY key.");;
+    word x = UnfoldTextFrame(3, 9, 32, "You are now cheating!", "Press ANY key.");
     DrawTextLine(x, 6, "  You have been awarded full");
     DrawTextLine(x, 7, " health and maximum amount of");
     DrawTextLine(x, 8, "            bombs!");

@@ -709,8 +709,7 @@ void DrawMapRegion(void)
     */
     word bdAddress = BACKDROP_0_0_ADDRESS - SOLID_TILES_BASE_ADDRESS;
 
-
-    /***************************************************************************
+    /*
     How the parallax scrolling works
 
     The backdrop scrolls in steps of 4 pixels, while the rest of the gameworld
@@ -850,8 +849,7 @@ void DrawMapRegion(void)
     Calculating the base index still requires modulo operations, but we only
     need to do this once before the loop that draws all map/backdrop tiles.
     Within the loop, we only need to do table lookups and additions.
-    ***************************************************************************/
-
+    */
 
     if (hasHScrollBackdrop) {
         if (scrollX % 2 != 0) {
