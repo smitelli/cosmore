@@ -220,7 +220,7 @@ void StartAdLib(void);
 void StopAdLib(void);
 void WaitHard(word delay);
 void WaitSoft(word delay);
-void FadeToWhite(word delay);
+void FadeWhiteCustom(word delay);
 void FadeOutCustom(word delay);
 void FadeIn(void);
 void FadeOut(void);

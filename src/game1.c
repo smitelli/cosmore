@@ -9798,7 +9798,7 @@ void ShowStarBonus(void)
         return;
     }
 
-    FadeToWhite(3);
+    FadeWhiteCustom(3);
     SelectDrawPage(0);
     SelectActivePage(0);
     ClearScreen();

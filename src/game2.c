@@ -684,7 +684,7 @@ void FadeInCustom(word delay)
 Fill the screen with white, one palette register at a time. Wait `delay` timer
 ticks between each step.
 */
-void FadeToWhite(word delay)
+void FadeWhiteCustom(word delay)
 {
     word reg;
 
@@ -3020,7 +3020,7 @@ void ShowEnding(void)
     DrawFullscreenImage(IMAGE_END);
     WaitSpinner(39, 24);
 
-    FadeToWhite(4);
+    FadeWhiteCustom(4);
     ClearScreen();
 
     x = UnfoldTextFrame(1, 24, 38, "", "Press ANY key.");
@@ -3080,7 +3080,7 @@ void ShowEnding(void)
     DrawTextLine(x + 1, 21, "\xFC""003   parents before it's too late!");
     WaitSpinner(37, 21);
 
-    FadeToWhite(4);
+    FadeWhiteCustom(4);
     ClearScreen();
 
     x = UnfoldTextFrame(6, 4, 24, "Thank you", " for playing!");
@@ -3190,7 +3190,7 @@ void ShowEnding(void)
     StartMenuMusic(MUSIC_ZZTOP);
     WaitSpinner(x + 21, 1);
 
-    FadeToWhite(4);
+    FadeWhiteCustom(4);
 
     x = UnfoldTextFrame(0, 5, 24, "Cosmo has the best", "The End!");
     DrawTextLine(x + 1, 2, "birthday of his life.");
