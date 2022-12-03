@@ -3527,11 +3527,19 @@ void AddScoreForSprite(word sprite_type)
 /*
 Clear the screen, redraw the status bar from the background image in memory,
 then redraw all the status bar number and health areas.
+
+NOTE regarding the `src` address: DrawSolidTile() interprets the source offset
+given to it as relative to the start of the area of video memory which is used
+to hold solid tiles, so it adds an offset of `EGA_OFFSET_SOLID_TILES` to it. But
+CopyTilesToEGA() uses absolute addresses (i.e., relative to the start of video
+memory). This means we need to adjust our status bar tile addresses, which are
+given as absolute addresses, before we can use them as arguments to
+DrawSolidTile().
 */
 void DrawStaticGameScreen(void)
 {
     word x, y;
-    word src = 0x4000;
+    word src = EGA_OFFSET_STATUS_TILES - EGA_OFFSET_SOLID_TILES;
 
     ClearScreen();
 

@@ -22,14 +22,8 @@
 
 #include "glue.h"
 
-#define SOLID_TILES_BASE_ADDRESS  0x4000
-#define STATUS_TILES_ADDRESS      0x8000
-#define BACKDROP_0_0_ADDRESS      0xa300
-#define BACKDROP_4_0_ADDRESS      0xb980
-#define BACKDROP_0_4_ADDRESS      0xd000
-#define BACKDROP_4_4_ADDRESS      0xe680
-#define BACKDROP_SIZE_BYTES       0x5a00
-#define BACKDROP_SIZE_VMEM        0x1680
+#define BACKDROP_SIZE_BYTES     0x5a00
+#define BACKDROP_SIZE_VMEM      BACKDROP_SIZE_BYTES / 4
 
 /*
 Overarching game control variables.
@@ -701,13 +695,13 @@ void DrawMapRegion(void)
     /*
     DrawSolidTile interprets the source offset given to it as relative to the
     start of the area of video memory which is used to hold solid tiles (and
-    backdrops), so it adds an offset of SOLID_TILES_BASE_ADDRESS to it. But
+    backdrops), so it adds an offset of EGA_OFFSET_SOLID_TILES to it. But
     CopyTilesToEGA uses absolute addresses (i.e., relative to the start of
     video memory). This means we need to adjust our backdrop addresses, which
     are given as absolute addresses, before we can use them as arguments to
     DrawSolidTile.
     */
-    word bdAddress = BACKDROP_0_0_ADDRESS - SOLID_TILES_BASE_ADDRESS;
+    word bdAddress = EGA_OFFSET_BACKDROP_0_0 - EGA_OFFSET_SOLID_TILES;
 
     /*
     How the parallax scrolling works
@@ -855,11 +849,11 @@ void DrawMapRegion(void)
         if (scrollX % 2 != 0) {
             /* If scrollX is odd, pick the version of the backdrop that's
             shifted to the left by 4 pixels. */
-            bdAddress = BACKDROP_4_0_ADDRESS - SOLID_TILES_BASE_ADDRESS;
+            bdAddress = EGA_OFFSET_BACKDROP_4_0 - EGA_OFFSET_SOLID_TILES;
         } else {
             /* This is redundant, since bdAddress was already initialized to
             this value in the variable declaration. */
-            bdAddress = BACKDROP_0_0_ADDRESS - SOLID_TILES_BASE_ADDRESS;
+            bdAddress = EGA_OFFSET_BACKDROP_0_0 - EGA_OFFSET_SOLID_TILES;
         }
     }
 
@@ -867,8 +861,8 @@ void DrawMapRegion(void)
 
     if (hasVScrollBackdrop && scrollY % 2 != 0) {
         /*
-        This offset turns BACKDROP_0_0_ADDRESS into BACKDROP_0_4_ADDRESS,
-        and BACKDROP_4_0_ADDRESS into BACKDROP_4_4_ADDRESS. This makes it so
+        This offset turns EGA_OFFSET_BACKDROP_0_0 into EGA_OFFSET_BACKDROP_0_4,
+        and EGA_OFFSET_BACKDROP_4_0 into EGA_OFFSET_BACKDROP_4_4. This makes it so
         that whenever scrollY is odd, a version of the backdrop is used that's
         shifted up by 4 pixels.
         */
@@ -8139,7 +8133,7 @@ void Startup(void)
 {
     /*
     Mode Dh is EGA/VGA 40x25 characters with an 8x8 pixel box.
-    320x200 graphics resolution, 16 color, 8 pages, A000 screen address
+    320x200 graphics resolution, 16 color, 8 pages, 0xA000 screen address
     */
     SetVideoMode(0x0d);
 
@@ -8199,10 +8193,10 @@ void Startup(void)
     actorTileData[2] = malloc((word)GroupEntryLength("ACTORS.MNI") + 2);
 
     LoadGroupEntryData("STATUS.MNI", actorTileData[0], 7296);
-    CopyTilesToEGA(actorTileData[0], 7296 / 4, STATUS_TILES_ADDRESS);
+    CopyTilesToEGA(actorTileData[0], 7296 / 4, EGA_OFFSET_STATUS_TILES);
 
     LoadGroupEntryData("TILES.MNI", actorTileData[0], 64000U);
-    CopyTilesToEGA(actorTileData[0], 64000U / 4, SOLID_TILES_BASE_ADDRESS);
+    CopyTilesToEGA(actorTileData[0], 64000U / 4, EGA_OFFSET_SOLID_TILES);
 
     LoadActorTileData("ACTORS.MNI");
 
@@ -10274,20 +10268,20 @@ void LoadBackdropData(char *entry_name, byte *scratch)
 
     /* Copy the unmodified backdrop. This is all we need if there is no
     backdrop scrolling. */
-    CopyTilesToEGA(scratch, BACKDROP_SIZE_VMEM, BACKDROP_0_0_ADDRESS);
+    CopyTilesToEGA(scratch, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_0_0);
 
     if (hasHScrollBackdrop) {
         /* To do horizontal backdrop scrolling, we need a copy of the backdrop
         shifted left by 4 pixels. */
         ShiftPixelsHorizontally(scratch, scratch + BACKDROP_SIZE_BYTES);
-        CopyTilesToEGA(scratch + BACKDROP_SIZE_BYTES, BACKDROP_SIZE_VMEM, BACKDROP_4_0_ADDRESS);
+        CopyTilesToEGA(scratch + BACKDROP_SIZE_BYTES, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_4_0);
     }
 
     if (hasVScrollBackdrop) {
         /* To do vertical backdrop scrolling, we need a copy of the backdrop
         shifted up by 4 pixels. */
-        ShiftPixelsVertically(scratch, miscData + 0x1388, scratch + 0xb400);
-        CopyTilesToEGA(miscData + 0x1388, BACKDROP_SIZE_VMEM, BACKDROP_0_4_ADDRESS);
+        ShiftPixelsVertically(scratch, miscData + 5000, scratch + 0xb400);
+        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_0_4);
 
         /*
         If horizontal scrolling is also enabled, we additionally need one that's
@@ -10295,17 +10289,17 @@ void LoadBackdropData(char *entry_name, byte *scratch)
         BACKDROP_SIZE_BYTES holds a copy of the backdrop that's already shifted
         to the left, which will be the case if hasHScrollBackdrop is also true,
         but not otherwise. This is also why the code just above uses miscData +
-        0x1388 to store the shifted copy of the backdrop, instead of using
+        5000 to store the shifted copy of the backdrop, instead of using
         scratch + BACKDROP_SIZE_BYTES as the horizontal version of this code
         does.
 
         If horizontal scrolling is not enabled, the game still does this, but it
         will end up writing whatever random garbage data. However, that doesn't
-        really cause any issues because BACKDROP_4_4_ADDRESS is never used if
+        really cause any issues because EGA_OFFSET_BACKDROP_4_4 is never used if
         horizontal scrolling is not enabled.
         */
-        ShiftPixelsVertically(scratch + BACKDROP_SIZE_BYTES, miscData + 0x1388, scratch + 0xb400);
-        CopyTilesToEGA(miscData + 0x1388, BACKDROP_SIZE_VMEM, BACKDROP_4_4_ADDRESS);
+        ShiftPixelsVertically(scratch + BACKDROP_SIZE_BYTES, miscData + 5000, scratch + 0xb400);
+        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_4_4);
     }
 
     fclose(fp);
