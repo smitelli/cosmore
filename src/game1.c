@@ -9906,7 +9906,7 @@ void NextLevel(void)
     }
 
     switch (levelNum) {
-    case 2:
+    case 2:  /* Lesser bonus levels... */
     case 6:
     case 10:
     case 14:
@@ -9914,9 +9914,9 @@ void NextLevel(void)
     case 22:
     case 26:
         levelNum++;
-        /* fall through! */
+        /* FALL THROUGH */
 
-    case 3:
+    case 3:  /* Better bonus levels... */
     case 7:
     case 11:
     case 15:
@@ -9924,9 +9924,9 @@ void NextLevel(void)
     case 23:
     case 27:
         ShowSectionIntermission("Bonus Level Completed!!", "Press ANY key.");
-        /* fall through! */
+        /* FALL THROUGH */
 
-    case 0:
+    case 0:  /* First levels in each section... */
     case 4:
     case 8:
     case 12:
@@ -9936,7 +9936,7 @@ void NextLevel(void)
         levelNum++;
         break;
 
-    case 1:
+    case 1:  /* Second levels in each section... */
     case 5:
     case 9:
     case 13:
@@ -9946,6 +9946,7 @@ void NextLevel(void)
         ShowSectionIntermission("Section Completed!", "Press ANY key.");
 
         if (stars > 24) {
+            /* Fade/clear not strictly needed */
             FadeOutCustom(0);
             ClearScreen();
             DrawFullscreenImage(IMAGE_BONUS);
