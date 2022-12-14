@@ -220,7 +220,7 @@ static bool isNewSound, enableSpeaker;
 Level/map control and global world flags.
 */
 static word levelNum, mapFlags, musicNum;
-static word mapWidth, mapHeight, mapYPower;  /* y power = map width expressed as 2^n. */
+static word mapWidth, maxScrollY, mapYPower;  /* y power = map width expressed as 2^n. */
 static bool hasLightSwitch, hasRain, hasHScrollBackdrop, hasVScrollBackdrop;
 static bool areForceFieldsActive, areLightsActive, arePlatformsActive;
 static byte paletteAnimationNum;
@@ -252,6 +252,9 @@ Inline functions.
 #define TILE_IN_FRONT(val)    (*(tileAttributeData + ((val) / 8)) & 0x20)
 #define TILE_SLOPED(val)      (*(tileAttributeData + ((val) / 8)) & 0x40)
 #define TILE_CAN_CLING(val)   (*(tileAttributeData + ((val) / 8)) & 0x80)
+
+/* Duplicate of MAP_CELL_DATA() that takes a shift expression to add to `x`. */
+#define MAP_CELL_DATA_SHIFTED(x, y, shift_expr) (*(mapData.w + (x) + ((y) << mapYPower) + shift_expr))
 
 /*
 Prototypes for "private" functions where strictly required.
@@ -857,7 +860,7 @@ void DrawMapRegion(void)
         }
     }
 
-    if (scrollY > mapHeight) scrollY = mapHeight;
+    if (scrollY > maxScrollY) scrollY = maxScrollY;
 
     if (hasVScrollBackdrop && scrollY % 2 != 0) {
         /*
@@ -1036,7 +1039,7 @@ word TestPlayerMove(word dir, word x, word y)
         break;
 
     case DIR4_SOUTH:
-        if (mapHeight + SCROLLH == playerY) return MOVE_FREE;
+        if (maxScrollY + SCROLLH == playerY) return MOVE_FREE;
 
         mapcell = MAP_CELL_ADDR(x, y);
 
@@ -1539,6 +1542,7 @@ void MovePlatforms(void)
         word newdir;
 
         for (x = 2; x < 7; x++) {
+            /* This is an ugly method of reading Platform.mapstash */
             SetMapTile(*((word *)plat + x), (plat->x + x) - 4, plat->y);
         }
 
@@ -1554,6 +1558,7 @@ void MovePlatforms(void)
         }
 
         for (x = 2; x < 7; x++) {
+            /* Again, now writing to Platform.mapstash */
             *((word *)plat + x) = GetMapTile((plat->x + x) - 4, plat->y);
         }
 
@@ -4075,8 +4080,8 @@ void ActTransporter(word index)
 
         if ((int) (playerY - 12) < 0) {
             scrollY = 0;
-        } else if (playerY - 12 > mapHeight) {
-            scrollY = mapHeight;
+        } else if (playerY - 12 > maxScrollY) {
+            scrollY = maxScrollY;
         } else {
             scrollY = playerY - 12;
         }
@@ -7789,7 +7794,7 @@ void ProcessActor(word index)
 
     if (act->dead) return;
 
-    if (act->y > mapHeight + SCROLLH + 3) {
+    if (act->y > maxScrollY + SCROLLH + 3) {
         act->dead = true;
         return;
     }
@@ -8957,7 +8962,7 @@ void MovePlayerScooter(void)
     } else if (cmdSouth && !cmdNorth) {
         playerFrame = PLAYER_LOOK_SOUTH;
 
-        if (mapHeight + 17 > playerY) playerY++;
+        if (maxScrollY + 17 > playerY) playerY++;
 
         if (TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1) != MOVE_FREE) {
             playerY--;
@@ -9076,11 +9081,11 @@ bbool DrawPlayerHelper(void)
 {
     static byte speechframe = 0;
 
-    if (mapHeight + SCROLLH + 3 < playerY && playerDeadTime == 0) {
+    if (maxScrollY + SCROLLH + 3 < playerY && playerDeadTime == 0) {
         playerFallDeadTime = 1;
         playerDeadTime = 1;
 
-        if (mapHeight + SCROLLH + 4 == playerY) {
+        if (maxScrollY + SCROLLH + 4 == playerY) {
             playerY++;
         }
 
@@ -10087,7 +10092,7 @@ regular actor type 0.
 
 The caller must provide the index for regular actors, which is convoluted.
 */
-void NewMapActor(word index, word map_actor, int x, int y)
+void NewMapActorAtIndex(word index, word map_actor, int x, int y)
 {
     if (map_actor < 32) {
         switch (map_actor) {
@@ -10154,17 +10159,19 @@ void NewMapActor(word index, word map_actor, int x, int y)
 
 /*
 Load data from a map file, initialize global state, and build all actors.
+
+This makes a waaay unsafe assumption about the Platform struct packing.
 */
 void LoadMapData(word level_num)
 {
     word i;
     word actorwords;
-    word a;
+    word t;  /* holds an actor's *T*ype OR a *T*ile's horizontal position */
     FILE *fp = GroupEntryFp(mapNames[level_num]);
 
     isCartoonDataLoaded = false;
 
-    getw(fp);  /* skip over flags */
+    getw(fp);  /* skip over map flags */
     mapWidth = getw(fp);
 
     switch (mapWidth) {
@@ -10191,7 +10198,7 @@ void LoadMapData(word level_num)
         break;
     }
 
-    actorwords = getw(fp);
+    actorwords = getw(fp);  /* total size of actor data, in words */
     numActors = 0;
     numPlatforms = 0;
     numFountains = 0;
@@ -10201,14 +10208,13 @@ void LoadMapData(word level_num)
 
     fread(mapData.w, actorwords, 2, fp);
 
-    for (i = 0; i < actorwords; i += 3) {
-        register word x;
-        register word y;
+    for (i = 0; i < actorwords; i += 3) {  /* each actor is 3 words long */
+        register word x, y;
 
-        a = *(mapData.w + i);
+        t = *(mapData.w + i);
         x = *(mapData.w + i + 1);
         y = *(mapData.w + i + 2);
-        NewMapActor(numActors, a, x, y);
+        NewMapActorAtIndex(numActors, t, x, y);
 
         if (numActors > MAX_ACTORS - 1) break;
     }
@@ -10217,14 +10223,16 @@ void LoadMapData(word level_num)
     fclose(fp);
 
     for (i = 0; i < numPlatforms; i++) {
-        for (a = 2; a < 7; a++) {
-            *((word *)(platforms + i) + a) =
-                *(mapData.w + platforms[i].x + (platforms[i].y << mapYPower) + a - 4);
+        for (t = 2; t < 7; t++) {
+            /* This is an ugly method of accessing Platform.mapstash */
+            *((word *)(platforms + i) + t) = MAP_CELL_DATA_SHIFTED(
+                platforms[i].x, platforms[i].y, t - 4
+            );
         }
     }
 
     levelNum = level_num;
-    mapHeight = (word)(0x10000L / (mapWidth * 2)) - (SCROLLH + 1);
+    maxScrollY = (word)(0x10000L / (mapWidth * 2)) - (SCROLLH + 1);
 }
 
 /*

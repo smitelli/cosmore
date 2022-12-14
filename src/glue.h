@@ -149,6 +149,8 @@ typedef struct {
 typedef struct {
     word x;
     word y;
+
+    /* This must begin at word offset 2; see LoadMapData(), MovePlatforms(). */
     word mapstash[5];
 } Platform;
 
