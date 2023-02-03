@@ -217,9 +217,9 @@ static word activeSoundIndex, activeSoundPriority;
 static bool isNewSound, enableSpeaker;
 
 /*
-Level/map control and global world flags.
+Level/map control and global world variables.
 */
-static word levelNum, mapFlags, musicNum;
+static word levelNum, mapVariables, musicNum;
 static word mapWidth, maxScrollY, mapYPower;  /* y power = map width expressed as 2^n. */
 static bool hasLightSwitch, hasRain, hasHScrollBackdrop, hasVScrollBackdrop;
 static bool areForceFieldsActive, areLightsActive, arePlatformsActive;
@@ -278,7 +278,7 @@ void SetPlayerPush(word, word, word, word, bool, bool);
 char *JoinPath(char *, char *);
 bbool LoadGameState(char);
 byte ProcessGameInput(byte);
-void SwitchLevel(word);
+void InitializeLevel(word);
 void InitializeGame(void);
 
 /*
@@ -9125,7 +9125,7 @@ bbool DrawPlayerHelper(void)
 
         if (playerFallDeadTime > 30) {
             LoadGameState('T');
-            SwitchLevel(levelNum);
+            InitializeLevel(levelNum);
             playerFallDeadTime = 0;
             return true;
         }
@@ -9170,7 +9170,7 @@ bbool DrawPlayerHelper(void)
 
         if (playerDeadTime > 36) {
             LoadGameState('T');
-            SwitchLevel(levelNum);
+            InitializeLevel(levelNum);
             return true;
         }
     }
@@ -9405,7 +9405,7 @@ bbool PromptLevelWarp(void)
     if (x >= 0 && x <= (sizeof levels / sizeof levels[0]) - 1) {
         levelNum = x;  /* no effect, next two calls both clobber this */
         LoadGameState('T');
-        SwitchLevel(levels[x]);
+        InitializeLevel(levels[x]);
 
         return true;
     }
@@ -9567,7 +9567,7 @@ byte ShowHelpMenu(void)
             {  /* for scope */
                 byte result = PromptRestoreGame();
                 if (result == RESTORE_GAME_SUCCESS) {
-                    SwitchLevel(levelNum);
+                    InitializeLevel(levelNum);
                     return HELP_MENU_RESTART;
                 } else if (result == RESTORE_GAME_NOT_FOUND) {
                     ShowRestoreGameError();
@@ -10075,7 +10075,7 @@ void GameLoop(byte demostate)
             winLevel = false;
             StartSound(SND_WIN_LEVEL);
             NextLevel();
-            SwitchLevel(levelNum);
+            InitializeLevel(levelNum);
         } else if (winGame) {
             break;
         }
@@ -10371,9 +10371,10 @@ void InitializePlayer(void)
 }
 
 /*
-Switch to a new level and perform all related tasks.
+Switch to a new level (or reload the current one) and perform all related
+initialization tasks.
 */
-void SwitchLevel(word level_num)
+void InitializeLevel(word level_num)
 {
     FILE *fp;
     word bdnum;
@@ -10387,17 +10388,17 @@ void SwitchLevel(word level_num)
     }
 
     fp = GroupEntryFp(mapNames[level_num]);
-    mapFlags = getw(fp);
+    mapVariables = getw(fp);
     fclose(fp);
 
     StopMusic();
 
-    hasRain = (bool)(mapFlags & 0x0020);
-    bdnum = mapFlags & 0x001f;
-    hasHScrollBackdrop = (bool)(mapFlags & 0x0040);
-    hasVScrollBackdrop = (bool)(mapFlags & 0x0080);
-    paletteAnimationNum = (byte)(mapFlags >> 8) & 0x07;
-    musicNum = (mapFlags >> 11) & 0x001f;
+    hasRain = (bool)(mapVariables & 0x0020);
+    bdnum = mapVariables & 0x001f;
+    hasHScrollBackdrop = (bool)(mapVariables & 0x0040);
+    hasVScrollBackdrop = (bool)(mapVariables & 0x0080);
+    paletteAnimationNum = (byte)(mapVariables >> 8) & 0x07;
+    musicNum = (mapVariables >> 11) & 0x001f;
 
     InitializePlayer();
 
@@ -10501,7 +10502,7 @@ void InnerMain(int argc, char *argv[])
     for (;;) {
         demoState = TitleLoop();
 
-        SwitchLevel(levelNum);
+        InitializeLevel(levelNum);
         LoadMaskedTileData("MASKTILE.MNI");
 
         if (demoState == DEMOSTATE_PLAY) {
