@@ -10441,8 +10441,8 @@ void InitializeLevel(word level_num)
     InitializeDecorations();
     ClearPlayerPush();
     InitializeSpawners();
-    ClearGameScreen();
 
+    ClearGameScreen();
     SelectDrawPage(activePage);
     activePage = !activePage;
     SelectActivePage(activePage);
