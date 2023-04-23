@@ -7876,22 +7876,22 @@ void MoveAndDrawActors(void)
 /*
 Prepare the video hardware for the possibility of showing the in-game help menu.
 
-Eventually handles keyboard/joystick input, returning a status byte that
+Eventually handles keyboard/joystick input, returning a result byte that
 indicates if the game should end or if a level change is needed.
 */
 byte ProcessGameInputHelper(word page, byte demo)
 {
-    byte status;
+    byte result;
 
     EGA_MODE_LATCHED_WRITE();
 
     SelectDrawPage(page);
 
-    status = ProcessGameInput(demo);
+    result = ProcessGameInput(demo);
 
     SelectDrawPage(!page);
 
-    return status;
+    return result;
 }
 
 /*
@@ -9415,7 +9415,7 @@ bbool PromptLevelWarp(void)
 
 /*
 Display the main title screen, credits (if the user waits long enough), and
-main menu options. Returns a status byte indicating which demo mode the game
+main menu options. Returns a result byte indicating which demo mode the game
 loop should run under.
 */
 byte TitleLoop(void)
@@ -9540,7 +9540,7 @@ getkey:
 #pragma warn .use
 
 /*
-Display the slimmed-down in-game help menu. Returns a status byte that indicates
+Display the slimmed-down in-game help menu. Returns a result byte that indicates
 if the game should continue, restart on a different level, or exit.
 */
 byte ShowHelpMenu(void)
@@ -9669,7 +9669,7 @@ void LoadDemoData(void)
 /*
 Read the state of the keyboard/joystick for the next iteration of the game loop.
 
-Returns a status byte that indicates if the game should end or if a level change
+Returns a result byte that indicates if the game should end or if a level change
 is needed.
 */
 byte ProcessGameInput(byte demostate)
@@ -9976,8 +9976,6 @@ won or the player quits.
 void GameLoop(byte demostate)
 {
     for (;;) {
-        word result;
-
         while (gameTickCount < 13)
             ;  /* VOID */
 
@@ -9985,9 +9983,11 @@ void GameLoop(byte demostate)
 
         AnimatePalette();
 
-        result = ProcessGameInputHelper(activePage, demostate);
-        if (result == GAME_INPUT_QUIT) return;
-        if (result == GAME_INPUT_RESTART) continue;
+        {  /* for scope */
+            word result = ProcessGameInputHelper(activePage, demostate);
+            if (result == GAME_INPUT_QUIT) return;
+            if (result == GAME_INPUT_RESTART) continue;
+        }
 
         MovePlayer();
 
