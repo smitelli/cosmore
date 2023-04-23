@@ -279,7 +279,7 @@ char *JoinPath(char *, char *);
 bbool LoadGameState(char);
 byte ProcessGameInput(byte);
 void InitializeLevel(word);
-void InitializeGame(void);
+void InitializeEpisode(void);
 
 /*
 Get the file size of the named group entry, in bytes.
@@ -9447,7 +9447,7 @@ title:
         }
 
         if (idlecount == 1200) {
-            InitializeGame();
+            InitializeEpisode();
             return DEMOSTATE_PLAY;
         }
     }
@@ -9468,7 +9468,7 @@ getkey:
         case SCANCODE_B:
         case SCANCODE_ENTER:
         case SCANCODE_SPACE:
-            InitializeGame();
+            InitializeEpisode();
             isNewGame = true;
             pounceHintState = POUNCE_HINT_UNSEEN;
             StartSound(SND_NEW_GAME);
@@ -9497,12 +9497,12 @@ getkey:
             break;
         case SCANCODE_F11:
             if (isDebugMode) {
-                InitializeGame();
+                InitializeEpisode();
                 return DEMOSTATE_RECORD;
             }
             break;
         case SCANCODE_D:
-            InitializeGame();
+            InitializeEpisode();
             return DEMOSTATE_PLAY;
         case SCANCODE_T:
             goto title;
@@ -9655,7 +9655,7 @@ void LoadDemoData(void)
     miscDataContents = IMAGE_DEMO;
 
     if (fp == NULL) {
-        /* These were already set in InitializeGame() */
+        /* These were already set in InitializeEpisode() */
         demoDataLength = 0;
         demoDataPos = 0;
     } else {
@@ -10315,10 +10315,10 @@ void LoadBackdropData(char *entry_name, byte *scratch)
 }
 
 /*
-Set all variables that pertain to the state of the player. These reset at the
-start of each level.
+Reset all of the global variables to prepare for (re)entry into a map. These are
+a mix of player movement variables, actor interactivity flags, and map state.
 */
-void InitializePlayer(void)
+void InitializeMapGlobals(void)
 {
     winGame = false;
     playerClingDir = DIR4_NONE;
@@ -10400,7 +10400,7 @@ void InitializeLevel(word level_num)
     paletteAnimationNum = (byte)(mapVariables >> 8) & 0x07;
     musicNum = (mapVariables >> 11) & 0x001f;
 
-    InitializePlayer();
+    InitializeMapGlobals();
 
     if (IsNewBackdrop(bdnum)) {
         LoadBackdropData(backdropNames[bdnum], mapData.b);
@@ -10466,10 +10466,10 @@ void InitializeLevel(word level_num)
 }
 
 /*
-Set all variables that pertain to the state of the game. These are set once at
-the beginning of the game and retain their values across levels.
+Set all variables that pertain to the state of the overarching game. These are
+set once at the beginning of each episode and retain their values across levels.
 */
-void InitializeGame(void)
+void InitializeEpisode(void)
 {
     gameScore = 0;
     playerHealth = 4;
