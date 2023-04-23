@@ -1,6 +1,6 @@
 ;**
 ;* Cosmore
-;* Copyright (c) 2020-2022 Scott Smitelli
+;* Copyright (c) 2020-2023 Scott Smitelli and contributors
 ;*
 ;* Based on COSMO{1..3}.EXE distributed with "Cosmo's Cosmic Adventure"
 ;* Copyright (c) 1992 Apogee Software, Ltd.
