@@ -94,7 +94,7 @@ static dword paletteStepCount;
 Player pain and death variables.
 */
 bool isGodMode = false;
-static bbool playerIsInvincible;
+static bbool isPlayerInvincible;
 static word playerHurtCooldown, playerDeadTime;
 static byte playerFallDeadTime = 0;
 
@@ -5283,7 +5283,7 @@ void ActInvincibilityBubble(word index)
     Actor *act = actors + index;
     byte frames[] = {0, 1, 2, 1};
 
-    playerIsInvincible = true;
+    isPlayerInvincible = true;
 
     act->data1++;
     act->frame = frames[act->data1 % 4];
@@ -5295,7 +5295,7 @@ void ActInvincibilityBubble(word index)
     if (act->data1 == 240) {
         act->dead = true;
         nextDrawMode = DRAWMODE_HIDDEN;
-        playerIsInvincible = false;
+        isPlayerInvincible = false;
     } else {
         act->x = playerX - 1;
         act->y = playerY + 1;
@@ -6848,7 +6848,7 @@ void HurtPlayer(void)
 {
     if (
         playerDeadTime != 0 || isGodMode || blockActionCmds || activeTransporter != 0 ||
-        playerIsInvincible || isPlayerInPipe || playerHurtCooldown != 0
+        isPlayerInvincible || isPlayerInPipe || playerHurtCooldown != 0
     ) return;
 
     playerClingDir = DIR4_NONE;
@@ -10347,11 +10347,11 @@ void InitializeMapGlobals(void)
 
     blockActionCmds = false;
     arePlatformsActive = true;
-    playerIsInvincible = false;
+    isPlayerInvincible = false;
     paletteStepCount = 0;
     randStepCount = 0;
-    playerFallDeadTime  = 0;
-    sawHurtBubble  = false;
+    playerFallDeadTime = 0;
+    sawHurtBubble = false;
     sawAutoHintGlobe = false;
     numBarrels = 0;
     numEyePlants = 0;
