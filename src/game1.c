@@ -59,12 +59,16 @@ static bool canPlayerCling, isPlayerNearHintGlobe, isPlayerNearTransporter;
 Player one-shot variables. Each of these controls the "happens only once"
 behavior of something in the game. Some are reset when a new level is started,
 others persist for the whole game (and into save files).
+
+In the case of the `saw*Bubble` variables, it appears the author believed that
+all of these were receiving an initial value, but only `sawHurtBubble` is
+actually initialized here.
 */
 static bbool sawAutoHintGlobe;
-static bool sawJumpPadBubble, sawMonumentBubble, sawScooterBubble;
-static bool sawTransporterBubble, sawPipeBubble, sawBossBubble;
-static bool sawPusherRobotBubble, sawBearTrapBubble, sawMysteryWallBubble;
-static bool sawTulipLauncherBubble, sawHamburgerBubble, sawHurtBubble = false;
+static bool sawJumpPadBubble, sawMonumentBubble, sawScooterBubble,
+    sawTransporterBubble, sawPipeBubble, sawBossBubble, sawPusherRobotBubble,
+    sawBearTrapBubble, sawMysteryWallBubble, sawTulipLauncherBubble,
+    sawHamburgerBubble, sawHurtBubble = false;
 static bool usedCheatCode, sawBombHint, sawHealthHint;
 static word pounceHintState;
 
