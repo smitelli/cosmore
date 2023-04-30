@@ -889,6 +889,10 @@ JoystickState ReadJoystickState(word stick)
     cmdNorth = false;
     cmdSouth = false;
 
+    /*
+    BUG: `blockMovementCmds` is not considered here; this allows the player to
+    walk/jump out of some situations that keyboard input would not permit.
+    */
     switch ((ymove * 3) + xmove) {
     case -4:
         cmdNorth = true;
@@ -1095,7 +1099,7 @@ void ShowJoystickConfiguration(word stick)
     /* Wait for all joystick buttons to be released */
     do {
         state = ReadJoystickState(stick);
-    } while (state.button1 == true || state.button2 == true);
+    } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     DrawTextLine(xframe, 6, " Hold the joystick in the");
     DrawTextLine(xframe, 7, " UPPER LEFT and press a");
@@ -1119,7 +1123,7 @@ void ShowJoystickConfiguration(word stick)
     /* Wait for all buttons to be released */
     do {
         state = ReadJoystickState(stick);
-    } while (state.button1 == true || state.button2 == true);
+    } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     DrawTextLine(xframe, 10, " Hold the joystick in the");
     DrawTextLine(xframe, 11, " BOTTOM RIGHT and press a");
@@ -1141,7 +1145,7 @@ void ShowJoystickConfiguration(word stick)
     /* Wait for all buttons to be released */
     do {
         state = ReadJoystickState(stick);
-    } while (state.button1 == true || state.button2 == true);
+    } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     /* The joystick must be 2/3 of the way to an edge to trigger a move */
     xthird = (righttime - lefttime) / 6;

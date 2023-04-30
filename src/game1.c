@@ -7883,17 +7883,17 @@ Prepare the video hardware for the possibility of showing the in-game help menu.
 Eventually handles keyboard/joystick input, returning a result byte that
 indicates if the game should end or if a level change is needed.
 */
-byte ProcessGameInputHelper(word page, byte demo)
+byte ProcessGameInputHelper(word activepage, byte demostate)
 {
     byte result;
 
     EGA_MODE_LATCHED_WRITE();
 
-    SelectDrawPage(page);
+    SelectDrawPage(activepage);
 
-    result = ProcessGameInput(demo);
+    result = ProcessGameInput(demostate);
 
-    SelectDrawPage(!page);
+    SelectDrawPage(!activepage);
 
     return result;
 }
@@ -9680,8 +9680,7 @@ byte ProcessGameInput(byte demostate)
 {
     if (demostate != DEMOSTATE_PLAY) {
         if (
-            isKeyDown[SCANCODE_TAB] &&
-            isKeyDown[SCANCODE_F12] &&
+            isKeyDown[SCANCODE_TAB] && isKeyDown[SCANCODE_F12] &&
             isKeyDown[SCANCODE_KP_DOT]  /* Del */
         ) {
             isDebugMode = !isDebugMode;
@@ -9694,7 +9693,9 @@ byte ProcessGameInput(byte demostate)
                 ToggleGodMode();
             }
 
-            if (isKeyDown[SCANCODE_W] && PromptLevelWarp()) return GAME_INPUT_RESTART;
+            if (isKeyDown[SCANCODE_W]) {
+                if (PromptLevelWarp()) return GAME_INPUT_RESTART;
+            }
 
             if (isKeyDown[SCANCODE_P]) {
                 StartSound(SND_PAUSE_GAME);
@@ -9710,20 +9711,14 @@ byte ProcessGameInput(byte demostate)
                 ShowMemoryUsage();
             }
 
-            if (
-                isKeyDown[SCANCODE_E] &&
-                isKeyDown[SCANCODE_N] &&
-                isKeyDown[SCANCODE_D]
-            ) {
+            if (isKeyDown[SCANCODE_E] && isKeyDown[SCANCODE_N] && isKeyDown[SCANCODE_D]) {
                 winGame = true;
             }
         }
 
         if (
-            isKeyDown[SCANCODE_C] &&
-            isKeyDown[SCANCODE_0] &&
-            isKeyDown[SCANCODE_F10] &&
-            usedCheatCode == false
+            isKeyDown[SCANCODE_C] && isKeyDown[SCANCODE_0] && isKeyDown[SCANCODE_F10] &&
+            !usedCheatCode
         ) {
             StartSound(SND_PAUSE_GAME);
             usedCheatCode = true;
@@ -9759,9 +9754,9 @@ byte ProcessGameInput(byte demostate)
 
     if (demostate != DEMOSTATE_PLAY) {
         if (!isJoystickReady) {
-            cmdWest  = isKeyDown[scancodeWest] >> (byte)blockMovementCmds;
-            cmdEast  = isKeyDown[scancodeEast] >> (byte)blockMovementCmds;
-            cmdJump  = isKeyDown[scancodeJump] >> (byte)blockMovementCmds;
+            cmdWest  = isKeyDown[scancodeWest] >> blockMovementCmds;
+            cmdEast  = isKeyDown[scancodeEast] >> blockMovementCmds;
+            cmdJump  = isKeyDown[scancodeJump] >> blockMovementCmds;
             cmdNorth = isKeyDown[scancodeNorth];
             cmdSouth = isKeyDown[scancodeSouth];
             cmdBomb  = isKeyDown[scancodeBomb];
