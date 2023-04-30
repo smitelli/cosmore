@@ -7019,6 +7019,8 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     register word height;
     register word offset;
 
+#define DO_POUNCE(recoil) (act->damagecooldown == 0 && PounceHelper(recoil))
+
     if (!IsSpriteVisible(sprite, frame, x, y)) return true;
 
     offset = *(actorInfoData + sprite) + (frame * 4);
@@ -7046,7 +7048,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_JUMP_PAD:
         if (act->data5 != 0) break;  /* ceiling-mounted */
 
-        if (act->damagecooldown == 0 && PounceHelper(40)) {
+        if (DO_POUNCE(40)) {
             StartSound(SND_PLAYER_POUNCE);
             if (!sawJumpPadBubble) {
                 sawJumpPadBubble = true;
@@ -7057,14 +7059,14 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_JUMP_PAD_ROBOT:
-        if (act->damagecooldown == 0 && PounceHelper(20)) {
+        if (DO_POUNCE(20)) {
             StartSound(SND_JUMP_PAD_ROBOT);
             act->data1 = 3;
         }
         return false;
 
     case SPR_CABBAGE:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             act->damagecooldown = 5;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAWMODE_WHITE;
@@ -7082,7 +7084,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
     case SPR_BASKET:
     case SPR_BARREL:
-        if (act->damagecooldown == 0 && PounceHelper(5)) {
+        if (DO_POUNCE(5)) {
             DestroyBarrel(index);
             AddScore(100);
             NewActor(ACT_SCORE_EFFECT_100, act->x, act->y);
@@ -7092,7 +7094,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
     case SPR_GHOST:
     case SPR_MOON:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             act->data5--;
@@ -7114,7 +7116,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_BABY_GHOST:
     case SPR_SUCTION_WALKER:
     case SPR_BIRD:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             StartSound(SND_PLAYER_POUNCE);
             act->dead = true;
             NewPounceDecoration(act->x, act->y);
@@ -7127,7 +7129,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
     case SPR_BABY_GHOST_EGG:
     case SPR_74:  /* probably for ACT_BABY_GHOST_EGG_PROX; never happens */
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             StartSound(SND_BGHOST_EGG_CRACK);
             if (act->data2 == 0) {
                 act->data2 = 10;
@@ -7138,7 +7140,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_PARACHUTE_BALL:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             StartSound(SND_PLAYER_POUNCE);
             act->data3 = 0;
             act->damagecooldown = 3;
@@ -7174,7 +7176,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_RED_JUMPER:
-        if (act->damagecooldown == 0 && PounceHelper(15)) {
+        if (DO_POUNCE(15)) {
             StartSound(SND_PLAYER_POUNCE);
             act->damagecooldown = 6;
             act->data5--;
@@ -7193,7 +7195,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_SPITTING_TURRET:
     case SPR_RED_CHOMPER:
     case SPR_PUSHER_ROBOT:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAWMODE_WHITE;
@@ -7212,7 +7214,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_PINK_WORM:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             AddScoreForSprite(SPR_PINK_WORM);
             StartSound(SND_PLAYER_POUNCE);
             NewPounceDecoration(act->x, act->y);
@@ -7225,7 +7227,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_SENTRY_ROBOT:
         if (
             ((!areLightsActive && hasLightSwitch) || (areLightsActive && !hasLightSwitch)) &&
-            act->damagecooldown == 0 && PounceHelper(15)
+            DO_POUNCE(15)
         ) {
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
@@ -7241,7 +7243,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
     case SPR_DRAGONFLY:
     case SPR_IVY_PLANT:
-        if (act->damagecooldown == 0 && PounceHelper(7)) {
+        if (DO_POUNCE(7)) {
             pounceStreak = 0;
             StartSound(SND_PLAYER_POUNCE);
             act->damagecooldown = 5;
@@ -7251,7 +7253,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return false;
 
     case SPR_ROCKET:
-        if (act->x == playerX && act->damagecooldown == 0 && PounceHelper(5)) {
+        if (act->x == playerX && DO_POUNCE(5)) {
             StartSound(SND_PLAYER_POUNCE);
         }
         return false;
@@ -7262,7 +7264,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             if (act->private2 == 0) {
                 isPlayerFalling = true;
                 isPounceReady = true;
-                act->damagecooldown == 0 && PounceHelper(20);
+                DO_POUNCE(20);
                 StartSound(SND_PLAYER_POUNCE);
                 blockMovementCmds = false;
                 blockActionCmds = false;
@@ -7306,7 +7308,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             && act->data5 != D5_VALUE
 #endif  /* HAS_ACT_BOSS */
         ) {
-            if (act->damagecooldown == 0 && PounceHelper(7)) {
+            if (DO_POUNCE(7)) {
                 StartSound(SND_PLAYER_POUNCE);
                 act->data5++;
                 act->private1 = 10;
@@ -7332,6 +7334,8 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         return true;
 #undef D5_VALUE
     }
+
+#undef DO_POUNCE
 
     if (!IsTouchingPlayer(sprite, frame, x, y)) {
         return false;
