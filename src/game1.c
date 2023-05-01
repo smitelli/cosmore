@@ -7887,17 +7887,17 @@ Prepare the video hardware for the possibility of showing the in-game help menu.
 Eventually handles keyboard/joystick input, returning a result byte that
 indicates if the game should end or if a level change is needed.
 */
-byte ProcessGameInputHelper(word activepage, byte demostate)
+byte ProcessGameInputHelper(word active_page, byte demo_state)
 {
     byte result;
 
     EGA_MODE_LATCHED_WRITE();
 
-    SelectDrawPage(activepage);
+    SelectDrawPage(active_page);
 
-    result = ProcessGameInput(demostate);
+    result = ProcessGameInput(demo_state);
 
-    SelectDrawPage(!activepage);
+    SelectDrawPage(!active_page);
 
     return result;
 }
@@ -9680,9 +9680,9 @@ Read the state of the keyboard/joystick for the next iteration of the game loop.
 Returns a result byte that indicates if the game should end or if a level change
 is needed.
 */
-byte ProcessGameInput(byte demostate)
+byte ProcessGameInput(byte demo_state)
 {
-    if (demostate != DEMO_STATE_PLAY) {
+    if (demo_state != DEMO_STATE_PLAY) {
         if (
             isKeyDown[SCANCODE_TAB] && isKeyDown[SCANCODE_F12] &&
             isKeyDown[SCANCODE_KP_DOT]  /* Del */
@@ -9756,7 +9756,7 @@ byte ProcessGameInput(byte demostate)
         return GAME_INPUT_QUIT;
     }
 
-    if (demostate != DEMO_STATE_PLAY) {
+    if (demo_state != DEMO_STATE_PLAY) {
         if (!isJoystickReady) {
             cmdWest  = isKeyDown[scancodeWest] >> blockMovementCmds;
             cmdEast  = isKeyDown[scancodeEast] >> blockMovementCmds;
@@ -9773,7 +9773,7 @@ byte ProcessGameInput(byte demostate)
             cmdNorth = cmdSouth = cmdBomb = false;
         }
 
-        if (demostate == DEMO_STATE_RECORD) {
+        if (demo_state == DEMO_STATE_RECORD) {
             if (WriteDemoFrame()) return GAME_INPUT_QUIT;
         }
     } else if (ReadDemoFrame()) {
@@ -9976,7 +9976,7 @@ void NextLevel(void)
 Run the game loop. This function does not return until the entire game has been
 won or the player quits.
 */
-void GameLoop(byte demostate)
+void GameLoop(byte demo_state)
 {
     for (;;) {
         while (gameTickCount < 13)
@@ -9987,7 +9987,7 @@ void GameLoop(byte demostate)
         AnimatePalette();
 
         {  /* for scope */
-            word result = ProcessGameInputHelper(activePage, demostate);
+            word result = ProcessGameInputHelper(activePage, demo_state);
             if (result == GAME_INPUT_QUIT) return;
             if (result == GAME_INPUT_RESTART) continue;
         }
@@ -10243,14 +10243,14 @@ Track the backdrop parameters (backdrop number and horizontal/vertical scroll
 flags) and return true if they have changed since the last call. Otherwise
 return false.
 */
-bbool IsNewBackdrop(word backdrop)
+bbool IsNewBackdrop(word backdrop_num)
 {
-    static word lastbd = WORD_MAX;
+    static word lastnum = WORD_MAX;
     static word lasth = WORD_MAX;
     static word lastv = WORD_MAX;
 
-    if (backdrop != lastbd || hasHScrollBackdrop != lasth || hasVScrollBackdrop != lastv) {
-        lastbd = backdrop;
+    if (backdrop_num != lastnum || hasHScrollBackdrop != lasth || hasVScrollBackdrop != lastv) {
+        lastnum = backdrop_num;
         lasth = hasHScrollBackdrop;
         lastv = hasVScrollBackdrop;
 
