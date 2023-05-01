@@ -350,11 +350,11 @@ void AnimatePalette(void)
     static byte lightningState = 0;
 
 #ifdef EXPLOSION_PALETTE
-    if (paletteAnimationNum == PALANIM_EXPLOSIONS) return;
+    if (paletteAnimationNum == PAL_ANIM_EXPLOSIONS) return;
 #endif  /* EXPLOSION_PALETTE */
 
     switch (paletteAnimationNum) {
-    case PALANIM_LIGHTNING:
+    case PAL_ANIM_LIGHTNING:
         if (lightningState == 2) {
             lightningState = 0;
             SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_DARKGRAY);
@@ -374,7 +374,7 @@ void AnimatePalette(void)
     /*
     Palette tables passed to StepPalette() must use COLORS, *not* MODE1_COLORS!
     */
-    case PALANIM_R_Y_W:  /* red-yellow-white */
+    case PAL_ANIM_R_Y_W:  /* red-yellow-white */
         {
             static byte rywTable[] = {
                 RED, RED, LIGHTRED, LIGHTRED, YELLOW, YELLOW, WHITE, WHITE,
@@ -385,7 +385,7 @@ void AnimatePalette(void)
         }
         break;
 
-    case PALANIM_R_G_B:  /* red-green-blue */
+    case PAL_ANIM_R_G_B:  /* red-green-blue */
         {
             static byte rgbTable[] = {
                 BLACK, BLACK, RED, RED, LIGHTRED, RED, RED,
@@ -397,7 +397,7 @@ void AnimatePalette(void)
         }
         break;
 
-    case PALANIM_MONO:  /* monochrome */
+    case PAL_ANIM_MONO:  /* monochrome */
         {
             static byte monoTable[] = {
                 BLACK, BLACK, DARKGRAY, LIGHTGRAY, WHITE, LIGHTGRAY, DARKGRAY,
@@ -408,7 +408,7 @@ void AnimatePalette(void)
         }
         break;
 
-    case PALANIM_W_R_M:  /* white-red-magenta */
+    case PAL_ANIM_W_R_M:  /* white-red-magenta */
         {
             static byte wrmTable[] = {
                 WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, RED, LIGHTMAGENTA,
@@ -468,7 +468,7 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
                 text[0] == 'n';  (also true!)
             */
             if (text[x] == '\xFD') {  /* draw player sprite */
-                DrawPlayer(sequence1, x_origin + x, y_origin, DRAWMODE_ABSOLUTE);
+                DrawPlayer(sequence1, x_origin + x, y_origin, DRAW_MODE_ABSOLUTE);
                 text += 4;
 
             } else if (text[x] == '\xFB') {  /* draw cartoon image */
@@ -487,7 +487,7 @@ void DrawTextLine(word x_origin, word y_origin, char *text)
                 lookahead[3] = '\0';
                 sequence2 = atoi(lookahead);
 
-                DrawSprite(sequence1, sequence2, x_origin + x, y_origin, DRAWMODE_ABSOLUTE);
+                DrawSprite(sequence1, sequence2, x_origin + x, y_origin, DRAW_MODE_ABSOLUTE);
                 text += 7;
             }
 
@@ -1202,23 +1202,23 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
     src = actorTileData[*(actorInfoData + offset + 3)] + *(actorInfoData + offset + 2);
 
     switch (mode) {
-    case DRAWMODE_NORMAL:
-    case DRAWMODE_IN_FRONT:
-    case DRAWMODE_ABSOLUTE:
+    case DRAW_MODE_NORMAL:
+    case DRAW_MODE_IN_FRONT:
+    case DRAW_MODE_ABSOLUTE:
         drawfn = DrawSpriteTile;
         break;
-    case DRAWMODE_WHITE:
+    case DRAW_MODE_WHITE:
         drawfn = DrawSpriteTileWhite;
         break;
-    case DRAWMODE_TRANSLUCENT:
+    case DRAW_MODE_TRANSLUCENT:
         drawfn = DrawSpriteTileTranslucent;
         break;
     }
 
     /* `mode` would go to ax if this was a switch, which doesn't happen */
-    if (mode == DRAWMODE_FLIPPED)  goto flipped;
-    if (mode == DRAWMODE_IN_FRONT) goto infront;
-    if (mode == DRAWMODE_ABSOLUTE) goto absolute;
+    if (mode == DRAW_MODE_FLIPPED)  goto flipped;
+    if (mode == DRAW_MODE_IN_FRONT) goto infront;
+    if (mode == DRAW_MODE_ABSOLUTE) goto absolute;
 
     y = (y_origin - height) + 1;
     for (;;) {
@@ -1325,21 +1325,21 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     EGA_MODE_DEFAULT();
 
     switch (mode) {
-    case DRAWMODE_NORMAL:
-    case DRAWMODE_IN_FRONT:
-    case DRAWMODE_ABSOLUTE:
+    case DRAW_MODE_NORMAL:
+    case DRAW_MODE_IN_FRONT:
+    case DRAW_MODE_ABSOLUTE:
         drawfn = DrawSpriteTile;
         break;
-    case DRAWMODE_WHITE:
+    case DRAW_MODE_WHITE:
         drawfn = DrawSpriteTileWhite;
         break;
-    case DRAWMODE_TRANSLUCENT:
+    case DRAW_MODE_TRANSLUCENT:
         /* never used in this game */
         drawfn = DrawSpriteTileTranslucent;
         break;
     }
 
-    if (mode != DRAWMODE_ABSOLUTE && (
+    if (mode != DRAW_MODE_ABSOLUTE && (
         playerPushFrame == PLAYER_HIDDEN ||
         activeTransporter != 0 ||
         playerHurtCooldown % 2 != 0 ||
@@ -1354,8 +1354,8 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     src = playerTileData + *(playerInfoData + offset + 2);
 
     /* `mode` would go to ax if this was a switch, which doesn't happen */
-    if (mode == DRAWMODE_IN_FRONT) goto infront;
-    if (mode == DRAWMODE_ABSOLUTE) goto absolute;
+    if (mode == DRAW_MODE_IN_FRONT) goto infront;
+    if (mode == DRAW_MODE_ABSOLUTE) goto absolute;
 
     for (;;) {
         if (
@@ -1662,10 +1662,10 @@ void DrawFountains(void)
         word y;
         Fountain *fnt = fountains + i;
 
-        DrawSprite(SPR_FOUNTAIN, slowcount % 2, fnt->x, fnt->y + 1, DRAWMODE_NORMAL);
+        DrawSprite(SPR_FOUNTAIN, slowcount % 2, fnt->x, fnt->y + 1, DRAW_MODE_NORMAL);
 
         for (y = 0; fnt->height + 1 > y; y++) {
-            DrawSprite(SPR_FOUNTAIN, (slowcount % 2) + 2, fnt->x + 1, fnt->y + y + 1, DRAWMODE_NORMAL);
+            DrawSprite(SPR_FOUNTAIN, (slowcount % 2) + 2, fnt->x + 1, fnt->y + y + 1, DRAW_MODE_NORMAL);
 
             if (IsTouchingPlayer(SPR_FOUNTAIN, 2, fnt->x + 1, fnt->y + y + 1)) {
                 HurtPlayer();
@@ -2010,7 +2010,7 @@ void ActJumpPad(word index)
     }
 
     if (act->data5 != 0) {
-        nextDrawMode = DRAWMODE_FLIPPED;
+        nextDrawMode = DRAW_MODE_FLIPPED;
 
         if (act->frame == 0) {
             act->y = act->data3;
@@ -2212,7 +2212,7 @@ void ActReciprocatingSpikes(word index)
     } else if (act->frame == 2 && act->data2 == 0) {
         act->data1 = 1;
         StartSound(SND_SPIKES_MOVE);
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
 
     } else if (act->data1 != 0) {
         if (act->frame > 0) act->frame--;
@@ -2222,7 +2222,7 @@ void ActReciprocatingSpikes(word index)
     }
 
     if (act->frame == 2) {
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 }
 
@@ -2265,16 +2265,16 @@ void ActBombArmed(word index)
         act->data2++;
         act->data1++;
         if (act->data1 % 2 != 0 && act->frame == 3) {
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
         }
 
         if (act->data2 == 10) {
             act->dead = true;
             NewPounceDecoration(act->x - 2, act->y + 2);
-            nextDrawMode = DRAWMODE_HIDDEN;
+            nextDrawMode = DRAW_MODE_HIDDEN;
             NewExplosion(act->x - 2, act->y);
             if (act->data1 % 2 != 0 && act->frame == 3) {
-                DrawSprite(SPR_BOMB_ARMED, act->frame, act->x, act->y, DRAWMODE_WHITE);
+                DrawSprite(SPR_BOMB_ARMED, act->frame, act->x, act->y, DRAW_MODE_WHITE);
             }
         }
     } else {
@@ -2451,7 +2451,7 @@ void ActFlyingWisp(word index)
             act->y--;
         }
 
-        nextDrawMode = DRAWMODE_FLIPPED;
+        nextDrawMode = DRAW_MODE_FLIPPED;
 
     } else if (act->data1 > 34) {
         if (act->data1 < 47) {
@@ -2535,7 +2535,7 @@ void ActTwoTonsCrusher(word index)
         HurtPlayer();
     }
 
-    DrawSprite(SPR_TWO_TONS_CRUSHER, 4, act->x - 1, act->y + 3, DRAWMODE_NORMAL);
+    DrawSprite(SPR_TWO_TONS_CRUSHER, 4, act->x - 1, act->y + 3, DRAW_MODE_NORMAL);
 }
 
 /*
@@ -2633,7 +2633,7 @@ void ActPyramid(word index)
     Actor *act = actors + index;
 
     if (act->data5 != 0) {  /* floor mounted */
-        nextDrawMode = DRAWMODE_FLIPPED;
+        nextDrawMode = DRAW_MODE_FLIPPED;
 
     } else if (act->data1 == 0) {
         if (act->y < playerY && act->x <= playerX + 6 && act->x + 5 > playerX) {
@@ -2645,7 +2645,7 @@ void ActPyramid(word index)
         act->dead = true;
         NewDecoration(SPR_SMOKE, 6, act->x, act->y, DIR8_NORTH, 3);
         StartSound(SND_BIG_OBJECT_HIT);
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 
     if (!act->dead) {
@@ -3025,7 +3025,7 @@ Pipe corner actors do not perform any meaningful action.
 */
 void ActPipeCorner(word index)
 {
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 #pragma warn -par
 }
 #pragma warn .par
@@ -3063,7 +3063,7 @@ void ActBabyGhostEgg(word index)
         act->data2--;
     } else if (act->data2 == 1) {
         act->dead = true;
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
 
         NewActor(ACT_BABY_GHOST, act->x, act->y);
         NewDecoration(SPR_BGHOST_EGG_SHARD_1, 1, act->x,     act->y - 1, DIR8_NORTHWEST, 5);
@@ -3170,10 +3170,10 @@ void ActParachuteBall(word index)
         if (act->fallspeed < 2) {
             act->frame = 1;  /* no purpose */
         } else if (act->fallspeed >= 2 && act->fallspeed <= 4) {
-            DrawSprite(SPR_PARACHUTE_BALL, 8, act->x, act->y - 2, DRAWMODE_NORMAL);
+            DrawSprite(SPR_PARACHUTE_BALL, 8, act->x, act->y - 2, DRAW_MODE_NORMAL);
         } else {
             act->y--;
-            DrawSprite(SPR_PARACHUTE_BALL, 9, act->x, act->y - 2, DRAWMODE_NORMAL);
+            DrawSprite(SPR_PARACHUTE_BALL, 9, act->x, act->y - 2, DRAW_MODE_NORMAL);
         }
 
         act->frame = 10;
@@ -3257,7 +3257,7 @@ void ActBeamRobot(word index)
     Actor *act = actors + index;
     int i;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (act->data2 != 0) {
         for (i = 0; act->data2 > i; i += 4) {
@@ -3293,7 +3293,7 @@ void ActBeamRobot(word index)
         }
     }
 
-    DrawSprite(SPR_BEAM_ROBOT, act->data5, act->x, act->y, DRAWMODE_NORMAL);
+    DrawSprite(SPR_BEAM_ROBOT, act->data5, act->x, act->y, DRAW_MODE_NORMAL);
     if (IsTouchingPlayer(SPR_BEAM_ROBOT, 0, act->x, act->y)) {
         HurtPlayer();
     }
@@ -3303,7 +3303,7 @@ void ActBeamRobot(word index)
     for (i = 2; i < 21; i++) {
         if (TestSpriteMove(DIR4_NORTH, SPR_BEAM_ROBOT, 2, act->x + 1, act->y - i) != MOVE_FREE) break;
 
-        DrawSprite(SPR_BEAM_ROBOT, (beamframe % 4) + 4, act->x + 1, act->y - i, DRAWMODE_NORMAL);
+        DrawSprite(SPR_BEAM_ROBOT, (beamframe % 4) + 4, act->x + 1, act->y - i, DRAW_MODE_NORMAL);
 
         if (IsTouchingPlayer(SPR_BEAM_ROBOT, 4, act->x + 1, act->y - i)) {
             HurtPlayer();
@@ -3311,7 +3311,7 @@ void ActBeamRobot(word index)
     }
     /* value left in i is used below! */
 
-    DrawSprite(SPR_BEAM_ROBOT, act->data5 + 2, act->x + 1, (act->y - i) + 1, DRAWMODE_NORMAL);
+    DrawSprite(SPR_BEAM_ROBOT, act->data5 + 2, act->x + 1, (act->y - i) + 1, DRAW_MODE_NORMAL);
 
     if (IsTouchingPlayer(SPR_BEAM_ROBOT, 0, act->x, act->y + 1)) {
         HurtPlayer();
@@ -3355,9 +3355,9 @@ void ActSplittingPlatform(word index)
         }
 
         if (act->data2 >= 5 && act->data2 < 8) {
-            nextDrawMode = DRAWMODE_HIDDEN;
-            DrawSprite(SPR_SPLITTING_PLATFORM, 1, act->x - (act->data2 - 5), act->y, DRAWMODE_NORMAL);
-            DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + act->data2) - 3, act->y, DRAWMODE_NORMAL);
+            nextDrawMode = DRAW_MODE_HIDDEN;
+            DrawSprite(SPR_SPLITTING_PLATFORM, 1, act->x - (act->data2 - 5), act->y, DRAW_MODE_NORMAL);
+            DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + act->data2) - 3, act->y, DRAW_MODE_NORMAL);
         }
 
         if (act->data2 == 7) {
@@ -3367,16 +3367,16 @@ void ActSplittingPlatform(word index)
     }
 
     if (act->data1 == 3) {
-        nextDrawMode = DRAWMODE_HIDDEN;
-        DrawSprite(SPR_SPLITTING_PLATFORM, 1, (act->x + act->data2) - 2, act->y, DRAWMODE_NORMAL);
-        DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + 4) - act->data2, act->y, DRAWMODE_NORMAL);
+        nextDrawMode = DRAW_MODE_HIDDEN;
+        DrawSprite(SPR_SPLITTING_PLATFORM, 1, (act->x + act->data2) - 2, act->y, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + 4) - act->data2, act->y, DRAW_MODE_NORMAL);
 
         if (act->private1 % 2 != 0) {
             act->data2++;
         }
 
         if (act->data2 == 3) {
-            nextDrawMode = DRAWMODE_NORMAL;
+            nextDrawMode = DRAW_MODE_NORMAL;
             SetMapTileRepeat(TILE_EMPTY, 4, act->x, act->y - 1);
             act->data1 = 0;
         }
@@ -3591,7 +3591,7 @@ void ActBoss(word index)
 #       define D5_VALUE 12
 #   endif  /* HARDER_BOSS */
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (!sawBossBubble) {
         sawBossBubble = true;
@@ -3627,8 +3627,8 @@ void ActBoss(word index)
         }
 
         if (act->private2 % 2 != 0) {
-            DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAWMODE_WHITE);
-            DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAWMODE_WHITE);
+            DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAW_MODE_WHITE);
+            DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAW_MODE_WHITE);
 
             if (act->private2 > 39) {
                 NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
@@ -3636,8 +3636,8 @@ void ActBoss(word index)
             }
 
         } else {
-            DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAWMODE_NORMAL);
-            DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAW_MODE_NORMAL);
+            DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAW_MODE_NORMAL);
         }
 
         return;
@@ -3647,11 +3647,11 @@ void ActBoss(word index)
         if (TestSpriteMove(DIR4_SOUTH, SPR_BOSS, 0, act->x, act->y + 1) == MOVE_FREE) {
             act->y++;
             if (act->y % 2 != 0) {
-                DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAWMODE_WHITE);
-                DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAWMODE_WHITE);
+                DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAW_MODE_WHITE);
+                DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAW_MODE_WHITE);
             } else {
-                DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAWMODE_NORMAL);
-                DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAWMODE_NORMAL);
+                DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAW_MODE_NORMAL);
+                DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAW_MODE_NORMAL);
             }
         }
 
@@ -3667,11 +3667,11 @@ void ActBoss(word index)
 
         act->private1--;
         if (act->private1 % 2 != 0) {
-            DrawSprite(SPR_BOSS, 0,     act->x, act->y,     DRAWMODE_WHITE);
-            DrawSprite(SPR_BOSS, frame, act->x, act->y - 4, DRAWMODE_WHITE);
+            DrawSprite(SPR_BOSS, 0,     act->x, act->y,     DRAW_MODE_WHITE);
+            DrawSprite(SPR_BOSS, frame, act->x, act->y - 4, DRAW_MODE_WHITE);
         } else {
-            DrawSprite(SPR_BOSS, 0,     act->x, act->y,     DRAWMODE_NORMAL);
-            DrawSprite(SPR_BOSS, frame, act->x, act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 0,     act->x, act->y,     DRAW_MODE_NORMAL);
+            DrawSprite(SPR_BOSS, frame, act->x, act->y - 4, DRAW_MODE_NORMAL);
         }
     }
 
@@ -3809,13 +3809,13 @@ void ActBoss(word index)
         DrawSprite(SPR_BOSS, 0, act->x, act->y, 0);
 
         if (act->data5 < 4) {
-            DrawSprite(SPR_BOSS, 1, act->x,     act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 1, act->x,     act->y - 4, DRAW_MODE_NORMAL);
         } else if (act->x + 1 > playerX) {
-            DrawSprite(SPR_BOSS, 2, act->x + 1, act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 2, act->x + 1, act->y - 4, DRAW_MODE_NORMAL);
         } else if (act->x + 2 < playerX) {
-            DrawSprite(SPR_BOSS, 4, act->x + 1, act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 4, act->x + 1, act->y - 4, DRAW_MODE_NORMAL);
         } else {
-            DrawSprite(SPR_BOSS, 3, act->x + 1, act->y - 4, DRAWMODE_NORMAL);
+            DrawSprite(SPR_BOSS, 3, act->x + 1, act->y - 4, DRAW_MODE_NORMAL);
         }
     }
 
@@ -3847,7 +3847,7 @@ void ActPipeEnd(word index)
 
     if (act->data1 == 4) act->data1 = 1;
 
-    DrawSprite(SPR_PIPE_END, act->data1, act->x, act->y + 3, DRAWMODE_NORMAL);
+    DrawSprite(SPR_PIPE_END, act->data1, act->x, act->y + 3, DRAW_MODE_NORMAL);
 }
 
 /*
@@ -4044,16 +4044,16 @@ void ActTransporter(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (transporterTimeLeft != 0 && random(2U) != 0) {
-        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAWMODE_WHITE);
+        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAW_MODE_WHITE);
     } else {
-        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAWMODE_NORMAL);
+        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAW_MODE_NORMAL);
     }
 
     if (GameRand() % 2 != 0) {
-        DrawSprite(SPR_TRANSPORTER_107, random(2U) + 1, act->x, act->y, DRAWMODE_NORMAL);
+        DrawSprite(SPR_TRANSPORTER_107, random(2U) + 1, act->x, act->y, DRAW_MODE_NORMAL);
     }
 
     if (transporterTimeLeft == 15) {
@@ -4326,7 +4326,7 @@ void ActForceField(word index)
         act->data4 = 0;
     }
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (!areForceFieldsActive) {
         act->dead = true;
@@ -4342,7 +4342,7 @@ void ActForceField(word index)
 
             if (TILE_BLOCK_NORTH(GetMapTile(act->x, act->y - act->data1))) break;
 
-            DrawSprite(act->sprite, act->data4, act->x, act->y - act->data1, DRAWMODE_NORMAL);
+            DrawSprite(act->sprite, act->data4, act->x, act->y - act->data1, DRAW_MODE_NORMAL);
         }
 
     } else {
@@ -4354,7 +4354,7 @@ void ActForceField(word index)
 
             if (TILE_BLOCK_EAST(GetMapTile(act->x + act->data1, act->y))) break;
 
-            DrawSprite(act->sprite, act->data4, act->x + act->data1, act->y, DRAWMODE_NORMAL);
+            DrawSprite(act->sprite, act->data4, act->x + act->data1, act->y, DRAW_MODE_NORMAL);
         }
     }
 }
@@ -4431,21 +4431,21 @@ void ActHintGlobe(word index)
         act->data3++;
     }
 
-    DrawSprite(SPR_HINT_GLOBE, orbframes[act->data3 % 6], act->x, act->y - 2, DRAWMODE_NORMAL);
+    DrawSprite(SPR_HINT_GLOBE, orbframes[act->data3 % 6], act->x, act->y - 2, DRAW_MODE_NORMAL);
 
     act->data2++;
     if (act->data2 == 4) {
         act->data2 = 1;
     }
 
-    DrawSprite(SPR_HINT_GLOBE, act->data2, act->x, act->y, DRAWMODE_NORMAL);
+    DrawSprite(SPR_HINT_GLOBE, act->data2, act->x, act->y, DRAW_MODE_NORMAL);
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (IsTouchingPlayer(SPR_HINT_GLOBE, 0, act->x, act->y - 2)) {
         isPlayerNearHintGlobe = true;
 
-        if (demoState != DEMOSTATE_NONE) {
+        if (demoState != DEMO_STATE_NONE) {
             sawAutoHintGlobe = true;
         }
 
@@ -4465,14 +4465,14 @@ void ActPusherRobot(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_TRANSLUCENT;
+    nextDrawMode = DRAW_MODE_TRANSLUCENT;
     if (act->data5 == 1) {
-        nextDrawMode = DRAWMODE_NORMAL;
+        nextDrawMode = DRAW_MODE_NORMAL;
     }
 
     if (act->data2 != 0) {
         act->data2--;
-        nextDrawMode = DRAWMODE_NORMAL;
+        nextDrawMode = DRAW_MODE_NORMAL;
         return;
     }
 
@@ -4491,7 +4491,7 @@ void ActPusherRobot(word index)
             playerBaseFrame = PLAYER_BASE_EAST;
 
             act->data4 = 3;
-            nextDrawMode = DRAWMODE_NORMAL;
+            nextDrawMode = DRAW_MODE_NORMAL;
             if (!sawPusherRobotBubble) {
                 sawPusherRobotBubble = true;
                 NewActor(ACT_SPEECH_UMPH, playerX - 1, playerY - 5);
@@ -4517,7 +4517,7 @@ void ActPusherRobot(word index)
             playerBaseFrame = PLAYER_BASE_WEST;
 
             act->data4 = 3;
-            nextDrawMode = DRAWMODE_NORMAL;
+            nextDrawMode = DRAW_MODE_NORMAL;
             if (!sawPusherRobotBubble) {
                 sawPusherRobotBubble = true;
                 NewActor(ACT_SPEECH_UMPH, playerX - 1, playerY - 5);
@@ -4684,7 +4684,7 @@ void ActWormCrate(word index)
 
             SetMapTileRepeat(TILE_EMPTY, 4, act->x, act->y - 2);
             NewActor(ACT_PINK_WORM, act->x, act->y);
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
             NewShard(SPR_WORM_CRATE_SHARDS, 0, act->x - 1, act->y + 3);
             NewShard(SPR_WORM_CRATE_SHARDS, 1, act->x,     act->y - 1);
             NewShard(SPR_WORM_CRATE_SHARDS, 2, act->x + 1, act->y);
@@ -4709,7 +4709,7 @@ void ActSatellite(word index)
 
         if (act->data2 != 0) {
             if (act->data2 % 2 != 0) {
-                nextDrawMode = DRAWMODE_WHITE;
+                nextDrawMode = DRAW_MODE_WHITE;
             }
 
             return;
@@ -4722,7 +4722,7 @@ void ActSatellite(word index)
             act->data2 = 15;
         } else {
             act->dead = true;
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
             StartSound(SND_DESTROY_SATELLITE);
 
             for (act->data1 = 1; act->data1 < 9; act->data1++) {
@@ -4807,7 +4807,7 @@ void ActExitMonsterWest(word index)
         static byte tongueframes[] = {2, 3, 4, 3};
         DrawSprite(
             SPR_EXIT_MONSTER_W, tongueframes[act->data3 % 4],
-            (act->x + 6) - act->data5, act->y - 3, DRAWMODE_NORMAL
+            (act->x + 6) - act->data5, act->y - 3, DRAW_MODE_NORMAL
         );
         act->data3++;
     }
@@ -4819,15 +4819,15 @@ void ActExitMonsterWest(word index)
         act->data5 = 0;
     }
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
-    DrawSprite(act->sprite, 1, act->x, act->y, DRAWMODE_NORMAL);
+    DrawSprite(act->sprite, 1, act->x, act->y, DRAW_MODE_NORMAL);
 
     if (act->data5 != 0 && act->data5 < 4) {
         act->data5++;
     }
 
-    DrawSprite(act->sprite, 0, act->x, (act->y - 1) - act->data5, DRAWMODE_NORMAL);
+    DrawSprite(act->sprite, 0, act->x, (act->y - 1) - act->data5, DRAW_MODE_NORMAL);
 }
 
 /*
@@ -4841,7 +4841,7 @@ void ActExitLineVertical(word index)
         winLevel = true;
     }
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 }
 
 /*
@@ -4857,7 +4857,7 @@ void ActExitLineHorizontal(word index)
         winGame = true;
     }
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 }
 
 /*
@@ -4879,7 +4879,7 @@ void ActPrize(word index)
     Actor *act = actors + index;
 
     if (act->data1 != 0) {
-        nextDrawMode = DRAWMODE_FLIPPED;
+        nextDrawMode = DRAW_MODE_FLIPPED;
     }
 
     if (act->data4 == 0) {
@@ -4958,7 +4958,7 @@ void ActFallingFloor(word index)
         NewShard(SPR_FALLING_FLOOR, 1, act->x, act->y);
         NewShard(SPR_FALLING_FLOOR, 2, act->x, act->y);
         StartSound(SND_DESTROY_SOLID);
-        nextDrawMode = DRAWMODE_WHITE;
+        nextDrawMode = DRAW_MODE_WHITE;
 
     } else {
         if (act->data1 == 0) {
@@ -4994,7 +4994,7 @@ void ActEpisode1End(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (act->data2 == 0 && act->y <= playerY && act->y >= playerY - 4) {
         ShowE1CliffhangerMessage(act->data1);
@@ -5009,7 +5009,7 @@ void ActScoreEffect(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     act->data1++;
     act->frame = !act->frame;
@@ -5029,10 +5029,10 @@ void ActScoreEffect(word index)
         !IsSpriteVisible(act->sprite, act->frame, act->x, act->y)
     ) {
         act->dead = true;
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 
-    DrawSprite(act->sprite, act->frame, act->x, act->y, DRAWMODE_IN_FRONT);
+    DrawSprite(act->sprite, act->frame, act->x, act->y, DRAW_MODE_IN_FRONT);
 }
 
 /*
@@ -5052,7 +5052,7 @@ void ActExitPlant(word index)
     }
 
     if (act->frame == 0 && act->data5 == 0) {
-        DrawSprite(SPR_EXIT_PLANT, tongueframes[act->data1 % 4], act->x + 2, act->y - 3, DRAWMODE_NORMAL);
+        DrawSprite(SPR_EXIT_PLANT, tongueframes[act->data1 % 4], act->x + 2, act->y - 3, DRAW_MODE_NORMAL);
         act->data1++;
     }
 
@@ -5199,7 +5199,7 @@ void ActRocket(word index)
             }
 
             act->data4 = !act->data4;
-            DrawSprite(SPR_ROCKET, act->data4 + 4, act->x, act->y + 6, DRAWMODE_NORMAL);
+            DrawSprite(SPR_ROCKET, act->data4 + 4, act->x, act->y + 6, DRAW_MODE_NORMAL);
             if (IsTouchingPlayer(SPR_ROCKET, 4, act->x, act->y + 6)) {
                 HurtPlayer();
             }
@@ -5231,7 +5231,7 @@ void ActRocket(word index)
         NewShard(SPR_ROCKET, 3, act->x + 2, act->y);
         NewExplosion(act->x - 4, act->y);
         NewExplosion(act->x + 1, act->y);
-        nextDrawMode = DRAWMODE_WHITE;
+        nextDrawMode = DRAW_MODE_WHITE;
     }
 }
 
@@ -5243,13 +5243,13 @@ void ActPedestal(word index)
     Actor *act = actors + index;
     word i;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     for (i = 0; act->data1 > i; i++) {
-        DrawSprite(SPR_PEDESTAL, 1, act->x, act->y - i, DRAWMODE_NORMAL);
+        DrawSprite(SPR_PEDESTAL, 1, act->x, act->y - i, DRAW_MODE_NORMAL);
     }
 
-    DrawSprite(SPR_PEDESTAL, 0, act->x - 2, act->y - i, DRAWMODE_NORMAL);
+    DrawSprite(SPR_PEDESTAL, 0, act->x - 2, act->y - i, DRAW_MODE_NORMAL);
     SetMapTileRepeat(TILE_INVISIBLE_PLATFORM, 5, act->x - 2, act->y - i);
 
     if (act->data2 == 0 && IsNearExplosion(SPR_PEDESTAL, 1, act->x, act->y)) {
@@ -5293,12 +5293,12 @@ void ActInvincibilityBubble(word index)
     act->frame = frames[act->data1 % 4];
 
     if (act->data1 > 200 && act->data1 % 2 != 0) {
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 
     if (act->data1 == 240) {
         act->dead = true;
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
         isPlayerInvincible = false;
     } else {
         act->x = playerX - 1;
@@ -5316,7 +5316,7 @@ void ActMonument(word index)
 
     if (act->data2 != 0) {
         act->dead = true;
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
         NewShard(SPR_MONUMENT, 3, act->x,     act->y - 8);
         NewShard(SPR_MONUMENT, 3, act->x,     act->y - 7);
         NewShard(SPR_MONUMENT, 3, act->x,     act->y - 6);
@@ -5345,7 +5345,7 @@ void ActMonument(word index)
     if (act->data1 != 0) {
         act->data1--;
         if (act->data1 % 2 != 0) {
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
         }
     }
 
@@ -5376,7 +5376,7 @@ void ActTulipLauncher(word index)
         act->data3--;
 
         if (act->data3 % 2 != 0) {
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
         }
 
         return;
@@ -5427,7 +5427,7 @@ void ActFrozenDN(word index)
     Actor *act = actors + index;
 
 #ifdef HAS_ACT_FROZEN_DN
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (act->data1 == 0) {
         if (IsNearExplosion(SPR_FROZEN_DN, 0, act->x, act->y)) {
@@ -5441,7 +5441,7 @@ void ActFrozenDN(word index)
             act->data1 = 1;
             act->x++;
         } else {
-            DrawSprite(SPR_FROZEN_DN, 0, act->x, act->y, DRAWMODE_NORMAL);
+            DrawSprite(SPR_FROZEN_DN, 0, act->x, act->y, DRAW_MODE_NORMAL);
         }
 
     } else if (act->data1 == 1) {
@@ -5450,8 +5450,8 @@ void ActFrozenDN(word index)
             act->y--;
         }
 
-        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAWMODE_NORMAL);
-        DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAWMODE_NORMAL);
+        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAW_MODE_NORMAL);
         NewDecoration(SPR_SMOKE, 6, act->x, act->y + 6, DIR8_SOUTH, 1);
 
         if (act->data2 == 10) {
@@ -5460,8 +5460,8 @@ void ActFrozenDN(word index)
         }
 
     } else if (act->data1 == 2) {
-        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAWMODE_NORMAL);
-        DrawSprite(SPR_FROZEN_DN, 1, act->x, act->y, DRAWMODE_NORMAL);
+        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_FROZEN_DN, 1, act->x, act->y, DRAW_MODE_NORMAL);
 
         act->data2++;
         if (act->data2 == 30) {
@@ -5474,12 +5474,12 @@ void ActFrozenDN(word index)
     } else if (act->data1 == 3) {
         act->data2++;
 
-        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAWMODE_NORMAL);
+        DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAW_MODE_NORMAL);
 
         if (act->data2 < 10) {
-            DrawSprite(SPR_FROZEN_DN, 1, act->x, act->y, DRAWMODE_NORMAL);
+            DrawSprite(SPR_FROZEN_DN, 1, act->x, act->y, DRAW_MODE_NORMAL);
         } else {
-            DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAWMODE_NORMAL);
+            DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAW_MODE_NORMAL);
             NewDecoration(SPR_SMOKE, 6, act->x, act->y + 6, DIR8_SOUTH, 1);
         }
 
@@ -5499,8 +5499,8 @@ void ActFrozenDN(word index)
         if (act->data2 > 50 || !IsSpriteVisible(SPR_FROZEN_DN, 2, act->x, act->y)) {
             act->dead = true;
         } else {
-            DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAWMODE_NORMAL);
-            DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAWMODE_NORMAL);
+            DrawSprite(SPR_FROZEN_DN, (act->data5++ % 2) + 4, act->x, act->y + 5, DRAW_MODE_NORMAL);
+            DrawSprite(SPR_FROZEN_DN, 2, act->x, act->y, DRAW_MODE_NORMAL);
             NewDecoration(SPR_SMOKE, 6, act->x, act->y + 6, DIR8_SOUTH, 1);
             StartSound(SND_ROCKET_BURN);
         }
@@ -5534,7 +5534,7 @@ void ActFlamePulse(word index)
         }
     } else {
         act->data1--;
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 }
 
@@ -5545,7 +5545,7 @@ void ActSpeechBubble(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (act->data1 == 0) {
         StartSound(SND_SPEECH_BUBBLE);
@@ -5560,7 +5560,7 @@ void ActSpeechBubble(word index)
     if (act->data1 == 20) {
         act->dead = true;
     } else {
-        DrawSprite(act->sprite, 0, playerX - 1, playerY - 5, DRAWMODE_IN_FRONT);
+        DrawSprite(act->sprite, 0, playerX - 1, playerY - 5, DRAW_MODE_IN_FRONT);
     }
 }
 
@@ -5571,7 +5571,7 @@ void ActSmokeEmitter(word index)
 {
     Actor *act = actors + index;
 
-    nextDrawMode = DRAWMODE_HIDDEN;
+    nextDrawMode = DRAW_MODE_HIDDEN;
 
     act->data1 = GameRand() % 32;
     if (act->data1 == 0) {
@@ -5803,10 +5803,10 @@ bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_HAMBURGER, x, y, T, F, T, F, ActFootSwitch, 0, 0, 0, 0, 0);
         break;
     case ACT_CLAM_PLANT_FLOOR:
-        ConstructActor(SPR_CLAM_PLANT, x, y, F, F, F, F, ActClamPlant, 0, 0, 0, 0, DRAWMODE_NORMAL);
+        ConstructActor(SPR_CLAM_PLANT, x, y, F, F, F, F, ActClamPlant, 0, 0, 0, 0, DRAW_MODE_NORMAL);
         break;
     case ACT_CLAM_PLANT_CEIL:
-        ConstructActor(SPR_CLAM_PLANT, x, y + 2, F, F, F, F, ActClamPlant, 0, 0, 0, 0, DRAWMODE_FLIPPED);
+        ConstructActor(SPR_CLAM_PLANT, x, y + 2, F, F, F, F, ActClamPlant, 0, 0, 0, 0, DRAW_MODE_FLIPPED);
         break;
     case ACT_GRAPES:
         ConstructActor(SPR_GRAPES, x, y + 2, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, 0);
@@ -5839,11 +5839,11 @@ bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_DANCING_MUSHROOM, x, y, T, F, T, F, ActPrize, 0, 0, 0, 1, 2);
         break;
     case ACT_EYE_PLANT_FLOOR:
-        ConstructActor(SPR_EYE_PLANT, x, y, F, T, F, F, ActEyePlant, 0, 0, 0, 0, DRAWMODE_NORMAL);
+        ConstructActor(SPR_EYE_PLANT, x, y, F, T, F, F, ActEyePlant, 0, 0, 0, 0, DRAW_MODE_NORMAL);
         if (numEyePlants < 15) numEyePlants++;
         break;
     case ACT_EYE_PLANT_CEIL:
-        ConstructActor(SPR_EYE_PLANT, x, y + 1, F, F, F, F, ActEyePlant, 0, 0, 0, 0, DRAWMODE_FLIPPED);
+        ConstructActor(SPR_EYE_PLANT, x, y + 1, F, F, F, F, ActEyePlant, 0, 0, 0, 0, DRAW_MODE_FLIPPED);
         break;
     case ACT_BARREL_CABB_HARDER:
         ConstructActor(SPR_BARREL, x, y, T, F, T, F, ActBarrel, ACT_CABBAGE_HARDER, SPR_BARREL_SHARDS, 0, 0, 0);
@@ -6525,9 +6525,9 @@ restart:
         }
 
         if (sh->age == 1) {
-            DrawSprite(sh->sprite, sh->frame, sh->x, sh->y, DRAWMODE_WHITE);
+            DrawSprite(sh->sprite, sh->frame, sh->x, sh->y, DRAW_MODE_WHITE);
         } else {
-            DrawSprite(sh->sprite, sh->frame, sh->x, sh->y, DRAWMODE_FLIPPED);
+            DrawSprite(sh->sprite, sh->frame, sh->x, sh->y, DRAW_MODE_FLIPPED);
         }
 
         sh->age++;
@@ -6584,7 +6584,7 @@ void DrawExplosions(void)
         if (ex->age == 0) continue;
 
 #ifdef EXPLOSION_PALETTE
-        if (paletteAnimationNum == PALANIM_EXPLOSIONS) {
+        if (paletteAnimationNum == PAL_ANIM_EXPLOSIONS) {
             byte paletteColors[] = {
                 MODE1_WHITE, MODE1_YELLOW, MODE1_WHITE, MODE1_BLACK, MODE1_YELLOW,
                 MODE1_WHITE, MODE1_YELLOW, MODE1_BLACK, MODE1_BLACK
@@ -6597,7 +6597,7 @@ void DrawExplosions(void)
             NewDecoration(SPR_SPARKLE_LONG, 8, ex->x + 2, ex->y - 2, DIR8_STATIONARY, 1);
         }
 
-        DrawSprite(SPR_EXPLOSION, (ex->age - 1) % 4, ex->x, ex->y, DRAWMODE_NORMAL);
+        DrawSprite(SPR_EXPLOSION, (ex->age - 1) % 4, ex->x, ex->y, DRAW_MODE_NORMAL);
 
         if (IsTouchingPlayer(SPR_EXPLOSION, (ex->age - 1) % 4, ex->x, ex->y)) {
             HurtPlayer();
@@ -6692,16 +6692,16 @@ void MoveAndDrawSpawners(void)
             )
         ) {
             NewActor(sp->actor, sp->x, sp->y + 1);
-            DrawSprite(sp->actor, 0, sp->x, sp->y + 1, DRAWMODE_NORMAL);
+            DrawSprite(sp->actor, 0, sp->x, sp->y + 1, DRAW_MODE_NORMAL);
             sp->actor = ACT_BASKET_NULL;
 
         } else if (sp->age == 11) {
             NewActor(sp->actor, sp->x, sp->y);
-            DrawSprite(sp->actor, 0, sp->x, sp->y, DRAWMODE_FLIPPED);
+            DrawSprite(sp->actor, 0, sp->x, sp->y, DRAW_MODE_FLIPPED);
             sp->actor = ACT_BASKET_NULL;
 
         } else {
-            DrawSprite(sp->actor, 0, sp->x, sp->y, DRAWMODE_FLIPPED);
+            DrawSprite(sp->actor, 0, sp->x, sp->y, DRAW_MODE_FLIPPED);
         }
     }
 }
@@ -6762,9 +6762,9 @@ void MoveAndDrawDecorations(void)
         /* Possible BUG: dec->numframes should be decorationFrame[i] instead. */
         if (IsSpriteVisible(dec->sprite, dec->numframes, dec->x, dec->y)) {
             if (dec->sprite != SPR_SPARKLE_SLIPPERY) {
-                DrawSprite(dec->sprite, decorationFrame[i], dec->x, dec->y, DRAWMODE_NORMAL);
+                DrawSprite(dec->sprite, decorationFrame[i], dec->x, dec->y, DRAW_MODE_NORMAL);
             } else {
-                DrawSprite(dec->sprite, decorationFrame[i], dec->x, dec->y, DRAWMODE_IN_FRONT);
+                DrawSprite(dec->sprite, decorationFrame[i], dec->x, dec->y, DRAW_MODE_IN_FRONT);
             }
 
             if (dec->sprite == SPR_RAINDROP) {
@@ -7069,7 +7069,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         if (DO_POUNCE(7)) {
             act->damagecooldown = 5;
             StartSound(SND_PLAYER_POUNCE);
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
             act->data1--;
             if (act->data1 == 0) {
                 act->dead = true;
@@ -7098,7 +7098,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             act->data5--;
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
             if (act->data5 == 0) {
                 act->dead = true;
                 if (sprite == SPR_GHOST) {
@@ -7161,7 +7161,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                     AddScore(800);
                 }
             } else {
-                nextDrawMode = DRAWMODE_WHITE;
+                nextDrawMode = DRAW_MODE_WHITE;
                 if (act->data1 == 0) {
                     act->data2 = 0;
                     act->data1 = (GameRand() % 2) + 1;
@@ -7186,7 +7186,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                 act->dead = true;
                 return true;
             }
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
         } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
             HurtPlayer();
         }
@@ -7198,7 +7198,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         if (DO_POUNCE(7)) {
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
-            nextDrawMode = DRAWMODE_WHITE;
+            nextDrawMode = DRAW_MODE_WHITE;
             if (sprite != SPR_RED_CHOMPER) {
                 act->data5--;
             }
@@ -7556,7 +7556,7 @@ bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                 }
                 NewSpawner(gifts[i], act->x, act->y + 1);
                 StartSound(SND_ROAMER_GIFT);
-                nextDrawMode = DRAWMODE_WHITE;
+                nextDrawMode = DRAW_MODE_WHITE;
                 act->data2--;
                 if (act->data2 == 0) {
                     act->dead = true;
@@ -7807,7 +7807,7 @@ void ProcessActor(word index)
         return;
     }
 
-    nextDrawMode = DRAWMODE_NORMAL;
+    nextDrawMode = DRAW_MODE_NORMAL;
 
     if (act->damagecooldown != 0) act->damagecooldown--;
 
@@ -7818,7 +7818,7 @@ void ProcessActor(word index)
     } else if (!act->forceactive) {
         return;
     } else {
-        nextDrawMode = DRAWMODE_HIDDEN;
+        nextDrawMode = DRAW_MODE_HIDDEN;
     }
 
     if (act->weighted) {
@@ -7847,7 +7847,7 @@ void ProcessActor(word index)
     }
 
     if (IsSpriteVisible(act->sprite, act->frame, act->x, act->y)) {
-        nextDrawMode = DRAWMODE_NORMAL;
+        nextDrawMode = DRAW_MODE_NORMAL;
     }
 
     act->tickfunc(index);
@@ -7859,7 +7859,7 @@ void ProcessActor(word index)
         act->dead = true;
     } else if (
         !TouchPlayer(index, act->sprite, act->frame, act->x, act->y) &&
-        nextDrawMode != DRAWMODE_HIDDEN
+        nextDrawMode != DRAW_MODE_HIDDEN
     ) {
         DrawSprite(act->sprite, act->frame, act->x, act->y, nextDrawMode);
     }
@@ -9120,14 +9120,14 @@ bbool DrawPlayerHelper(void)
         if (playerFallDeadTime > 12 && playerFallDeadTime < 19) {
             DrawSprite(
                 SPR_SPEECH_MULTI, speechframe,
-                playerX - 1, (playerY - playerFallDeadTime) + 13, DRAWMODE_IN_FRONT
+                playerX - 1, (playerY - playerFallDeadTime) + 13, DRAW_MODE_IN_FRONT
             );
         }
 
         if (playerFallDeadTime > 18) {
             DrawSprite(
                 SPR_SPEECH_MULTI, speechframe,
-                playerX - 1, playerY - 6, DRAWMODE_IN_FRONT
+                playerX - 1, playerY - 6, DRAW_MODE_IN_FRONT
             );
         }
 
@@ -9140,18 +9140,18 @@ bbool DrawPlayerHelper(void)
 
     } else if (playerDeadTime == 0) {
         if (playerHurtCooldown == 44) {
-            DrawPlayer(playerBaseFrame + PLAYER_PAIN, playerX, playerY, DRAWMODE_WHITE);
+            DrawPlayer(playerBaseFrame + PLAYER_PAIN, playerX, playerY, DRAW_MODE_WHITE);
         } else if (playerHurtCooldown > 40) {
-            DrawPlayer(playerBaseFrame + PLAYER_PAIN, playerX, playerY, DRAWMODE_NORMAL);
+            DrawPlayer(playerBaseFrame + PLAYER_PAIN, playerX, playerY, DRAW_MODE_NORMAL);
         }
 
         if (playerHurtCooldown != 0) playerHurtCooldown--;
 
         if (playerHurtCooldown < 41) {
             if (!isPlayerPushed) {
-                DrawPlayer(playerBaseFrame + playerFrame, playerX, playerY, DRAWMODE_NORMAL);
+                DrawPlayer(playerBaseFrame + playerFrame, playerX, playerY, DRAW_MODE_NORMAL);
             } else {
-                DrawPlayer(playerPushFrame, playerX, playerY, DRAWMODE_NORMAL);
+                DrawPlayer(playerPushFrame, playerX, playerY, DRAW_MODE_NORMAL);
             }
         }
 
@@ -9161,7 +9161,7 @@ bbool DrawPlayerHelper(void)
         }
 
         playerDeadTime++;
-        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAWMODE_IN_FRONT);
+        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAW_MODE_IN_FRONT);
 
     } else if (playerDeadTime > 9) {
         if (scrollY > 0 && playerDeadTime < 12) {
@@ -9174,7 +9174,7 @@ bbool DrawPlayerHelper(void)
 
         playerY--;
         playerDeadTime++;
-        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAWMODE_IN_FRONT);
+        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAW_MODE_IN_FRONT);
 
         if (playerDeadTime > 36) {
             LoadGameState('T');
@@ -9395,15 +9395,15 @@ if the request was acceptable, or false if the input was bad or Esc was pressed.
 bbool PromptLevelWarp(void)
 {
 #ifdef HAS_MAP_11
-#   define MAXMAP "13"
+#   define MAX_MAP "13"
     word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 2, 3};
 #else
-#   define MAXMAP "12"
+#   define MAX_MAP "12"
     word levels[] = {0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 2, 3};
 #endif  /* HAS_MAP_11 */
     char buffer[3];
-    int x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-" MAXMAP "):");
-#undef MAXMAP
+    int x = UnfoldTextFrame(2, 4, 28, "Warp Mode!", "Enter level (1-" MAX_MAP "):");
+#undef MAX_MAP
 
     ReadAndEchoText(x + 21, 4, buffer, 2);
 
@@ -9456,7 +9456,7 @@ title:
 
         if (idlecount == 1200) {
             InitializeEpisode();
-            return DEMOSTATE_PLAY;
+            return DEMO_STATE_PLAY;
         }
     }
 
@@ -9480,7 +9480,7 @@ getkey:
             isNewGame = true;
             pounceHintState = POUNCE_HINT_UNSEEN;
             StartSound(SND_NEW_GAME);
-            return DEMOSTATE_NONE;
+            return DEMO_STATE_NONE;
         case SCANCODE_O:
             ShowOrderingInformation();
             break;
@@ -9494,7 +9494,7 @@ getkey:
             {  /* for scope */
                 byte result = PromptRestoreGame();
                 if (result == RESTORE_GAME_SUCCESS) {
-                    return DEMOSTATE_NONE;
+                    return DEMO_STATE_NONE;
                 } else if (result == RESTORE_GAME_NOT_FOUND) {
                     ShowRestoreGameError();
                 }
@@ -9506,12 +9506,12 @@ getkey:
         case SCANCODE_F11:
             if (isDebugMode) {
                 InitializeEpisode();
-                return DEMOSTATE_RECORD;
+                return DEMO_STATE_RECORD;
             }
             break;
         case SCANCODE_D:
             InitializeEpisode();
-            return DEMOSTATE_PLAY;
+            return DEMO_STATE_PLAY;
         case SCANCODE_T:
             goto title;
         case SCANCODE_Q:
@@ -9682,7 +9682,7 @@ is needed.
 */
 byte ProcessGameInput(byte demostate)
 {
-    if (demostate != DEMOSTATE_PLAY) {
+    if (demostate != DEMO_STATE_PLAY) {
         if (
             isKeyDown[SCANCODE_TAB] && isKeyDown[SCANCODE_F12] &&
             isKeyDown[SCANCODE_KP_DOT]  /* Del */
@@ -9756,7 +9756,7 @@ byte ProcessGameInput(byte demostate)
         return GAME_INPUT_QUIT;
     }
 
-    if (demostate != DEMOSTATE_PLAY) {
+    if (demostate != DEMO_STATE_PLAY) {
         if (!isJoystickReady) {
             cmdWest  = isKeyDown[scancodeWest] >> blockMovementCmds;
             cmdEast  = isKeyDown[scancodeEast] >> blockMovementCmds;
@@ -9773,7 +9773,7 @@ byte ProcessGameInput(byte demostate)
             cmdNorth = cmdSouth = cmdBomb = false;
         }
 
-        if (demostate == DEMOSTATE_RECORD) {
+        if (demostate == DEMO_STATE_RECORD) {
             if (WriteDemoFrame()) return GAME_INPUT_QUIT;
         }
     } else if (ReadDemoFrame()) {
@@ -9806,7 +9806,7 @@ void ShowStarBonus(void)
     ClearScreen();
 
     UnfoldTextFrame(2, 14, 30, "Super Star Bonus!!!!", "");
-    DrawSprite(SPR_STAR, 2, 8, 8, DRAWMODE_ABSOLUTE);
+    DrawSprite(SPR_STAR, 2, 8, 8, DRAW_MODE_ABSOLUTE);
     DrawTextLine(14, 7, "X 1000 =");
     DrawNumberFlushRight(27, 7, gameStars * 1000);
     WaitHard(50);  /* nothing is visible during this delay! */
@@ -9894,7 +9894,7 @@ void NextLevel(void)
 {
     word stars = (word)gameStars;
 
-    if (demoState != DEMOSTATE_NONE) {
+    if (demoState != DEMO_STATE_NONE) {
         switch (levelNum) {
         case 0:
             levelNum = 13;
@@ -10017,8 +10017,8 @@ void GameLoop(byte demostate)
         MoveAndDrawDecorations();
         DrawLights();
 
-        if (demoState != DEMOSTATE_NONE) {
-            DrawSprite(SPR_DEMO_OVERLAY, 0, 18, 4, DRAWMODE_ABSOLUTE);
+        if (demoState != DEMO_STATE_NONE) {
+            DrawSprite(SPR_DEMO_OVERLAY, 0, 18, 4, DRAW_MODE_ABSOLUTE);
         }
 
 #ifdef DEBUG_BAR
@@ -10416,7 +10416,7 @@ void InitializeLevel(word level_num)
         isNewGame = false;
     }
 
-    if (demoState == DEMOSTATE_NONE) {
+    if (demoState == DEMO_STATE_NONE) {
         switch (level_num) {
         case 0:
         case 1:
@@ -10462,7 +10462,7 @@ void InitializeLevel(word level_num)
     FadeIn();
 
 #ifdef EXPLOSION_PALETTE
-    if (paletteAnimationNum == PALANIM_EXPLOSIONS) {
+    if (paletteAnimationNum == PAL_ANIM_EXPLOSIONS) {
         SetPaletteRegister(PALETTE_KEY_INDEX, MODE1_BLACK);
     }
 #endif  /* EXPLOSION_PALETTE */
@@ -10508,7 +10508,7 @@ void InnerMain(int argc, char *argv[])
         InitializeLevel(levelNum);
         LoadMaskedTileData("MASKTILE.MNI");
 
-        if (demoState == DEMOSTATE_PLAY) {
+        if (demoState == DEMO_STATE_PLAY) {
             LoadDemoData();
         }
 
@@ -10518,11 +10518,11 @@ void InnerMain(int argc, char *argv[])
 
         StopMusic();
 
-        if (demoState != DEMOSTATE_PLAY && demoState != DEMOSTATE_RECORD) {
+        if (demoState != DEMO_STATE_PLAY && demoState != DEMO_STATE_RECORD) {
             CheckHighScoreAndShow();
         }
 
-        if (demoState == DEMOSTATE_RECORD) {
+        if (demoState == DEMO_STATE_RECORD) {
             SaveDemoData();
         }
     }

@@ -3598,7 +3598,7 @@ void ShowBombHint(void)
 {
     word x;
 
-    if (demoState != DEMOSTATE_NONE) return;
+    if (demoState != DEMO_STATE_NONE) return;
 
     EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);
@@ -3620,7 +3620,7 @@ void ShowPounceHint(void)
 {
     word x;
 
-    if (demoState != DEMOSTATE_NONE) return;
+    if (demoState != DEMO_STATE_NONE) return;
 
     EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);
@@ -3650,7 +3650,7 @@ void ShowLevelIntro(word level_num)
     word x;
 
     /* This never occurs */
-    if (demoState != DEMOSTATE_NONE) return;
+    if (demoState != DEMO_STATE_NONE) return;
 
     x = UnfoldTextFrame(7, 3, 24, "\xFC""003  Now entering level", "");
     WaitHard(20);
@@ -3670,7 +3670,7 @@ void ShowHealthHint(void)
 {
     word x;
 
-    if (demoState != DEMOSTATE_NONE) return;
+    if (demoState != DEMO_STATE_NONE) return;
 
     EGA_MODE_LATCHED_WRITE();
     SelectDrawPage(activePage);

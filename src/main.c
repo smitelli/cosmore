@@ -26,7 +26,7 @@ void main(int argc, char *argv[])
 {
     int cputype = GetProcessorType();
 
-    if (cputype < CPUTYPE_80188) {
+    if (cputype < CPU_TYPE_80188) {
         byte response;
 
         /* Grammatical errors preserved faithfully */

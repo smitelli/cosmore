@@ -59,13 +59,13 @@ be one of the COLORS members, *not* MODE1_COLORS!
 /*
 Palette animation types.
 */
-#define PALANIM_NONE            0
-#define PALANIM_LIGHTNING       1
-#define PALANIM_R_Y_W           2
-#define PALANIM_R_G_B           3
-#define PALANIM_MONO            4
-#define PALANIM_W_R_M           5
-#define PALANIM_EXPLOSIONS      6
+#define PAL_ANIM_NONE           0
+#define PAL_ANIM_LIGHTNING      1
+#define PAL_ANIM_R_Y_W          2
+#define PAL_ANIM_R_G_B          3
+#define PAL_ANIM_MONO           4
+#define PAL_ANIM_W_R_M          5
+#define PAL_ANIM_EXPLOSIONS     6
 
 /*
 Map tile values. Values 0..15,999 are spaced in increments of 8 and reference

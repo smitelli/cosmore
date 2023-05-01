@@ -20,9 +20,9 @@
 /*
 Demo states. Indicates if a demo is being recorded, played back, or neither.
 */
-#define DEMOSTATE_NONE          0
-#define DEMOSTATE_RECORD        1
-#define DEMOSTATE_PLAY          2
+#define DEMO_STATE_NONE         0
+#define DEMO_STATE_RECORD       1
+#define DEMO_STATE_PLAY         2
 
 /*
 Two-way direction systems. For actors that only move in one dimension, these
@@ -70,13 +70,13 @@ Draw modes for sprite drawing functions. Unless otherwise stated, all of these
 modes consider the x,y position to be somewhere on the map, and subject to the
 viewable scroll position.
 */
-#define DRAWMODE_NORMAL         0  /* draw unmodified, but in-front tiles can cover the sprite */
-#define DRAWMODE_HIDDEN         1  /* don't draw under any circumstance */
-#define DRAWMODE_WHITE          2  /* same as _NORMAL, but all non-transparent pixels are white */
-#define DRAWMODE_TRANSLUCENT    3  /* same as _WHITE, but drawn semi-transparent */
-#define DRAWMODE_FLIPPED        4  /* same as _NORMAL, but flipped vertically */
-#define DRAWMODE_IN_FRONT       5  /* draw unmodified, covering _all_ tiles */
-#define DRAWMODE_ABSOLUTE       6  /* draw unmodified, but x,y are screen coordinates */
+#define DRAW_MODE_NORMAL        0  /* draw unmodified, but in-front tiles can cover the sprite */
+#define DRAW_MODE_HIDDEN        1  /* don't draw under any circumstance */
+#define DRAW_MODE_WHITE         2  /* same as _NORMAL, but all non-transparent pixels are white */
+#define DRAW_MODE_TRANSLUCENT   3  /* same as _WHITE, but drawn semi-transparent */
+#define DRAW_MODE_FLIPPED       4  /* same as _NORMAL, but flipped vertically */
+#define DRAW_MODE_IN_FRONT      5  /* draw unmodified, covering _all_ tiles */
+#define DRAW_MODE_ABSOLUTE      6  /* draw unmodified, but x,y are screen coordinates */
 
 /*
 All memory offsets that reference data sored in the EGA's memory. These are all

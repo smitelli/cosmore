@@ -283,7 +283,7 @@ void DrawSpriteTileWhite(byte *src, word x, word y)
 
 word GetProcessorType(void)
 {
-    return CPUTYPE_80386;  /* I assume you know what you're doing. */
+    return CPU_TYPE_80386;  /* I assume you know what you're doing. */
 }
 ```
 

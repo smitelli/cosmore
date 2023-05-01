@@ -64,11 +64,11 @@ MASKED_TILE_ROW_STRIDE          EQU 5
 ;
 ; CPU types for GetProcessorType.
 ;
-CPUTYPE_8088                    EQU 0
-CPUTYPE_8086                    EQU 1
-CPUTYPE_V20                     EQU 2
-CPUTYPE_V30                     EQU 3
-CPUTYPE_80188                   EQU 4
-CPUTYPE_80186                   EQU 5
-CPUTYPE_80286                   EQU 6
-CPUTYPE_80386                   EQU 7
+CPU_TYPE_8088                   EQU 0
+CPU_TYPE_8086                   EQU 1
+CPU_TYPE_V20                    EQU 2
+CPU_TYPE_V30                    EQU 3
+CPU_TYPE_80188                  EQU 4
+CPU_TYPE_80186                  EQU 5
+CPU_TYPE_80286                  EQU 6
+CPU_TYPE_80386                  EQU 7

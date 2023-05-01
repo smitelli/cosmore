@@ -1458,7 +1458,7 @@ P8086
 ;    data bus.
 ;
 ; Returns: CPU type (0..7) as a word in AX. More meaningful names for the
-;     numeric values are available as CPUTYPE_* equates.
+;     numeric values are available as CPU_TYPE_* equates.
 ; Registers destroyed: AX, CX, DX, ES
 ;
 PROC _GetProcessorType FAR
@@ -1502,7 +1502,7 @@ PROC _GetProcessorType FAR
 
         ; Here, at least one of the relevant flag bits was off, so the CPU must
         ; be at least an 80286.
-        mov   dl,CPUTYPE_80286  ; DL stores the work-in-progress return value.
+        mov   dl,CPU_TYPE_80286 ; DL stores the work-in-progress return value.
 
         ; Push a constant value to the stack, then immediately pop that value
         ; into the FLAGS register. The constant is designed to attempt to turn
@@ -1523,12 +1523,12 @@ PROC _GetProcessorType FAR
 
         ; Here, at least one of the relevant flag bits was on, so the CPU must
         ; be an 80386.
-        inc   dl                ; Return value becomes CPUTYPE_80386.
+        inc   dl                ; Return value becomes CPU_TYPE_80386.
         jmp   @@done
 
 @@less_than_286:
         ; Now we know that the CPU is less than an 80286.
-        mov   dl,CPUTYPE_80188
+        mov   dl,CPU_TYPE_80188
 
         ; Perform "FFh >> 33" then check for a zero or nonzero result.
         ;
@@ -1543,7 +1543,7 @@ PROC _GetProcessorType FAR
         jnz   @@cpu_class_known ; Jump if result in AL is not zero.
 
         ; Now we know that the CPU is less than an 80186/88.
-        mov   dl,CPUTYPE_V20
+        mov   dl,CPU_TYPE_V20
 
         ; Ensure interrupts are enabled, then save SI's value on the stack. The
         ; `push` (and the `pop` below) aren't strictly required since the SI
@@ -1586,7 +1586,7 @@ PROC _GetProcessorType FAR
         jz    @@cpu_class_known ; Jump if CX is zero.
 
         ; Now we know that the CPU is a bottom-rung 8086 or 8088.
-        mov   dl,CPUTYPE_8088
+        mov   dl,CPU_TYPE_8088
 
 @@cpu_class_known:
         ; Now we know which class the CPU belongs to, but we don't yet know if
@@ -1634,9 +1634,9 @@ PROC _GetProcessorType FAR
         ; instruction was still there because its prefetch queue doesn't know
         ; about the memory change. An 8088 will read `sti`, and will not
         ; increment [Tischer, pg. 657]. The increment instruction would change
-        ; the return value from CPUTYPE_8088 to CPUTYPE_8086, from CPUTYPE_V20
-        ; to CPUTYPE_V30, or from CPUTYPE_80188 to CPUTYPE_80186 depending on
-        ; what the value already was.
+        ; the return value from CPU_TYPE_8088 to CPU_TYPE_8086, from
+        ; CPU_TYPE_V20 to CPU_TYPE_V30, or from CPU_TYPE_80188 to CPU_TYPE_80186
+        ; depending on what the value already was.
         ;
         ; The `cld` instruction, which turns the Direction Flag back off, is
         ; probably not critical here because DF gets restored by `popf` below.

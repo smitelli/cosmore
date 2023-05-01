@@ -19,14 +19,14 @@
 /*
 CPU types as returned by GetProcessorType().
 */
-#define CPUTYPE_8088            0
-#define CPUTYPE_8086            1
-#define CPUTYPE_V20             2
-#define CPUTYPE_V30             3
-#define CPUTYPE_80188           4
-#define CPUTYPE_80186           5
-#define CPUTYPE_80286           6
-#define CPUTYPE_80386           7
+#define CPU_TYPE_8088           0
+#define CPU_TYPE_8086           1
+#define CPU_TYPE_V20            2
+#define CPU_TYPE_V30            3
+#define CPU_TYPE_80188          4
+#define CPU_TYPE_80186          5
+#define CPU_TYPE_80286          6
+#define CPU_TYPE_80386          7
 
 /*
 Resets the EGA's bit mask to its default state. Allows writes to all eight pixel
