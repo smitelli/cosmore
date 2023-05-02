@@ -22,7 +22,7 @@
 
 #include "glue.h"
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int cputype = GetProcessorType();
 
@@ -45,4 +45,6 @@ void main(int argc, char *argv[])
     } else {
         InnerMain(argc, argv);
     }
+#pragma warn -rvl
 }
+#pragma warn .rvl

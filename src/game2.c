@@ -146,7 +146,7 @@ void FadeOutAdLibPlayback(void);
 Write `value` to the counter on channel 0 of the programmable interval timer.
 [ID_SD, SDL_SetTimer0()]
 */
-void SetPIT0Value(word value)
+static void SetPIT0Value(word value)
 {
     /*
     Bit Pattern | Interpretation
@@ -175,7 +175,7 @@ The different compnents of the IBM PC ran at integral multiples of 315/88 MHz.
 The PIT clock was one-third of that, or 1,193,181.81... Hz. The chosen constant
 is about 0.1% off for an unknown reason.
 */
-void SetInterruptRate(word ints_second)
+static void SetInterruptRate(word ints_second)
 {
     SetPIT0Value((word)(1192030L / ints_second));
 }
@@ -184,7 +184,7 @@ void SetInterruptRate(word ints_second)
 Define a simple test counter to benchmark the CPU against the PIT.
 [ID_SD, SDL_TimingService()]
 */
-void interrupt ProfileCPUService(void)
+static void interrupt ProfileCPUService(void)
 {
     profCountCPU = _CX;
     profCountPIT++;
@@ -196,7 +196,7 @@ void interrupt ProfileCPUService(void)
 Perform 10 trials to determine the timing of the CPU relative to the speed of
 the PIT. [ID_SD, SDL_InitDelay()]
 */
-void ProfileCPU(void)
+static void ProfileCPU(void)
 {
     int trial;
     word loops_ms;
@@ -247,7 +247,7 @@ depending on the system, and are based on how many CPU clocks it takes to
 perform a busy test/jnz pair. The loop structure here closely matches that in
 ProfileCPU(). [ID_SD, SDL_Delay()]
 */
-void WaitWallclock(word loops)
+static void WaitWallclock(word loops)
 {
     if (loops == 0) return;
 
@@ -267,7 +267,7 @@ Write `data` to the AdLib register at OPL2 address `addr`. The long string of
 hardware to process the write and become ready for another (potential) write.
 [ID_SD, alOut()]
 */
-void SetAdLibRegister(byte addr, byte data)
+static void SetAdLibRegister(byte addr, byte data)
 {
     asm pushf
 
@@ -330,7 +330,7 @@ void SetAdLibRegister(byte addr, byte data)
 Update the AdLib with the next music chunk(s) that are due to play at the
 current time. [ID_SD, SDL_ALService()]
 */
-void AdLibService(void)
+static void AdLibService(void)
 {
     if (!enableAdLib) return;
 
@@ -364,7 +364,7 @@ addresses 388..389h contain something that is behaving like a set of Yamaha OPL2
 timers. Return true if an AdLib or compatible card is installed, otherwise
 return false. [ID_SD, SDL_DetectAdLib()]
 */
-bool DetectAdLib(void)
+static bool DetectAdLib(void)
 {
     byte oplstatus1, oplstatus2;
     int addr;
@@ -416,7 +416,7 @@ Respond to timer interrupts and call both the AdLib and PC speaker services at
 the appropriate rates. The timer runs 4x faster when the AdLib is being used,
 which is the reason for the count division. [ID_SD, SDL_t0Service()]
 */
-void interrupt TimerInterruptService(void)
+static void interrupt TimerInterruptService(void)
 {
     static word count = 1;
 
@@ -458,7 +458,7 @@ done:
 Set the timer frequency based on whether or not the AdLib is enabled.
 [ID_SD, SDL_SetTimerSpeed()]
 */
-void InitializeInterruptRate(void)
+static void InitializeInterruptRate(void)
 {
     word rate;
 
@@ -474,7 +474,7 @@ void InitializeInterruptRate(void)
 /*
 Handle global changes to the music state. [ID_SD, SD_SetMusicMode()]
 */
-bool SetMusic(bool state)
+static bool SetMusic(bool state)
 {
     volatile bool found;  /* Force compiler *not* to use a register var */
 
@@ -564,7 +564,7 @@ void StopAdLib(void)
 /*
 Activate the AdLib hardware for music playback. [ID_SD, SD_MusicOn()]
 */
-void StartAdLibPlayback(void)
+static void StartAdLibPlayback(void)
 {
     enableAdLib = true;
 }
@@ -598,7 +598,7 @@ void StopAdLibPlayback(void)
 /*
 Start playback of a new piece of music. [ID_SD, SD_StartMusic()]
 */
-void SwitchMusic(Music *music)
+static void SwitchMusic(Music *music)
 {
     StopAdLibPlayback();
 
@@ -667,7 +667,7 @@ Fade the screen in (from all black to full color), one palette register at a
 time. Wait `delay` timer ticks between each step. See the comments for
 SetPaletteRegister() for an explanation of why a skip of 8 is applied.
 */
-void FadeInCustom(word delay)
+static void FadeInCustom(word delay)
 {
     word reg;
     word skip = 0;
@@ -697,7 +697,7 @@ void FadeWhiteCustom(word delay)
 /*
 Draw a solid gray screen tile, to overwrite a former wait spinner location.
 */
-void EraseWaitSpinner(word x, word y)
+static void EraseWaitSpinner(word x, word y)
 {
     EGA_MODE_LATCHED_WRITE();
 
@@ -738,7 +738,7 @@ void FadeOut(void)
 Draw one frame of the wait spinner on the screen at x,y and return the last
 scancode read by the keyboard service. Does not wait.
 */
-byte StepWaitSpinner(word x, word y)
+static byte StepWaitSpinner(word x, word y)
 {
     static word frameoff = 0;
     byte scancode = SCANCODE_NULL;
@@ -818,7 +818,7 @@ Poll for the X,Y position of the specified joystick, and store the result into
 the two provided timer pointers. If either timer exceeds 500 polls, abort.
 [IDLIB, ReadJoystick()]
 */
-void ReadJoystickTimes(word stick, int *x_time, int *y_time)
+static void ReadJoystickTimes(word stick, int *x_time, int *y_time)
 {
     word xmask, ymask;
 
@@ -926,10 +926,14 @@ JoystickState ReadJoystickState(word stick)
 
     buttons = inportb(0x0201);
 
+    /*
+    JOYSTICK_B is not used or implemented; `state` is returned uninitialized if
+    joystick B is selected.
+    */
     if (stick == JOYSTICK_A) {
         cmdJump = state.button1 = ((buttons & 0x0010) == 0);
         cmdBomb = state.button2 = ((buttons & 0x0020) == 0);
-    }  /* JOYSTICK_B not used or implemented */
+    }
 
     if (joystickBtn1Bombs) {
         /* Swap button state, using `buttons` as a temp var */
@@ -954,7 +958,7 @@ false, these text lines are left-aligned relative to the inside of the frame.
 
 Returns the X coordinate of the inside-left edge of the frame.
 */
-word DrawTextFrame(
+static word DrawTextFrame(
     word left, word top, int height, int width, char *top_text,
     char *bottom_text, bbool centered
 ) {
@@ -1059,7 +1063,7 @@ void ReadAndEchoText(word x_origin, word y_origin, char *dest, word max_length)
             return;
         } else if (scancode == SCANCODE_BACKSPACE) {
             if (pos > 0) pos--;
-        } else if (pos < max_length) {
+        } else if ((word)pos < max_length) {
             if (
                 (scancode >= SCANCODE_1 && scancode <= SCANCODE_EQUAL) ||
                 (scancode >= SCANCODE_Q && scancode <= SCANCODE_P) ||
@@ -1081,7 +1085,7 @@ calibration variables. At any point during the inner loops, a keypress will
 cancel the process. The function must run through to completion before the
 joystick can be used in the game. [IDLIB, CalibrateJoy()]
 */
-void ShowJoystickConfiguration(word stick)
+static void ShowJoystickConfiguration(word stick)
 {
     word xframe;
     word junk;  /* in IDLIB, this provided an 8-dir spinning arrow */
@@ -1203,7 +1207,7 @@ Add `points` to the player's score, then redraw that area of the status bar.
 This function does not know where that x/y position on the screen is, so those
 need to be passed in.
 */
-void DrawStatusBarScore(dword add_points, word x, word y)
+static void DrawStatusBarScore(dword add_points, word x, word y)
 {
     gameScore += add_points;
 
@@ -1218,10 +1222,9 @@ void DrawStatusBarScore(dword add_points, word x, word y)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-#   pragma warn -par
+    (void) x, (void) y;
 #endif  /* DEBUG_BAR */
 }
-#pragma warn .par
 
 /*
 Add `points` to the player's score, then redraw that area of the status bar.
@@ -1236,7 +1239,7 @@ Redraw the "Stars" area of the status bar with the current global value. This
 function does not know where that x/y position on the screen is, so those need
 to be passed in.
 */
-void DrawStatusBarStars(word x, word y)
+static void DrawStatusBarStars(word x, word y)
 {
 #ifndef DEBUG_BAR
 
@@ -1249,10 +1252,9 @@ void DrawStatusBarStars(word x, word y)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-#   pragma warn -par
+    (void) x, (void) y;
 #endif  /* DEBUG_BAR */
 }
-#pragma warn .par
 
 /*
 Redraw the "Stars" area of the status bar with the current global value.
@@ -1267,7 +1269,7 @@ Redraw the "Bombs" area of the status bar with the current global value. This
 function does not know where that x/y position on the screen is, so those need
 to be passed in.
 */
-void DrawStatusBarBombs(word x, word y)
+static void DrawStatusBarBombs(word x, word y)
 {
 #ifndef DEBUG_BAR
 
@@ -1289,10 +1291,9 @@ void DrawStatusBarBombs(word x, word y)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-#   pragma warn -par
+    (void) x, (void) y;
 #endif  /* DEBUG_BAR */
 }
-#pragma warn .par
 
 /*
 Redraw the "Bombs" area of the status bar with the current global value.
@@ -1308,7 +1309,7 @@ function does not know where that x/y position on the screen is, so those need
 to be passed in. It also does not flip the draw page, so this function must be
 called twice -- once for each page.
 */
-void DrawStatusBarHealth(word x, word y)
+static void DrawStatusBarHealth(word x, word y)
 {
 #ifndef DEBUG_BAR
 
@@ -1329,16 +1330,15 @@ void DrawStatusBarHealth(word x, word y)
     }
 
 #else
-#   pragma warn -par
+    (void) x, (void) y;
 #endif  /* DEBUG_BAR */
 }
-#pragma warn .par
 
 /*
 Redraw the "Health" area of the status bar with the current global value, on the
 active draw page only.
 */
-void DrawSBarHealthHelper(void)
+static void DrawSBarHealthHelper(void)
 {
     DrawStatusBarHealth(17, 22);
 }
@@ -1469,7 +1469,7 @@ unsigned. This function uses a bit of a mismash of the two.
 */
 FILE *GroupEntryFp(char *entry_name)
 {
-    byte header[1000];
+    char header[1000];
     char name[20];
     FILE *fp;
     dword offset;
@@ -1547,7 +1547,7 @@ FILE *GroupEntryFp(char *entry_name)
 /*
 Return true if there is no AdLib hardware installed, and false otherwise.
 */
-bbool IsAdLibAbsent(void)
+static bbool IsAdLibAbsent(void)
 {
     return !isAdLibPresentPrivate;
 }
@@ -1556,7 +1556,7 @@ bbool IsAdLibAbsent(void)
 Read music data from the group entry referred to by the music number, and store
 it into the passed Music pointer.
 */
-Music *LoadMusicData(word music_num, Music *dest)
+static Music *LoadMusicData(word music_num, Music *dest)
 {
     FILE *fp;
     Music *localdest = dest;  /* not clear why this copy is needed */
@@ -1904,7 +1904,7 @@ horizontally. The typed scancode is written into `target_var` and *false* is
 returned. If the user cancels by pressing Esc, *true* is returned with no change
 to the target variable.
 */
-bbool PromptKeyBind(byte *target_var, word x, char *message)
+static bbool PromptKeyBind(byte *target_var, word x, char *message)
 {
     byte scancode;
 
@@ -1929,7 +1929,7 @@ disallowed key is Esc, which exits this menu unconditionally.
 NOTE: Entering this menu disables the joystick, requiring a recalibration to get
 it back.
 */
-void ShowKeyboardConfiguration(void)
+static void ShowKeyboardConfiguration(void)
 {
     word x;
 
@@ -2034,11 +2034,16 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
         upper 4 lines of the destination's current tile row */
         for (col = 0; col < 40; col++) {
             for (i = 0; i < 16; i++) {
-                /* Since a tile is 32 bytes, each row of tiles occupies
+                /*
+                Since a tile is 32 bytes, each row of tiles occupies
                 40*32 = 1280 bytes.
 
                 Offset the source by 16 to get to the lower 4 lines of
-                each tile. */
+                each tile.
+
+                WARNING: Undefined behavior. `offset` on left side wants the
+                PRE-incremented value.
+                */
                 *(dest + offset + (row * 1280)) =
                   *(src + (row * 1280) + offset++ + 16);
             }
@@ -2064,6 +2069,9 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
                 destination are filled with random memory here, but it doesn't
                 matter because they are overwritten again further down when the
                 temp buffer is written to the destination.
+
+                WARNING: Undefined behavior. `offset` on left side wants the
+                PRE-incremented value.
                 */
                 *(dest + offset + (row * 1280) + 16) =
                   *(src + (row * 1280) + offset++ + 1280);
@@ -2690,12 +2698,11 @@ void ShowE1CliffhangerMessage(word actor_type)
 
     SelectDrawPage(!activePage);
 #else
+    (void) actor_type;
 #   pragma warn -use
-#   pragma warn -par
 #endif  /* E1_CLIFFHANGER */
 }
 #pragma warn .use
-#pragma warn .par
 
 /*
 Ask for confirmation of the user's request to quit. Return true if the request
@@ -2764,7 +2771,7 @@ At any time, Up/Down changes the sound number, Enter plays the selected sound,
 and Esc leaves the menu. If the sound effects option is disabled, it is
 temporarily re-enabled while this menu remains open.
 */
-void ShowSoundTest(void)
+static void ShowSoundTest(void)
 {
     word x;
     bool enabled = isSoundEnabled;

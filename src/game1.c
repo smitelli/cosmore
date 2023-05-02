@@ -288,7 +288,7 @@ void InitializeEpisode(void);
 /*
 Get the file size of the named group entry, in bytes.
 */
-dword GroupEntryLength(char *entry_name)
+static dword GroupEntryLength(char *entry_name)
 {
     fclose(GroupEntryFp(entry_name));
 
@@ -298,7 +298,7 @@ dword GroupEntryLength(char *entry_name)
 /*
 Reset all variables for the "player dizzy/shaking head" immobilization.
 */
-void ClearPlayerDizzy(void)
+static void ClearPlayerDizzy(void)
 {
     queuePlayerDizzy = false;
     playerDizzyLeft = 0;
@@ -312,7 +312,7 @@ for consistent demo recording/playback.
 
 The upper bound for return value is on the order of 4,000.
 */
-word GameRand(void)
+static word GameRand(void)
 {
     static word randtable[] = {
         31,  12,  17,  233, 99,  8,   64,  12,  199, 49,  5,   6,
@@ -329,7 +329,7 @@ word GameRand(void)
 /*
 Read the next color from the palette animation array and load it in.
 */
-void StepPalette(byte *pal_table)
+static void StepPalette(byte *pal_table)
 {
     paletteStepCount++;
     if (pal_table[(word)paletteStepCount] == END_ANIMATION) paletteStepCount = 0;
@@ -345,7 +345,7 @@ void StepPalette(byte *pal_table)
 /*
 Handle palette animation for this frame.
 */
-void AnimatePalette(void)
+static void AnimatePalette(void)
 {
     static byte lightningState = 0;
 
@@ -530,7 +530,7 @@ Load font data into system memory.
 The font data on disk has an inverted transparency mask relative to what the
 rest of the game expects, so negate those bits while loading.
 */
-void LoadFontTileData(char *entry_name, byte *dest, word length)
+static void LoadFontTileData(char *entry_name, byte *dest, word length)
 {
     int i;
     FILE *fp = GroupEntryFp(entry_name);
@@ -595,7 +595,7 @@ Load sound data into system memory.
 There are three group entries with sound data. `skip` allows them to be arranged
 into a single linear pointer array.
 */
-void LoadSoundData(char *entry_name, word *dest, int skip)
+static void LoadSoundData(char *entry_name, word *dest, int skip)
 {
     int i;
     FILE *fp = GroupEntryFp(entry_name);
@@ -628,7 +628,7 @@ void StartSound(word sound_num)
 /*
 Read a group entry into system memory.
 */
-void LoadGroupEntryData(char *entry_name, byte *dest, word length)
+static void LoadGroupEntryData(char *entry_name, byte *dest, word length)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -639,7 +639,7 @@ void LoadGroupEntryData(char *entry_name, byte *dest, word length)
 /*
 Load actor tile data into system memory.
 */
-void LoadActorTileData(char *entry_name)
+static void LoadActorTileData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -653,7 +653,7 @@ void LoadActorTileData(char *entry_name)
 /*
 Load row-planar tile image data into EGA memory.
 */
-void CopyTilesToEGA(byte *source, word dest_length, word dest_offset)
+static void CopyTilesToEGA(byte *source, word dest_length, word dest_offset)
 {
     word i;
     word mask;
@@ -677,7 +677,7 @@ Used when loading {ACTR,CART,PLYR}INFO.MNI entries.
 NOTE: This is identical to the more general-purpose LoadGroupEntryData(), except
 that here `dest` is a word pointer.
 */
-void LoadInfoData(char *entry_name, word *dest, word length)
+static void LoadInfoData(char *entry_name, word *dest, word length)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -689,7 +689,7 @@ void LoadInfoData(char *entry_name, word *dest, word length)
 Draw the static game world (backdrop plus all solid/masked map tiles), windowed
 to the current scroll position.
 */
-void DrawMapRegion(void)
+static void DrawMapRegion(void)
 {
     register int xtile;
     word destoff = 321;
@@ -916,7 +916,7 @@ void DrawMapRegion(void)
 /*
 Is any part of the sprite frame at x,y visible within the screen's scroll area?
 */
-bool IsSpriteVisible(word sprite, word frame, word x, word y)
+static bool IsSpriteVisible(word sprite, word frame, word x, word y)
 {
     register word width, height;
     word offset = *(actorInfoData + sprite) + (frame * 4);
@@ -944,7 +944,7 @@ NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the sprite wants to move into, and *not* the
 location where it currently is.
 */
-word TestSpriteMove(word dir, word sprite, word frame, word x, word y)
+static word TestSpriteMove(word dir, word sprite, word frame, word x, word y)
 {
     register word i;
     word *mapcell;
@@ -1022,7 +1022,7 @@ NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the player wants to move into, and *not* the
 location where they currently are.
 */
-word TestPlayerMove(word dir, word x, word y)
+static word TestPlayerMove(word dir, word x, word y)
 {
     word i;
     word *mapcell;
@@ -1116,7 +1116,7 @@ word TestPlayerMove(word dir, word x, word y)
 /*
 Is the passed sprite frame at x,y touching the player's sprite?
 */
-bool IsTouchingPlayer(word sprite, word frame, word x, word y)
+static bool IsTouchingPlayer(word sprite, word frame, word x, word y)
 {
     register word height, width;
     word offset;
@@ -1146,7 +1146,7 @@ Is the passed sprite frame at x,y (#1) touching another passed sprite (#2)?
 
 Only used by IsNearExplosion().
 */
-bool IsIntersecting(
+static bool IsIntersecting(
     word sprite1, word frame1, word x1, word y1,
     word sprite2, word frame2, word x2, word y2
 ) {
@@ -1201,6 +1201,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
 
     src = actorTileData[*(actorInfoData + offset + 3)] + *(actorInfoData + offset + 2);
 
+    /* NOTE: No default draw function. An unhandled `mode` will crash! */
     switch (mode) {
     case DRAW_MODE_NORMAL:
     case DRAW_MODE_IN_FRONT:
@@ -1324,6 +1325,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
 
     EGA_MODE_DEFAULT();
 
+    /* NOTE: No default draw function. An unhandled `mode` will crash! */
     switch (mode) {
     case DRAW_MODE_NORMAL:
     case DRAW_MODE_IN_FRONT:
@@ -1420,7 +1422,7 @@ infront:
 /*
 Load cartoon data into system memory.
 */
-void LoadCartoonData(char *entry_name)
+static void LoadCartoonData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -1474,7 +1476,7 @@ Handle movement of the player when standing on a moving platform/fountain.
 
 There's no real need for x_dir/y_dir to be split up; might be cruft.
 */
-void MovePlayerPlatform(word x_west, word x_east, word x_dir, word y_dir)
+static void MovePlayerPlatform(word x_west, word x_east, word x_dir, word y_dir)
 {
     register word offset;
     register word playerx2;
@@ -1537,7 +1539,7 @@ Perform one frame of movement on every platform in the map.
 
 This makes a waaay unsafe assumption about the Platform struct packing.
 */
-void MovePlatforms(void)
+static void MovePlatforms(void)
 {
     register word i, x;
 
@@ -1575,7 +1577,7 @@ void MovePlatforms(void)
 /*
 Perform SetMapTile(), repeated `count` times horizontally.
 */
-void SetMapTileRepeat(word value, word count, word x_origin, word y_origin)
+static void SetMapTileRepeat(word value, word count, word x_origin, word y_origin)
 {
     word x;
 
@@ -1587,7 +1589,7 @@ void SetMapTileRepeat(word value, word count, word x_origin, word y_origin)
 /*
 Perform SetMapTile() four times horizontally, with unique values.
 */
-void SetMapTile4(
+static void SetMapTile4(
     word val1, word val2, word val3, word val4, word x_origin, word y_origin
 ) {
     SetMapTile(val1, x_origin,     y_origin);
@@ -1599,7 +1601,7 @@ void SetMapTile4(
 /*
 Perform one frame of movement on every fountain in the map.
 */
-void MoveFountains(void)
+static void MoveFountains(void)
 {
     word i;
 
@@ -1647,7 +1649,7 @@ void MoveFountains(void)
 /*
 Draw all fountains, and handle contact between their streams and the player.
 */
-void DrawFountains(void)
+static void DrawFountains(void)
 {
     static word slowcount = 0;
     static word fastcount = 0;
@@ -1688,7 +1690,7 @@ Lighten each area of the map that a light touches.
 The map defines the top edge of each column of the cone. This function fills all
 tiles south of the defined light actor until a south-blocking tile is hit.
 */
-void DrawLights(void)
+static void DrawLights(void)
 {
     register word i;
 
@@ -1733,7 +1735,7 @@ void DrawLights(void)
 /*
 Create the specified actor at the current nextActorIndex.
 */
-void ConstructActor(
+static void ConstructActor(
     word sprite, word x, word y, bool force_active, bool stay_active,
     bool weighted, bool acrophile, ActorTickFunction tick_func, word data1,
     word data2, word data3, word data4, word data5
@@ -1778,7 +1780,7 @@ revert the move if not.
 Sets private1 to 0 if westward movement was blocked, and 1 if the move was valid
 as-is. private2 is changed the same way for eastward movement.
 */
-void AdjustActorMove(word index, word dir)
+static void AdjustActorMove(word index, word dir)
 {
     Actor *act = actors + index;
     word offset;
@@ -1866,7 +1868,7 @@ void AdjustActorMove(word index, word dir)
 /*
 Handle one frame of foot switch movement.
 */
-void ActFootSwitch(word index)
+static void ActFootSwitch(word index)
 {
     Actor *act = actors + index;
 
@@ -1955,7 +1957,7 @@ void ActFootSwitch(word index)
 /*
 Handle one frame of horizontal saw blade/sharp robot movement.
 */
-void ActHorizontalMover(word index)
+static void ActHorizontalMover(word index)
 {
     Actor *act = actors + index;
 
@@ -1998,7 +2000,7 @@ void ActHorizontalMover(word index)
 /*
 Handle one frame of floor/ceiling jump pad movement.
 */
-void ActJumpPad(word index)
+static void ActJumpPad(word index)
 {
     Actor *act = actors + index;
 
@@ -2023,7 +2025,7 @@ void ActJumpPad(word index)
 /*
 Handle one frame of arrow piston movement.
 */
-void ActArrowPiston(word index)
+static void ActArrowPiston(word index)
 {
     Actor *act = actors + index;
 
@@ -2061,7 +2063,7 @@ Handle one frame of fireball movement.
 NOTE: This actor consists only of the fireball, which spends its idle frames
 hidden behind map tiles. The "launchers" are solid map tiles.
 */
-void ActFireball(word index)
+static void ActFireball(word index)
 {
     Actor *act = actors + index;
 
@@ -2107,7 +2109,7 @@ void ActFireball(word index)
 /*
 Look for any door(s) linked to the passed switch, and unlock them if needed.
 */
-void UpdateDoors(word door_sprite, Actor *act_switch)
+static void UpdateDoors(word door_sprite, Actor *act_switch)
 {
     word i, y;
 
@@ -2132,7 +2134,7 @@ void UpdateDoors(word door_sprite, Actor *act_switch)
 /*
 Handle one frame of head switch movement.
 */
-void ActHeadSwitch(word index)
+static void ActHeadSwitch(word index)
 {
     Actor *act = actors + index;
 
@@ -2146,7 +2148,7 @@ void ActHeadSwitch(word index)
 /*
 Handle first-time initialization of a door, then become a no-op.
 */
-void ActDoor(word index)
+static void ActDoor(word index)
 {
     word y;
     Actor *act = actors + index;
@@ -2165,7 +2167,7 @@ void ActDoor(word index)
 /*
 Handle one frame of jump pad robot movement.
 */
-void ActJumpPadRobot(word index)
+static void ActJumpPadRobot(word index)
 {
     Actor *act = actors + index;
 
@@ -2198,7 +2200,7 @@ void ActJumpPadRobot(word index)
 /*
 Handle one frame of reciprocating spike movement.
 */
-void ActReciprocatingSpikes(word index)
+static void ActReciprocatingSpikes(word index)
 {
     Actor *act = actors + index;
 
@@ -2229,7 +2231,7 @@ void ActReciprocatingSpikes(word index)
 /*
 Handle one frame of vertical saw blade movement.
 */
-void ActVerticalMover(word index)
+static void ActVerticalMover(word index)
 {
     Actor *act = actors + index;
 
@@ -2257,7 +2259,7 @@ void ActVerticalMover(word index)
 /*
 Handle one frame of armed bomb movement.
 */
-void ActBombArmed(word index)
+static void ActBombArmed(word index)
 {
     Actor *act = actors + index;
 
@@ -2293,7 +2295,7 @@ void ActBombArmed(word index)
 /*
 Handle one frame of barrel movement.
 */
-void ActBarrel(word index)
+static void ActBarrel(word index)
 {
     Actor *act = actors + index;
 
@@ -2307,7 +2309,7 @@ void ActBarrel(word index)
 /*
 Handle one frame of cabbage movement.
 */
-void ActCabbage(word index)
+static void ActCabbage(word index)
 {
     Actor *act = actors + index;
 
@@ -2365,7 +2367,7 @@ void ActCabbage(word index)
 /*
 Handle one frame of reciprocating spear movement.
 */
-void ActReciprocatingSpear(word index)
+static void ActReciprocatingSpear(word index)
 {
     Actor *act = actors + index;
 
@@ -2388,7 +2390,7 @@ Handle one frame of ged/green slime movement.
 The repeat rate of dripping slime actors is directly related to how far they
 have to travel before falling off the bottom of the screen.
 */
-void ActRedGreenSlime(word index)
+static void ActRedGreenSlime(word index)
 {
     static word throbframes[] = {0, 1, 2, 3, 2, 1, 0};
     Actor *act = actors + index;
@@ -2432,7 +2434,7 @@ void ActRedGreenSlime(word index)
 /*
 Handle one frame of flying wisp movement.
 */
-void ActFlyingWisp(word index)
+static void ActFlyingWisp(word index)
 {
     Actor *act = actors + index;
 
@@ -2467,7 +2469,7 @@ void ActFlyingWisp(word index)
 /*
 Handle one frame of "Two Tons" crusher movement.
 */
-void ActTwoTonsCrusher(word index)
+static void ActTwoTonsCrusher(word index)
 {
     Actor *act = actors + index;
 
@@ -2541,7 +2543,7 @@ void ActTwoTonsCrusher(word index)
 /*
 Handle one frame of jumping bullet movement.
 */
-void ActJumpingBullet(word index)
+static void ActJumpingBullet(word index)
 {
     static int yjump[] = {-2, -2, -2, -2, -1, -1, -1, 0, 0, 1, 1, 1, 2, 2, 2, 2};
     Actor *act = actors + index;
@@ -2569,7 +2571,7 @@ void ActJumpingBullet(word index)
 /*
 Handle one frame of stone head crusher movement.
 */
-void ActStoneHeadCrusher(word index)
+static void ActStoneHeadCrusher(word index)
 {
     Actor *act = actors + index;
 
@@ -2628,7 +2630,7 @@ void ActStoneHeadCrusher(word index)
 /*
 Handle one frame of pyramid movement.
 */
-void ActPyramid(word index)
+static void ActPyramid(word index)
 {
     Actor *act = actors + index;
 
@@ -2670,7 +2672,7 @@ void ActPyramid(word index)
 /*
 Handle one frame of ghost movement.
 */
-void ActGhost(word index)
+static void ActGhost(word index)
 {
     Actor *act = actors + index;
 
@@ -2719,7 +2721,7 @@ void ActGhost(word index)
 /*
 Handle one frame of moon movement.
 */
-void ActMoon(word index)
+static void ActMoon(word index)
 {
     Actor *act = actors + index;
 
@@ -2739,7 +2741,7 @@ void ActMoon(word index)
 /*
 Handle one frame of heart plant movement.
 */
-void ActHeartPlant(word index)
+static void ActHeartPlant(word index)
 {
     Actor *act = actors + index;
 
@@ -2774,7 +2776,7 @@ void ActHeartPlant(word index)
 /*
 Handle one frame of idle bomb movement.
 */
-void ActBombIdle(word index)
+static void ActBombIdle(word index)
 {
     Actor *act = actors + index;
 
@@ -2802,7 +2804,7 @@ void SetMapTile(word value, word x, word y)
 /*
 Handle one frame of mystery wall movement.
 */
-void ActMysteryWall(word index)
+static void ActMysteryWall(word index)
 {
     Actor *act = actors + index;
 
@@ -2841,7 +2843,7 @@ void ActMysteryWall(word index)
 /*
 Handle one frame of baby ghost movement.
 */
-void ActBabyGhost(word index)
+static void ActBabyGhost(word index)
 {
     Actor *act = actors + index;
 
@@ -2893,7 +2895,7 @@ Handle one frame of projectile movement.
 
 Projectiles use a unique DIRP_* system that is incompatible with DIR8_*.
 */
-void ActProjectile(word index)
+static void ActProjectile(word index)
 {
     Actor *act = actors + index;
 
@@ -2937,7 +2939,7 @@ void ActProjectile(word index)
 /*
 Handle one frame of roamer slug movement.
 */
-void ActRoamerSlug(word index)
+static void ActRoamerSlug(word index)
 {
     Actor *act = actors + index;
 
@@ -3023,17 +3025,17 @@ void ActRoamerSlug(word index)
 /*
 Pipe corner actors do not perform any meaningful action.
 */
-void ActPipeCorner(word index)
+static void ActPipeCorner(word index)
 {
+    (void) index;
+
     nextDrawMode = DRAW_MODE_HIDDEN;
-#pragma warn -par
 }
-#pragma warn .par
 
 /*
 Handle one frame of baby ghost egg movement.
 */
-void ActBabyGhostEgg(word index)
+static void ActBabyGhostEgg(word index)
 {
     Actor *act = actors + index;
 
@@ -3077,7 +3079,7 @@ void ActBabyGhostEgg(word index)
 /*
 Handle one frame of sharp robot movement.
 */
-void ActSharpRobot(word index)
+static void ActSharpRobot(word index)
 {
     Actor *act = actors + index;
 
@@ -3116,7 +3118,7 @@ void ActSharpRobot(word index)
 /*
 Handle one frame of clam plant movement.
 */
-void ActClamPlant(word index)
+static void ActClamPlant(word index)
 {
     Actor *act = actors + index;
 
@@ -3159,7 +3161,7 @@ Handle one frame of parachute ball movement.
 
 NOTE: This uses a direction system that is incompatible with DIR2_*.
 */
-void ActParachuteBall(word index)
+static void ActParachuteBall(word index)
 {
     Actor *act = actors + index;
 
@@ -3251,7 +3253,7 @@ Handle one frame of beam robot movement.
 
 NOTE: This uses a direction system that is incompatible with DIR2_*.
 */
-void ActBeamRobot(word index)
+static void ActBeamRobot(word index)
 {
     static word beamframe = 0;
     Actor *act = actors + index;
@@ -3260,7 +3262,7 @@ void ActBeamRobot(word index)
     nextDrawMode = DRAW_MODE_HIDDEN;
 
     if (act->data2 != 0) {
-        for (i = 0; act->data2 > i; i += 4) {
+        for (i = 0; act->data2 > (word)i; i += 4) {
             NewExplosion(act->x, act->y - i);
             NewActor(ACT_STAR_FLOAT, act->x, act->y - i);
         }
@@ -3325,7 +3327,7 @@ void ActBeamRobot(word index)
 /*
 Handle one frame of splitting platform movement.
 */
-void ActSplittingPlatform(word index)
+static void ActSplittingPlatform(word index)
 {
     Actor *act = actors + index;
 
@@ -3388,7 +3390,7 @@ Handle one frame of spark movment.
 
 NOTE: This uses a direction system that is incompatible with DIR4_*.
 */
-void ActSpark(word index)
+static void ActSpark(word index)
 {
     Actor *act = actors + index;
 
@@ -3438,7 +3440,7 @@ void ActSpark(word index)
 /*
 Handle one frame of eye plant movement.
 */
-void ActEyePlant(word index)
+static void ActEyePlant(word index)
 {
     Actor *act = actors + index;
 
@@ -3463,7 +3465,7 @@ void ActEyePlant(word index)
 /*
 Handle one frame of red jumper movement.
 */
-void ActRedJumper(word index)
+static void ActRedJumper(word index)
 {
     static int jumptable[] = {
         /* even elements = y change; odd elements = actor frame */
@@ -3569,15 +3571,14 @@ void ActRedJumper(word index)
     if (act->data2 < 39) act->data2 += 2;
 
 #else
-#   pragma warn -aus
+    (void) jumptable, (void) act;
 #endif  /* HAS_ACT_RED_JUMPER */
 }
-#pragma warn .aus
 
 /*
 Handle one frame of boss movement.
 */
-void ActBoss(word index)
+static void ActBoss(word index)
 {
     static int yjump[] = {2, 2, 1, 0, -1, -2, -2, -2, -2, -1, 0, 1, 2, 2};
     Actor *act = actors + index;
@@ -3822,15 +3823,14 @@ void ActBoss(word index)
 #   undef WIN_VAR
 #   undef D5_VALUE
 #else
-#   pragma warn -aus
+    (void) yjump, (void) act;
 #endif  /* HAS_ACT_BOSS */
 }
-#pragma warn .aus
 
 /*
 Handle one frame of pipe end movement.
 */
-void ActPipeEnd(word index)
+static void ActPipeEnd(word index)
 {
     Actor *act = actors + index;
 
@@ -3853,7 +3853,7 @@ void ActPipeEnd(word index)
 /*
 Return true if there is a close-enough surface above/below this suction walker.
 */
-bbool CanSuctionWalkerFlip(word index, word dir)
+static bbool CanSuctionWalkerFlip(word index, word dir)
 {
     Actor *act = actors + index;
     word y;
@@ -3889,7 +3889,7 @@ Handle one frame of suction walker movement.
 
 NOTE: The _BLOCK_WEST checks should almost certainly be _BLOCK_NORTH instead.
 */
-void ActSuctionWalker(word index)
+static void ActSuctionWalker(word index)
 {
     Actor *act = actors + index;
     word move, ledge;
@@ -4040,7 +4040,7 @@ void ActSuctionWalker(word index)
 /*
 Handle one frame of transporter movement.
 */
-void ActTransporter(word index)
+static void ActTransporter(word index)
 {
     Actor *act = actors + index;
 
@@ -4104,7 +4104,7 @@ void ActTransporter(word index)
 /*
 Handle one frame of spitting wall plant movement.
 */
-void ActSpittingWallPlant(word index)
+static void ActSpittingWallPlant(word index)
 {
     Actor *act = actors + index;
 
@@ -4133,7 +4133,7 @@ void ActSpittingWallPlant(word index)
 /*
 Handle one frame of spitting turret movement.
 */
-void ActSpittingTurret(word index)
+static void ActSpittingTurret(word index)
 {
     Actor *act = actors + index;
 
@@ -4210,7 +4210,7 @@ void ActSpittingTurret(word index)
 /*
 Handle one frame of scooter movement.
 */
-void ActScooter(word index)
+static void ActScooter(word index)
 {
     Actor *act = actors + index;
 
@@ -4240,7 +4240,7 @@ void ActScooter(word index)
 /*
 Handle one frame of red chomper movement.
 */
-void ActRedChomper(word index)
+static void ActRedChomper(word index)
 {
     Actor *act = actors + index;
 
@@ -4315,7 +4315,7 @@ void ActRedChomper(word index)
 /*
 Handle one frame of force field movement.
 */
-void ActForceField(word index)
+static void ActForceField(word index)
 {
     Actor *act = actors + index;
 
@@ -4362,7 +4362,7 @@ void ActForceField(word index)
 /*
 Handle one frame of pink worm movement.
 */
-void ActPinkWorm(word index)
+static void ActPinkWorm(word index)
 {
     Actor *act = actors + index;
 
@@ -4421,7 +4421,7 @@ void ActPinkWorm(word index)
 /*
 Handle one frame of hint globe movement.
 */
-void ActHintGlobe(word index)
+static void ActHintGlobe(word index)
 {
     static byte orbframes[] = {0, 4, 5, 6, 5, 4};
     Actor *act = actors + index;
@@ -4461,7 +4461,7 @@ void ActHintGlobe(word index)
 /*
 Handle one frame of pusher robot movement.
 */
-void ActPusherRobot(word index)
+static void ActPusherRobot(word index)
 {
     Actor *act = actors + index;
 
@@ -4539,7 +4539,7 @@ void ActPusherRobot(word index)
 /*
 Handle one frame of sentry robot movement.
 */
-void ActSentryRobot(word index)
+static void ActSentryRobot(word index)
 {
     Actor *act = actors + index;
 
@@ -4610,7 +4610,7 @@ void ActSentryRobot(word index)
 /*
 Handle one frame of pink worm slime movement.
 */
-void ActPinkWormSlime(word index)
+static void ActPinkWormSlime(word index)
 {
     Actor *act = actors + index;
 
@@ -4628,7 +4628,7 @@ void ActPinkWormSlime(word index)
 /*
 Handle one frame of dragonfly movement.
 */
-void ActDragonfly(word index)
+static void ActDragonfly(word index)
 {
     Actor *act = actors + index;
 
@@ -4653,7 +4653,7 @@ void ActDragonfly(word index)
 /*
 Handle one frame of worm crate movmenet.
 */
-void ActWormCrate(word index)
+static void ActWormCrate(word index)
 {
     Actor *act = actors + index;
 
@@ -4700,7 +4700,7 @@ void ActWormCrate(word index)
 /*
 Handle one frame of satellite movement.
 */
-void ActSatellite(word index)
+static void ActSatellite(word index)
 {
     Actor *act = actors + index;
 
@@ -4746,7 +4746,7 @@ void ActSatellite(word index)
 /*
 Handle one frame of ivy plant movement.
 */
-void ActIvyPlant(word index)
+static void ActIvyPlant(word index)
 {
     Actor *act = actors + index;
 
@@ -4787,7 +4787,7 @@ void ActIvyPlant(word index)
 /*
 Handle one frame of exit monster (facing west) movement.
 */
-void ActExitMonsterWest(word index)
+static void ActExitMonsterWest(word index)
 {
     Actor *act = actors + index;
 
@@ -4833,7 +4833,7 @@ void ActExitMonsterWest(word index)
 /*
 Handle interaction between the player and a vertical exit line.
 */
-void ActExitLineVertical(word index)
+static void ActExitLineVertical(word index)
 {
     Actor *act = actors + index;
 
@@ -4847,7 +4847,7 @@ void ActExitLineVertical(word index)
 /*
 Handle interaction between the player and a horizontal exit line.
 */
-void ActExitLineHorizontal(word index)
+static void ActExitLineHorizontal(word index)
 {
     Actor *act = actors + index;
 
@@ -4863,7 +4863,7 @@ void ActExitLineHorizontal(word index)
 /*
 Handle one frame of small flame movement.
 */
-void ActSmallFlame(word index)
+static void ActSmallFlame(word index)
 {
     Actor *act = actors + index;
 
@@ -4874,7 +4874,7 @@ void ActSmallFlame(word index)
 /*
 Handle one frame of prize movement.
 */
-void ActPrize(word index)
+static void ActPrize(word index)
 {
     Actor *act = actors + index;
 
@@ -4905,7 +4905,7 @@ void ActPrize(word index)
 /*
 Handle one frame of bear trap movement.
 */
-void ActBearTrap(word index)
+static void ActBearTrap(word index)
 {
     Actor *act = actors + index;
 
@@ -4949,7 +4949,7 @@ void ActBearTrap(word index)
 /*
 Handle one frame of falling floor movement.
 */
-void ActFallingFloor(word index)
+static void ActFallingFloor(word index)
 {
     Actor *act = actors + index;
 
@@ -4990,7 +4990,7 @@ void ActFallingFloor(word index)
 /*
 Handle interaction between the player and the Episode 1 end sequence lines.
 */
-void ActEpisode1End(word index)
+static void ActEpisode1End(word index)
 {
     Actor *act = actors + index;
 
@@ -5005,7 +5005,7 @@ void ActEpisode1End(word index)
 /*
 Handle one frame of score effect movement.
 */
-void ActScoreEffect(word index)
+static void ActScoreEffect(word index)
 {
     Actor *act = actors + index;
 
@@ -5038,7 +5038,7 @@ void ActScoreEffect(word index)
 /*
 Handle one frame of exit plant movement.
 */
-void ActExitPlant(word index)
+static void ActExitPlant(word index)
 {
     Actor *act = actors + index;
     byte tongueframes[] = {5, 6, 7, 8};
@@ -5076,7 +5076,7 @@ void ActExitPlant(word index)
 /*
 Handle one frame of bird movement.
 */
-void ActBird(word index)
+static void ActBird(word index)
 {
     Actor *act = actors + index;
 
@@ -5150,7 +5150,7 @@ void ActBird(word index)
 /*
 Handle one frame of rocket movement.
 */
-void ActRocket(word index)
+static void ActRocket(word index)
 {
     Actor *act = actors + index;
 
@@ -5238,7 +5238,7 @@ void ActRocket(word index)
 /*
 Handle one frame of pedestal movement.
 */
-void ActPedestal(word index)
+static void ActPedestal(word index)
 {
     Actor *act = actors + index;
     word i;
@@ -5282,7 +5282,7 @@ Handle one frame of invincibility bubble movement.
 
 As long as this actor is alive, it follows the player and gives invincibility.
 */
-void ActInvincibilityBubble(word index)
+static void ActInvincibilityBubble(word index)
 {
     Actor *act = actors + index;
     byte frames[] = {0, 1, 2, 1};
@@ -5309,7 +5309,7 @@ void ActInvincibilityBubble(word index)
 /*
 Handle one frame of monument movement.
 */
-void ActMonument(word index)
+static void ActMonument(word index)
 {
     Actor *act = actors + index;
     int i;
@@ -5365,7 +5365,7 @@ void ActMonument(word index)
 /*
 Handle one frame of tulip launcher movement.
 */
-void ActTulipLauncher(word index)
+static void ActTulipLauncher(word index)
 {
     byte launchframes[] = {0, 2, 1, 0, 1};
     Actor *act = actors + index;
@@ -5422,7 +5422,7 @@ void ActTulipLauncher(word index)
 /*
 Handle one frame of frozen D.N. movement.
 */
-void ActFrozenDN(word index)
+static void ActFrozenDN(word index)
 {
     Actor *act = actors + index;
 
@@ -5506,15 +5506,14 @@ void ActFrozenDN(word index)
         }
     }
 #else
-#   pragma warn -aus
+    (void) act;
 #endif  /* HAS_ACT_FROZEN_DN */
 }
-#pragma warn .aus
 
 /*
 Handle one frame of flame pulse movement.
 */
-void ActFlamePulse(word index)
+static void ActFlamePulse(word index)
 {
     Actor *act = actors + index;
     byte frames[] = {0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 1, 0};
@@ -5541,7 +5540,7 @@ void ActFlamePulse(word index)
 /*
 Handle one frame of speech bubble movement.
 */
-void ActSpeechBubble(word index)
+static void ActSpeechBubble(word index)
 {
     Actor *act = actors + index;
 
@@ -5567,7 +5566,7 @@ void ActSpeechBubble(word index)
 /*
 Handle one frame of smoke emitter movement.
 */
-void ActSmokeEmitter(word index)
+static void ActSmokeEmitter(word index)
 {
     Actor *act = actors + index;
 
@@ -5587,7 +5586,7 @@ void ActSmokeEmitter(word index)
 Create a new actor of the specified type located at x,y.
 Relies on the caller providing the correct index into the main actors array.
 */
-bbool NewActorAtIndex(word index, word actor_type, word x, word y)
+static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
 {
     /* This is probably to save having to pass this 240+ times below. */
     nextActorIndex = index;
@@ -6380,7 +6379,7 @@ void NewActor(word actor_type, word x, word y)
 /*
 Add sparkles to slippery areas of the map; add raindrops to empty areas of sky.
 */
-void DrawRandomEffects(void)
+static void DrawRandomEffects(void)
 {
     word x = random(SCROLLW) + scrollX;
     word y = random(SCROLLH) + scrollY;
@@ -6404,7 +6403,7 @@ static word numShards = MAX_SHARDS;
 /*
 Deactivate every element in the shards array, freeing them for re-use.
 */
-void InitializeShards(void)
+static void InitializeShards(void)
 {
     word i;
 
@@ -6448,7 +6447,7 @@ void NewShard(word sprite, word frame, word x, word y)
 /*
 Animate one frame for each active shard, expiring old ones in the process.
 */
-void MoveAndDrawShards(void)
+static void MoveAndDrawShards(void)
 {
     word i;
     Shard *sh;
@@ -6540,7 +6539,7 @@ static word numExplosions = MAX_EXPLOSIONS;
 /*
 Deactivate every element in the explosions array, freeing them for re-use.
 */
-void InitializeExplosions(void)
+static void InitializeExplosions(void)
 {
     word i;
 
@@ -6574,7 +6573,7 @@ void NewExplosion(word x, word y)
 /*
 Animate one frame for each active explosion, expiring old ones in the process.
 */
-void DrawExplosions(void)
+static void DrawExplosions(void)
 {
     word i;
 
@@ -6637,7 +6636,7 @@ static word numSpawners = MAX_SPAWNERS;
 /*
 Deactivate every element in the spawners array, freeing them for re-use.
 */
-void InitializeSpawners(void)
+static void InitializeSpawners(void)
 {
     word i;
 
@@ -6673,7 +6672,7 @@ Animate one frame for each active spawner, expiring old ones in the process.
 NOTE: This function only behaves correctly for actors whose sprite type number
 matches the actor type number. While spawning, frame 0 of the sprite is used.
 */
-void MoveAndDrawSpawners(void)
+static void MoveAndDrawSpawners(void)
 {
     word i;
 
@@ -6685,10 +6684,10 @@ void MoveAndDrawSpawners(void)
         sp->age++;
 
         if (
-            (sp->y--, TestSpriteMove(DIR4_NORTH, sp->actor, 0, sp->x, sp->y)) != MOVE_FREE ||
+            ((void)sp->y--, TestSpriteMove(DIR4_NORTH, sp->actor, 0, sp->x, sp->y)) != MOVE_FREE ||
             (
                 sp->age < 9 &&
-                (sp->y--, TestSpriteMove(DIR4_NORTH, sp->actor, 0, sp->x, sp->y)) != MOVE_FREE
+                ((void)sp->y--, TestSpriteMove(DIR4_NORTH, sp->actor, 0, sp->x, sp->y)) != MOVE_FREE
             )
         ) {
             NewActor(sp->actor, sp->x, sp->y + 1);
@@ -6711,11 +6710,11 @@ static int numDecorations = MAX_DECORATIONS;
 /*
 Deactivate every element in the decorations array, freeing them for re-use.
 */
-void InitializeDecorations(void)
+static void InitializeDecorations(void)
 {
     word i;
 
-    for (i = 0; i < numDecorations; i++) {
+    for (i = 0; i < (word)numDecorations; i++) {
         decorations[i].alive = false;
     }
 }
@@ -6728,7 +6727,7 @@ void NewDecoration(
 ) {
     word i;
 
-    for (i = 0; i < numDecorations; i++) {
+    for (i = 0; i < (word)numDecorations; i++) {
         Decoration *dec = decorations + i;
 
         if (!dec->alive) {
@@ -6750,11 +6749,11 @@ void NewDecoration(
 /*
 Animate one frame for each active decoration, expiring old ones in the process.
 */
-void MoveAndDrawDecorations(void)
+static void MoveAndDrawDecorations(void)
 {
-    int i;
+    word i;
 
-    for (i = 0; i < numDecorations; i++) {
+    for (i = 0; (int)i < numDecorations; i++) {
         Decoration *dec = decorations + i;
 
         if (!dec->alive) continue;
@@ -6794,7 +6793,7 @@ void MoveAndDrawDecorations(void)
 /*
 Decide, somehow, if a pounce is valid. Not totally clear on this yet.
 */
-bool PounceHelper(int recoil)
+static bool PounceHelper(int recoil)
 {
     if (playerDeadTime != 0 || playerDizzyLeft != 0) return false;
 
@@ -6899,7 +6898,7 @@ Return true if so, and handle special cases. Otherwise returns false. As a side
 effect, adds a shard decoration and adds to the player's score if the sprite is
 explodable.
 */
-bool CanBeExploded(word sprite, word frame, word x, word y)
+static bool CanBeExploded(word sprite, word frame, word x, word y)
 {
     switch (sprite) {
     case SPR_ARROW_PISTON_W:
@@ -7012,7 +7011,7 @@ standard way.
 It's not clear what benefit there is to passing sprite/frame/x/y instead of
 reading it from the actor itself. Both methods are used interchangeably.
 */
-bool TouchPlayer(word index, word sprite, word frame, word x, word y)
+static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 {
     Actor *act = actors + index;
     word width;
@@ -7796,7 +7795,7 @@ Tasks include application of gravity, killing actors that fall off the map,
 wakeup/cooldown management, interactions between the actor and the player/
 explosions, calling the actor tick function, and typical-case sprite drawing.
 */
-void ProcessActor(word index)
+static void ProcessActor(word index)
 {
     Actor *act = actors + index;
 
@@ -7868,7 +7867,7 @@ void ProcessActor(word index)
 /*
 Reset per-frame global actor variables, and process each actor in turn.
 */
-void MoveAndDrawActors(void)
+static void MoveAndDrawActors(void)
 {
     word i;
 
@@ -7887,7 +7886,7 @@ Prepare the video hardware for the possibility of showing the in-game help menu.
 Eventually handles keyboard/joystick input, returning a result byte that
 indicates if the game should end or if a level change is needed.
 */
-byte ProcessGameInputHelper(word active_page, byte demo_state)
+static byte ProcessGameInputHelper(word active_page, byte demo_state)
 {
     byte result;
 
@@ -7925,7 +7924,7 @@ If that were the case, it would look like this:
 Why the table is set up like this is explained in detail in DrawMapRegion.
 
 */
-void InitializeBackdropTable(void)
+static void InitializeBackdropTable(void)
 {
     int x, y;
     word val = 0;
@@ -7949,7 +7948,7 @@ void InitializeBackdropTable(void)
 /*
 Respond to keyboard controller interrupts and update the global key states.
 */
-void interrupt KeyboardInterruptService(void)
+static void interrupt KeyboardInterruptService(void)
 {
     lastScancode = inportb(0x0060);
 
@@ -8017,7 +8016,7 @@ Write a page of "PC-ASCII" text and attributes to the screen, then emit a series
 of newline characters to ensure the text cursor clears the bottom of what was
 just written.
 */
-void DrawFullscreenText(char *entry_name)
+static void DrawFullscreenText(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
     byte *dest = MK_FP(0xb800, 0);
@@ -8034,7 +8033,7 @@ Saves the configuration file, restores the keyboard interrupt handler, graphics,
 and AdLib. Removes the temporary save file, displays a text page, and returns to
 DOS.
 */
-void ExitClean(void)
+static void ExitClean(void)
 {
     SaveConfigurationData(JoinPath(writePath, FILENAME_BASE ".CFG"));
 
@@ -8062,7 +8061,7 @@ void ExitClean(void)
 /*
 Read the tile attribute data into the designated memory location.
 */
-void LoadTileAttributeData(char *entry_name)
+static void LoadTileAttributeData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -8073,7 +8072,7 @@ void LoadTileAttributeData(char *entry_name)
 /*
 Read the masked tile data into the designated memory location.
 */
-void LoadMaskedTileData(char *entry_name)
+static void LoadMaskedTileData(char *entry_name)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -8100,7 +8099,7 @@ from what's reported by coreleft(), so the final amount ends up being 390,080.
 
 NOTE: This function assumes the video mode has already been set to Dh.
 */
-void ValidateSystem(void)
+static void ValidateSystem(void)
 {
     union REGS x86regs;
     dword bytesfree;
@@ -8142,7 +8141,7 @@ screen.
 Nothing allocated here is ever explicitly freed. DOS gets it all back when the
 program eventually exits.
 */
-void Startup(void)
+static void Startup(void)
 {
     /*
     Mode Dh is EGA/VGA 40x25 characters with an 8x8 pixel box.
@@ -8244,7 +8243,7 @@ void Startup(void)
 /*
 Clear the screen, then redraw the in-game status bar onto both video pages.
 */
-void ClearGameScreen(void)
+static void ClearGameScreen(void)
 {
     SelectDrawPage(0);
     DrawStaticGameScreen();
@@ -8300,7 +8299,7 @@ void SetPlayerPush(
 Push the player for one frame. Stop if the player hits the edge of the map or a
 wall (if enabled), or if the push expires.
 */
-void MovePlayerPush(void)
+static void MovePlayerPush(void)
 {
     word i;
     bool wallhit = false;
@@ -8363,7 +8362,7 @@ void MovePlayerPush(void)
 /*
 This is the hairiest function in the entire game. Best of luck to you.
 */
-void MovePlayer(void)
+static void MovePlayer(void)
 {
     static word idlecount = 0;
     static int jumptable[] = {-2, -1, -1, -1, -1, -1, -1, 0, 0, 0};
@@ -8880,7 +8879,7 @@ void MovePlayer(void)
 /*
 Handle player movement and bomb placement while the player is riding a scooter.
 */
-void MovePlayerScooter(void)
+static void MovePlayerScooter(void)
 {
     static word bombcooldown = 0;
 
@@ -9046,7 +9045,7 @@ decrement:
 /*
 If the player has a head-shake queued up, perform it here.
 */
-void ProcessPlayerDizzy(void)
+static void ProcessPlayerDizzy(void)
 {
     static word shakeframes[] = {
         PLAYER_SHAKE_1, PLAYER_SHAKE_2, PLAYER_SHAKE_3, PLAYER_SHAKE_2,
@@ -9085,7 +9084,7 @@ different player death animations.
 Returns true if the level needs to restart due to player death, and false during
 normal gameplay.
 */
-bbool DrawPlayerHelper(void)
+static bbool DrawPlayerHelper(void)
 {
     static byte speechframe = 0;
 
@@ -9190,7 +9189,7 @@ bbool DrawPlayerHelper(void)
 Wait indefinitely for any key to be pressed and released, then return the
 scancode of that key.
 */
-byte WaitForAnyKey(void)
+static byte WaitForAnyKey(void)
 {
     lastScancode = SCANCODE_NULL;  /* will get modified by the keyboard interrupt service */
 
@@ -9203,7 +9202,7 @@ byte WaitForAnyKey(void)
 /*
 Return true if any key is currently pressed, regardless of which key it is.
 */
-bbool IsAnyKeyDown(void)
+static bbool IsAnyKeyDown(void)
 {
     return !(inportb(0x0060) & 0x80);
 }
@@ -9245,7 +9244,7 @@ bbool LoadGameState(char slot_char)
 {
     static char *filename = FILENAME_BASE ".SV ";
     FILE *fp;
-    word checksum;
+    int checksum;
 
     *(filename + SAVE_SLOT_INDEX) = slot_char;
 
@@ -9268,6 +9267,7 @@ bbool LoadGameState(char slot_char)
     sawHealthHint = getw(fp);
 
     checksum = playerHealth + (word)gameStars + levelNum + playerBombs + playerHealthCells;
+
     if (getw(fp) != checksum) {
         ShowAlteredFileError();
         ExitClean();
@@ -9282,7 +9282,7 @@ bbool LoadGameState(char slot_char)
 Save the current game state to a save file. The slot number is a single
 character, '1' through '9', or the letter 'T' for the temporary save file.
 */
-void SaveGameState(char slot_char)
+static void SaveGameState(char slot_char)
 {
     static char *filename = FILENAME_BASE ".SV ";
     FILE *fp;
@@ -9311,7 +9311,7 @@ void SaveGameState(char slot_char)
 /*
 Present a UI for restoring a saved game, and return the result of the prompt.
 */
-byte PromptRestoreGame(void)
+static byte PromptRestoreGame(void)
 {
     byte scancode;
     word x = UnfoldTextFrame(11, 7, 28, "Restore a game.", "Press ESC to quit.");
@@ -9343,7 +9343,7 @@ byte PromptRestoreGame(void)
 Present a UI for saving the game. As the prompt says, the save file will be
 written with the state of the game when the level was last started.
 */
-void PromptSaveGame(void)
+static void PromptSaveGame(void)
 {
     byte scancode;
     word tmphealth, tmpbombs, tmplevel, tmpstars, tmpbars;
@@ -9392,7 +9392,7 @@ Present a UI for the "warp mode" debug feature. This abandons any progress made
 in the current level, and jumps unconditionally to the new level. Returns true
 if the request was acceptable, or false if the input was bad or Esc was pressed.
 */
-bbool PromptLevelWarp(void)
+static bbool PromptLevelWarp(void)
 {
 #ifdef HAS_MAP_11
 #   define MAX_MAP "13"
@@ -9410,7 +9410,7 @@ bbool PromptLevelWarp(void)
     /* Repurposing x here to hold the level index */
     x = atoi(buffer) - 1;
 
-    if (x >= 0 && x <= (sizeof levels / sizeof levels[0]) - 1) {
+    if (x >= 0 && x <= (int)(sizeof levels / sizeof levels[0]) - 1) {
         levelNum = x;  /* no effect, next two calls both clobber this */
         LoadGameState('T');
         InitializeLevel(levels[x]);
@@ -9426,7 +9426,7 @@ Display the main title screen, credits (if the user waits long enough), and
 main menu options. Returns a result byte indicating which demo mode the game
 loop should run under.
 */
-byte TitleLoop(void)
+static byte TitleLoop(void)
 {
 #ifdef FOREIGN_ORDERS
 #   define YSHIFT 1
@@ -9551,7 +9551,7 @@ getkey:
 Display the slimmed-down in-game help menu. Returns a result byte that indicates
 if the game should continue, restart on a different level, or exit.
 */
-byte ShowHelpMenu(void)
+static byte ShowHelpMenu(void)
 {
     word x = UnfoldTextFrame(2, 12, 22, "HELP MENU", "Press ESC to quit.");
     DrawTextLine(x, 5,  " S)ave your game");
@@ -9600,7 +9600,7 @@ byte ShowHelpMenu(void)
 Read the next byte of demo data into the global command variables. Return true
 if the end of the demo data has been reached, otherwise return false.
 */
-bbool ReadDemoFrame(void)
+static bbool ReadDemoFrame(void)
 {
     cmdWest  = (bbool)(*(miscData + demoDataPos) & 0x01);
     cmdEast  = (bbool)(*(miscData + demoDataPos) & 0x02);
@@ -9621,7 +9621,7 @@ Pack the current state of all the global command variables into a byte, then
 append that byte to the demo data. Return true if the demo data storage is full,
 otherwise return false.
 */
-bbool WriteDemoFrame(void)
+static bbool WriteDemoFrame(void)
 {
     if (demoDataLength > 4998) return true;
 
@@ -9643,7 +9643,7 @@ bbool WriteDemoFrame(void)
 /*
 Flush the recorded demo data to disk.
 */
-void SaveDemoData(void)
+static void SaveDemoData(void)
 {
     FILE *fp = fopen("PREVDEMO.MNI", "wb");
     miscDataContents = IMAGE_DEMO;
@@ -9657,7 +9657,7 @@ void SaveDemoData(void)
 /*
 Read demo data into memory.
 */
-void LoadDemoData(void)
+static void LoadDemoData(void)
 {
     FILE *fp = GroupEntryFp("PREVDEMO.MNI");
     miscDataContents = IMAGE_DEMO;
@@ -9868,7 +9868,7 @@ void ShowStarBonus(void)
 /*
 Show the intermission screen that bookends every bonus stage.
 */
-void ShowSectionIntermission(char *top_text, char *bottom_text)
+static void ShowSectionIntermission(char *top_text, char *bottom_text)
 {
     word x;
 
@@ -9890,7 +9890,7 @@ void ShowSectionIntermission(char *top_text, char *bottom_text)
 /*
 Handle progression to the next level.
 */
-void NextLevel(void)
+static void NextLevel(void)
 {
     word stars = (word)gameStars;
 
@@ -9976,7 +9976,7 @@ void NextLevel(void)
 Run the game loop. This function does not return until the entire game has been
 won or the player quits.
 */
-void GameLoop(byte demo_state)
+static void GameLoop(byte demo_state)
 {
     for (;;) {
         while (gameTickCount < 13)
@@ -10095,12 +10095,12 @@ regular actor type 0.
 
 The caller must provide the index for regular actors, which is convoluted.
 */
-void NewMapActorAtIndex(word index, word map_actor, int x, int y)
+static void NewMapActorAtIndex(word index, word map_actor, int x, int y)
 {
     if (map_actor < 32) {
         switch (map_actor) {
         case SPA_PLAYER_START:
-            if (x > mapWidth - 15) {
+            if ((word)x > mapWidth - 15) {
                 scrollX = mapWidth - SCROLLW;
             } else if (x - 15 >= 0 && mapYPower > 5) {
                 scrollX = x - 15;
@@ -10165,7 +10165,7 @@ Load data from a map file, initialize global state, and build all actors.
 
 This makes a waaay unsafe assumption about the Platform struct packing.
 */
-void LoadMapData(word level_num)
+static void LoadMapData(word level_num)
 {
     word i;
     word actorwords;
@@ -10243,7 +10243,7 @@ Track the backdrop parameters (backdrop number and horizontal/vertical scroll
 flags) and return true if they have changed since the last call. Otherwise
 return false.
 */
-bbool IsNewBackdrop(word backdrop_num)
+static bbool IsNewBackdrop(word backdrop_num)
 {
     static word lastnum = WORD_MAX;
     static word lasth = WORD_MAX;
@@ -10268,7 +10268,7 @@ Depending on the current backdrop scroll settings, up to 4 versions of the
 backdrop are copied into EGA video memory. This is due to how the parallax
 scrolling works, which is explained in detail in DrawMapRegion.
 */
-void LoadBackdropData(char *entry_name, byte *scratch)
+static void LoadBackdropData(char *entry_name, byte *scratch)
 {
     FILE *fp = GroupEntryFp(entry_name);
 
@@ -10321,7 +10321,7 @@ void LoadBackdropData(char *entry_name, byte *scratch)
 Reset all of the global variables to prepare for (re)entry into a map. These are
 a mix of player movement variables, actor interactivity flags, and map state.
 */
-void InitializeMapGlobals(void)
+static void InitializeMapGlobals(void)
 {
     winGame = false;
     playerClingDir = DIR4_NONE;
