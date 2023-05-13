@@ -6723,7 +6723,7 @@ static void InitializeDecorations(void)
 Insert the given decoration into the first free spot in the decorations array.
 */
 void NewDecoration(
-    word sprite, word numframes, word x, word y, word dir, word numtimes
+    word sprite, word num_frames, word x, word y, word dir, word num_times
 ) {
     word i;
 
@@ -6733,11 +6733,11 @@ void NewDecoration(
         if (!dec->alive) {
             dec->alive = true;
             dec->sprite = sprite;
-            dec->numframes = numframes;
+            dec->numframes = num_frames;
             dec->x = x;
             dec->y = y;
             dec->dir = dir;
-            dec->numtimes = numtimes;
+            dec->numtimes = num_times;
 
             decorationFrame[i] = 0;
 

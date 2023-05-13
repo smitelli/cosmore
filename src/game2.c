@@ -474,7 +474,7 @@ static void InitializeInterruptRate(void)
 /*
 Handle global changes to the music state. [ID_SD, SD_SetMusicMode()]
 */
-static bool SetMusic(bool state)
+static bool SetMusicState(bool state)
 {
     volatile bool found;  /* Force compiler *not* to use a register var */
 
@@ -527,7 +527,7 @@ void StartAdLib(void)
 
     junk2 = junk3 = musicTickCount = 0;
 
-    SetMusic(false);
+    SetMusicState(false);
 
     /* Useless check; this is always false here */
     if (!skipDetectAdLib) {
@@ -818,11 +818,11 @@ Poll for the X,Y position of the specified joystick, and store the result into
 the two provided timer pointers. If either timer exceeds 500 polls, abort.
 [IDLIB, ReadJoystick()]
 */
-static void ReadJoystickTimes(word stick, int *x_time, int *y_time)
+static void ReadJoystickTimes(word stick_num, int *x_time, int *y_time)
 {
     word xmask, ymask;
 
-    if (stick == JOYSTICK_A) {
+    if (stick_num == JOYSTICK_A) {
         xmask = 0x0001;
         ymask = 0x0002;
     } else {  /* JOYSTICK_B */
@@ -853,14 +853,14 @@ account the current joystick calibration values and button swap configuration.
 Returns the current state of *just* the joystick buttons -- movement commands
 are changed globally. [IDLIB, ControlJoystick()]
 */
-JoystickState ReadJoystickState(word stick)
+JoystickState ReadJoystickState(word stick_num)
 {
     int xtime = 0, ytime = 0;
     int xmove = 0, ymove = 0;
     word buttons;
     JoystickState state;
 
-    ReadJoystickTimes(stick, &xtime, &ytime);
+    ReadJoystickTimes(stick_num, &xtime, &ytime);
 
     /*
     This is really, really a bitwise OR instead of logical. Whether this was
@@ -868,19 +868,19 @@ JoystickState ReadJoystickState(word stick)
     aborts before either value gets high enough.
     */
     if ((xtime > 500) | (ytime > 500)) {
-        xtime = joystickBandLeft[stick] + 1;
-        ytime = joystickBandTop[stick] + 1;
+        xtime = joystickBandLeft[stick_num] + 1;
+        ytime = joystickBandTop[stick_num] + 1;
     }
 
-    if (xtime > joystickBandRight[stick]) {
+    if (xtime > joystickBandRight[stick_num]) {
         xmove = 1;
-    } else if (xtime < joystickBandLeft[stick]) {
+    } else if (xtime < joystickBandLeft[stick_num]) {
         xmove = -1;
     }
 
-    if (ytime > joystickBandBottom[stick]) {
+    if (ytime > joystickBandBottom[stick_num]) {
         ymove = 1;
-    } else if (ytime < joystickBandTop[stick]) {
+    } else if (ytime < joystickBandTop[stick_num]) {
         ymove = -1;
     }
 
@@ -930,7 +930,7 @@ JoystickState ReadJoystickState(word stick)
     JOYSTICK_B is not used or implemented; `state` is returned uninitialized if
     joystick B is selected.
     */
-    if (stick == JOYSTICK_A) {
+    if (stick_num == JOYSTICK_A) {
         cmdJump = state.button1 = ((buttons & 0x0010) == 0);
         cmdBomb = state.button2 = ((buttons & 0x0020) == 0);
     }
@@ -1085,7 +1085,7 @@ calibration variables. At any point during the inner loops, a keypress will
 cancel the process. The function must run through to completion before the
 joystick can be used in the game. [IDLIB, CalibrateJoy()]
 */
-static void ShowJoystickConfiguration(word stick)
+static void ShowJoystickConfiguration(word stick_num)
 {
     word xframe;
     word junk;  /* in IDLIB, this provided an 8-dir spinning arrow */
@@ -1102,7 +1102,7 @@ static void ShowJoystickConfiguration(word stick)
 
     /* Wait for all joystick buttons to be released */
     do {
-        state = ReadJoystickState(stick);
+        state = ReadJoystickState(stick_num);
     } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     DrawTextLine(xframe, 6, " Hold the joystick in the");
@@ -1114,8 +1114,8 @@ static void ShowJoystickConfiguration(word stick)
     do {
         if (++junk == 23) junk = 15;
 
-        ReadJoystickTimes(stick, &lefttime, &toptime);
-        state = ReadJoystickState(stick);
+        ReadJoystickTimes(stick_num, &lefttime, &toptime);
+        state = ReadJoystickState(stick_num);
         scancode = StepWaitSpinner(xframe + 8, 8);
 
         if ((scancode & 0x80) == 0) return;
@@ -1126,7 +1126,7 @@ static void ShowJoystickConfiguration(word stick)
 
     /* Wait for all buttons to be released */
     do {
-        state = ReadJoystickState(stick);
+        state = ReadJoystickState(stick_num);
     } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     DrawTextLine(xframe, 10, " Hold the joystick in the");
@@ -1137,8 +1137,8 @@ static void ShowJoystickConfiguration(word stick)
     do {
         if (++junk == 23) junk = 15;
 
-        ReadJoystickTimes(stick, &righttime, &bottomtime);
-        state = ReadJoystickState(stick);
+        ReadJoystickTimes(stick_num, &righttime, &bottomtime);
+        state = ReadJoystickState(stick_num);
         scancode = StepWaitSpinner(xframe + 8, 12);
 
         if ((scancode & 0x80) == 0) return;
@@ -1148,16 +1148,16 @@ static void ShowJoystickConfiguration(word stick)
 
     /* Wait for all buttons to be released */
     do {
-        state = ReadJoystickState(stick);
+        state = ReadJoystickState(stick_num);
     } while (state.button1 == true || state.button2 == true);  /* explicit compare against 1 */
 
     /* The joystick must be 2/3 of the way to an edge to trigger a move */
     xthird = (righttime - lefttime) / 6;
     ythird = (bottomtime - toptime) / 6;
-    joystickBandLeft[stick] = lefttime + xthird;
-    joystickBandRight[stick] = righttime - xthird;
-    joystickBandTop[stick] = toptime + ythird;
-    joystickBandBottom[stick] = bottomtime - ythird;
+    joystickBandLeft[stick_num] = lefttime + xthird;
+    joystickBandRight[stick_num] = righttime - xthird;
+    joystickBandTop[stick_num] = toptime + ythird;
+    joystickBandBottom[stick_num] = bottomtime - ythird;
 
     DrawTextLine(xframe, 14, " Should button 1 (D)rop");
     DrawTextLine(xframe, 15, " a bomb or (J)ump?");
@@ -1567,7 +1567,7 @@ static Music *LoadMusicData(word music_num, Music *dest)
     fread(&dest->datahead, 1, (word)lastGroupEntryLength + 2, fp);
     localdest->length = (word)lastGroupEntryLength;
 
-    SetMusic(true);
+    SetMusicState(true);
 
     fclose(fp);
 
@@ -1995,7 +1995,7 @@ are removed from the top and placed at the bottom instead.
 
 A temporary buffer of at least 640 bytes is needed.
 */
-void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
+void ShiftPixelsVertically(byte *src, byte *dest, byte *scratch)
 {
     register word col, i;
     word bufferIndex, offset, row;
@@ -2009,7 +2009,7 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
     Backdrops are 40x18 tiles, 23040 (0x5a00) bytes.
     */
 
-    /* First, copy the 4 top lines of pixels into the temp buffer, so that we
+    /* First, copy the 4 top lines of pixels into the scratch buffer, so that we
     can place them at the bottom of the image later */
     bufferIndex = 0;
     offset = 0;
@@ -2017,7 +2017,7 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
         /* Copy the first 4 lines of this tile. Each line is 4 bytes, so we need
          * to copy 4*4 = 16 bytes. */
         for (i = 0; i < 16; i++) {
-            *(temp + bufferIndex++) = *(src + offset++);
+            *(scratch + bufferIndex++) = *(src + offset++);
         }
 
         /* Skip the remaining 4 lines, this puts us at the start of the next
@@ -2068,7 +2068,7 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
                 the end of the source image. So the bottom-most lines of the
                 destination are filled with random memory here, but it doesn't
                 matter because they are overwritten again further down when the
-                temp buffer is written to the destination.
+                scratch buffer is written to the destination.
 
                 WARNING: Undefined behavior. `offset` on left side wants the
                 PRE-incremented value.
@@ -2081,17 +2081,17 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
     }
 
     /*
-    Finally, copy the contents of the temp buffer to the last 4 lines of the
+    Finally, copy the contents of the scratch buffer to the last 4 lines of the
     destination, so that the source's upper 4 lines end up at the bottom of the
     output image, creating the wrap-around. This overwrites the garbage that was
     written during the last iteration of the loop above.
 
-    I actually don't know why the temp buffer is used. The source image is
+    I actually don't know why the scratch buffer is used. The source image is
     never modified, so we could just read directly from the source here, and
-    remove the temp buffer (as well as the copy at the beginning). One theory
+    remove the scratch buffer (as well as the copy at the beginning). One theory
     is that the function used to operate in place at one point, which would
-    necessitate a temp buffer. This was later changed to make a copy of the
-    image instead, but the temp buffer wasn't removed.
+    necessitate a scratch buffer. This was later changed to make a copy of the
+    image instead, but the scratch buffer wasn't removed.
     */
     offset = 0;
     bufferIndex = 0;
@@ -2100,7 +2100,7 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *temp)
         bottom 4 lines of the tile. */
         for (i = 0; i < 16; i++) {
             *(dest + offset++ + (17*1280 + 16)) =
-              *(temp + bufferIndex++);
+              *(scratch + bufferIndex++);
         }
         offset += 16;
     }
@@ -2144,7 +2144,7 @@ void ShiftPixelsHorizontally(byte *src, byte *dest)
         /* Go through the lines within the tile row. A new line starts every 4
          bytes. */
         for (lineStart = 0; lineStart < 8 * 4; lineStart += 4) {
-            /* Copy the left-most pixels of the left-most tile into our temp
+            /* Copy the left-most pixels of the left-most tile into our scratch
             buffer */
             for (plane = 0; plane < 4; plane++) {
                 /* Downshift to extract the 4 left-most pixels */
@@ -2182,7 +2182,7 @@ void ShiftPixelsHorizontally(byte *src, byte *dest)
             }
 
             /*
-            Finally, place the contents of the temp buffer at the very end of
+            Finally, place the contents of the scratch buffer at the very end of
             the line. This makes the original image's left-most pixels appear at
             the end of the destination, creating the wrap-around.
             */
