@@ -19,6 +19,45 @@
  *****************************************************************************/
 
 /*
+Useful constants pertaining to some of the magic numbers surrounding backdrops.
+*/
+#define BACKDROP_SIZE           23040
+#define BACKDROP_SIZE_EGA_MEM   (BACKDROP_SIZE / 4)
+#define BACKDROP_WIDTH          40
+#define BACKDROP_HEIGHT         18
+
+/*
+All memory offsets that reference data sored in the EGA's memory. These are all
+relative to the EGA's segment address: 0xA000. This is the typical memory layout
+while the game is running:
+
+Segment | Offset | Size   | Content
+--------|--------|--------|--------
+0xA000  | 0x0000 | 0x1F40 | Display page 0
+0xA000  | 0x1F40 | 0xC0   | (unused)
+0xA000  | 0x2000 | 0x1F40 | Display page 1
+0xA000  | 0x3F40 | 0xC0   | (unused)
+0xA000  | 0x4000 | 0x3E80 | Solid tile images
+0xA000  | 0x7E80 | 0x180  | (unused)
+0xA000  | 0x8000 | 0x720  | Status bar tile images
+0xA000  | 0x8720 | 0x1BE0 | (unused)
+0xA000  | 0XA300 | 0x1680 | Backdrop tile images
+0xA000  | 0XB980 | 0x1680 | Backdrop tile images (shifted for odd X)
+0xA000  | 0XD000 | 0x1680 | Backdrop tile images (shifted for odd Y)
+0xA000  | 0XE680 | 0x1680 | Backdrop tile images (shifted for odd X *and* Y)
+
+Note that due to the planar nature of the EGA's memory, each byte of address
+space here represents four physical bytes of memory on the card. This game
+*requires* a 256K EGA card to hold everything!
+*/
+#define EGA_OFFSET_SOLID_TILES  0x4000
+#define EGA_OFFSET_STATUS_TILES 0x8000
+#define EGA_OFFSET_BDROP_EVEN   0xa300
+#define EGA_OFFSET_BDROP_ODD_X  0xb980
+#define EGA_OFFSET_BDROP_ODD_Y  0xd000
+#define EGA_OFFSET_BDROP_ODD_XY 0xe680
+
+/*
 Font characters. Only ones directly referenced in the game code are included
 here. The rest are calculated relative to these.
 */

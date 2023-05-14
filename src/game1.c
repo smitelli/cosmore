@@ -22,9 +22,6 @@
 
 #include "glue.h"
 
-#define BACKDROP_SIZE_BYTES     0x5a00
-#define BACKDROP_SIZE_VMEM      BACKDROP_SIZE_BYTES / 4
-
 /*
 Overarching game control variables.
 */
@@ -177,7 +174,7 @@ static Spawner spawners[MAX_SPAWNERS];
 static Decoration decorations[MAX_DECORATIONS];
 /* Holds each decoration's currently displayed frame. Why this isn't in the Decoration struct, who knows. */
 static word decorationFrame[MAX_DECORATIONS];
-static word backdropTable[2880];
+static word backdropTable[BACKDROP_WIDTH * BACKDROP_HEIGHT * 4];
 static char joinPathBuffer[80];
 
 /*
@@ -708,7 +705,7 @@ static void DrawMapRegion(void)
     are given as absolute addresses, before we can use them as arguments to
     DrawSolidTile.
     */
-    word bdAddress = EGA_OFFSET_BACKDROP_0_0 - EGA_OFFSET_SOLID_TILES;
+    word bdAddress = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
 
     /*
     How the parallax scrolling works
@@ -856,24 +853,24 @@ static void DrawMapRegion(void)
         if (scrollX % 2 != 0) {
             /* If scrollX is odd, pick the version of the backdrop that's
             shifted to the left by 4 pixels. */
-            bdAddress = EGA_OFFSET_BACKDROP_4_0 - EGA_OFFSET_SOLID_TILES;
+            bdAddress = EGA_OFFSET_BDROP_ODD_X - EGA_OFFSET_SOLID_TILES;
         } else {
             /* This is redundant, since bdAddress was already initialized to
             this value in the variable declaration. */
-            bdAddress = EGA_OFFSET_BACKDROP_0_0 - EGA_OFFSET_SOLID_TILES;
+            bdAddress = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
         }
     }
 
     if (scrollY > maxScrollY) scrollY = maxScrollY;
 
-    if (hasVScrollBackdrop && scrollY % 2 != 0) {
+    if (hasVScrollBackdrop && (scrollY % 2 != 0)) {
         /*
-        This offset turns EGA_OFFSET_BACKDROP_0_0 into EGA_OFFSET_BACKDROP_0_4,
-        and EGA_OFFSET_BACKDROP_4_0 into EGA_OFFSET_BACKDROP_4_4. This makes it so
+        This offset turns EGA_OFFSET_BDROP_EVEN into EGA_OFFSET_BDROP_ODD_Y, and
+        EGA_OFFSET_BDROP_ODD_X into EGA_OFFSET_BDROP_ODD_XY. This makes it so
         that whenever scrollY is odd, a version of the backdrop is used that's
         shifted up by 4 pixels.
         */
-        bdAddress += 0x2d00;
+        bdAddress += (EGA_OFFSET_BDROP_ODD_Y - EGA_OFFSET_BDROP_EVEN);
     }
 
     /* Compute the base index for indexing into the lookup table */
@@ -7905,42 +7902,56 @@ static byte ProcessGameInputHelper(word active_page, byte demo_state)
 Fill the backdrop offset lookup table.
 
 backdropTable is a 1-dimensional array storing a 2-dimensional lookup table of
-80x36 values. The values are simply counting up from 0 up to 5752 in steps of
-8, but after every 40 values, the last 40 values are repeated. The 2nd half of
-the table is repeating the first half.  In other words, within a row, the
+80x36 values. The values are simply counting up from 0 up to 5,752 in steps of
+8, but after every 40 values, the previous 40 values are repeated. The second
+half of the table is repeating the first half. In other words, within a row, the
 values at indices 0 to 39 are identical to the values at indices 40 to 79.
 Within the whole table, rows 0 to 17 are identical to rows 18 to 35.
 
-To make this a bit easier to imagine, let's say the table is only 8x6.
-If that were the case, it would look like this:
+To make this a bit easier to imagine, let's say the table is only 8x6. If that
+were the case, it would look like this:
 
-|  0 |  8 | 16 | 24 |  0 |  8 | 16 | 24 |
-| 32 | 40 | 48 | 56 | 32 | 40 | 48 | 56 |
-| 64 | 72 | 80 | 88 | 64 | 72 | 80 | 88 |
-|  0 |  8 | 16 | 24 |  0 |  8 | 16 | 24 |
-| 32 | 40 | 48 | 56 | 32 | 40 | 48 | 56 |
-| 64 | 72 | 80 | 88 | 64 | 72 | 80 | 88 |
+                           +-- repeating...
+                           V
+    |  0 |  8 | 16 | 24 |  0 |  8 | 16 | 24 |
+    | 32 | 40 | 48 | 56 | 32 | 40 | 48 | 56 |
+    | 64 | 72 | 80 | 88 | 64 | 72 | 80 | 88 |
+    |  0 |  8 | 16 | 24 |  0 |  8 | 16 | 24 | <-- repeating...
+    | 32 | 40 | 48 | 56 | 32 | 40 | 48 | 56 |
+    | 64 | 72 | 80 | 88 | 64 | 72 | 80 | 88 |
 
-Why the table is set up like this is explained in detail in DrawMapRegion.
+Why the table is set up like this is explained in detail in DrawMapRegion().
 
 */
 static void InitializeBackdropTable(void)
 {
     int x, y;
-    word val = 0;
+    word offset = 0;
 
-    for (y = 0; y < 18; y++) {
-        for (x = 0; x < 40; x++) {
-            /* 1st half of the table (rows 0 to 17) */
-            *(backdropTable + (y * 80) + x       ) =      /* 1st half of row */
-            *(backdropTable + (y * 80) + x +   40) = val; /* 2nd half of row */
+    for (y = 0; y < BACKDROP_HEIGHT; y++) {
+        for (x = 0; x < BACKDROP_WIDTH; x++) {
+            /*
+            Magic numbers:
+            - 80 is double BACKDROP_WIDTH, since the table is twice as wide
+              as a backdrop image.
+            - 40 is basically BACKDROP_WIDTH, to skip horizontally over the
+              first copy of the data in the table.
+            - 1440 is double (BACKDROP_WIDTH * BACKDROP_HEIGHT), to skip
+              vertically over the top two copies of the data in the table.
+            - 1480 is the combination of 1440 and 40.
+            - 8 is the step value required to move from one solid tile to a
+              subsequent tile in the EGA memory's address space.
+            */
 
-            /* 2nd half of the table (rows 18 to 35)
-            The offset of 1440 skips to the 2nd half (1440 = 18 * 80) */
-            *(backdropTable + (y * 80) + x + 1480) =      /* 2nd half of row */
-            *(backdropTable + (y * 80) + x + 1440) = val; /* 1st half of row */
+            /* First half of the table (rows 0 to 17) */
+            *(backdropTable + (y * 80) + x) =               /* 1st half of row */
+            *(backdropTable + (y * 80) + x + 40) = offset;  /* 2nd half of row */
 
-            val += 8;
+            /* Second half of the table (rows 18 to 35) */
+            *(backdropTable + (y * 80) + x + 1480) =          /* 2nd half of row */
+            *(backdropTable + (y * 80) + x + 1440) = offset;  /* 1st half of row */
+
+            offset += 8;
         }
     }
 }
@@ -8145,7 +8156,7 @@ static void Startup(void)
 {
     /*
     Mode Dh is EGA/VGA 40x25 characters with an 8x8 pixel box.
-    320x200 graphics resolution, 16 color, 8 pages, 0xA000 screen address
+    320x200 graphics resolution, 16 color, 8 pages, 0xA000 screen segment
     */
     SetVideoMode(0x0d);
 
@@ -10262,11 +10273,11 @@ static bbool IsNewBackdrop(word backdrop_num)
 
 /*
 Load the specified backdrop image data into the video memory. Requires a scratch
-buffer to perform this work.
+buffer twice the size of BACKDROP_SIZE *plus* 640 bytes to perform this work.
 
-Depending on the current backdrop scroll settings, up to 4 versions of the
+Depending on the current backdrop scroll settings, up to four versions of the
 backdrop are copied into EGA video memory. This is due to how the parallax
-scrolling works, which is explained in detail in DrawMapRegion.
+scrolling works, which is explained in detail in DrawMapRegion().
 */
 static void LoadBackdropData(char *entry_name, byte *scratch)
 {
@@ -10276,42 +10287,47 @@ static void LoadBackdropData(char *entry_name, byte *scratch)
     EGA_BIT_MASK_DEFAULT();
 
     miscDataContents = IMAGE_NONE;
-    fread(scratch, BACKDROP_SIZE_BYTES, 1, fp);
+    fread(scratch, BACKDROP_SIZE, 1, fp);
 
-    /* Copy the unmodified backdrop. This is all we need if there is no
-    backdrop scrolling. */
-    CopyTilesToEGA(scratch, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_0_0);
+    /*
+    Copy the unmodified backdrop. This is all we need if there is no backdrop
+    scrolling.
+    */
+    CopyTilesToEGA(scratch, BACKDROP_SIZE_EGA_MEM, EGA_OFFSET_BDROP_EVEN);
 
     if (hasHScrollBackdrop) {
-        /* To do horizontal backdrop scrolling, we need a copy of the backdrop
-        shifted left by 4 pixels. */
-        ShiftPixelsHorizontally(scratch, scratch + BACKDROP_SIZE_BYTES);
-        CopyTilesToEGA(scratch + BACKDROP_SIZE_BYTES, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_4_0);
+        /*
+        To do horizontal backdrop scrolling, we need a copy of the backdrop
+        shifted left by 4 pixels.
+        */
+        WrapBackdropHorizontal(scratch, scratch + BACKDROP_SIZE);
+        CopyTilesToEGA(scratch + BACKDROP_SIZE, BACKDROP_SIZE_EGA_MEM, EGA_OFFSET_BDROP_ODD_X);
     }
 
     if (hasVScrollBackdrop) {
-        /* To do vertical backdrop scrolling, we need a copy of the backdrop
-        shifted up by 4 pixels. */
-        ShiftPixelsVertically(scratch, miscData + 5000, scratch + 0xb400);
-        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_0_4);
+        /*
+        To do vertical backdrop scrolling, we need a copy of the backdrop
+        shifted up by 4 pixels.
+        */
+        WrapBackdropVertical(scratch, miscData + 5000, scratch + (2 * BACKDROP_SIZE));
+        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_EGA_MEM, EGA_OFFSET_BDROP_ODD_Y);
 
         /*
         If horizontal scrolling is also enabled, we additionally need one that's
         shifted both left and up by 4. Here, the assumption is that scratch +
-        BACKDROP_SIZE_BYTES holds a copy of the backdrop that's already shifted
-        to the left, which will be the case if hasHScrollBackdrop is also true,
-        but not otherwise. This is also why the code just above uses miscData +
-        5000 to store the shifted copy of the backdrop, instead of using
-        scratch + BACKDROP_SIZE_BYTES as the horizontal version of this code
-        does.
+        BACKDROP_SIZE holds a copy of the backdrop that's already shifted to the
+        left, which will be the case if hasHScrollBackdrop is also true, but not
+        otherwise. This is also why the code just above uses miscData + 5000 to
+        store the shifted copy of the backdrop, instead of using scratch +
+        BACKDROP_SIZE as the horizontal version of this code does.
 
         If horizontal scrolling is not enabled, the game still does this, but it
-        will end up writing whatever random garbage data. However, that doesn't
-        really cause any issues because EGA_OFFSET_BACKDROP_4_4 is never used if
+        will end up operating on random garbage data. However, that doesn't
+        really cause any issues because EGA_OFFSET_BDROP_ODD_XY is never used if
         horizontal scrolling is not enabled.
         */
-        ShiftPixelsVertically(scratch + BACKDROP_SIZE_BYTES, miscData + 5000, scratch + 0xb400);
-        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_VMEM, EGA_OFFSET_BACKDROP_4_4);
+        WrapBackdropVertical(scratch + BACKDROP_SIZE, miscData + 5000, scratch + (2 * BACKDROP_SIZE));
+        CopyTilesToEGA(miscData + 5000, BACKDROP_SIZE_EGA_MEM, EGA_OFFSET_BDROP_ODD_XY);
     }
 
     fclose(fp);

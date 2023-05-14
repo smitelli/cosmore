@@ -79,37 +79,6 @@ viewable scroll position.
 #define DRAW_MODE_ABSOLUTE      6  /* draw unmodified, but x,y are screen coordinates */
 
 /*
-All memory offsets that reference data sored in the EGA's memory. These are all
-relative to the EGA's segment address: 0xA000. This is the typical memory layout
-while the game is running:
-
-Segment | Offset | Size   | Content
---------|--------|--------|--------
-0xA000  | 0x0000 | 0x1F40 | Display page 0
-0xA000  | 0x1F40 | 0xC0   | (unused)
-0xA000  | 0x2000 | 0x1F40 | Display page 1
-0xA000  | 0x3F40 | 0xC0   | (unused)
-0xA000  | 0x4000 | 0x3E80 | Solid tile images
-0xA000  | 0x7E80 | 0x180  | (unused)
-0xA000  | 0x8000 | 0x720  | Status bar tile images
-0xA000  | 0x8720 | 0x1BE0 | (unused)
-0xA000  | 0XA300 | 0x1680 | Backdrop 0_0 tile images
-0xA000  | 0XB980 | 0x1680 | Backdrop 4_0 tile images
-0xA000  | 0XD000 | 0x1680 | Backdrop 0_4 tile images
-0xA000  | 0XE680 | 0x1680 | Backdrop 4_4 tile images
-
-Note that due to the planar nature of the EGA's memory, each byte of address
-space here represents four physical bytes of memory on the card. This game
-*requires* a 256K EGA card to hold everything!
-*/
-#define EGA_OFFSET_SOLID_TILES  0x4000
-#define EGA_OFFSET_STATUS_TILES 0x8000
-#define EGA_OFFSET_BACKDROP_0_0 0xa300
-#define EGA_OFFSET_BACKDROP_4_0 0xb980
-#define EGA_OFFSET_BACKDROP_0_4 0xd000
-#define EGA_OFFSET_BACKDROP_4_4 0xe680
-
-/*
 Game input return states. Usually continues the game loop, but also permits
 quitting the game or restarting the game loop on a new level.
 */

@@ -1987,15 +1987,35 @@ static void ShowKeyboardConfiguration(void)
 }
 
 /*
-Makes a copy of src with all pixels shifted up by 4, with wrap-around.
+Makes a copy of `src` with all pixels shifted up by 4, with wrap-around.
 
-src must be a backdrop image.  A copy of the image is written to dest, but with
-all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows of pixels
-are removed from the top and placed at the bottom instead.
+`src` must point to a backdrop image. A copy of the image is written to `dest`,
+but with all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows
+of pixelsare removed from the top and placed at the bottom instead.
 
-A temporary buffer of at least 640 bytes is needed.
+A `scratch` buffer of at least 640 bytes is needed.
+
+The work done by this function is far simpler than what was implemented. In
+particular, the `scratch` buffer is not actually necessary:
+
+    void WrapBackdropVertical(byte *src, byte *dest)
+    {
+        word offset, i;
+
+        for (offset = 0; offset < BACKDROP_SIZE; offset += 32) {
+            for (i = 0; i < 16; i++) {
+                // Top half of tile gets bottom half of the same tile
+                *(dest + offset + i) = *(src + offset + i + 16);
+
+                // Bottom half of tile gets top half of *subsequent* tile
+                *(dest + offset + i + 16) = *(src + ((offset + i + 1280) % BACKDROP_SIZE));
+            }
+        }
+    }
+
+The above is far more strightforward, but at a cost of 11,520 modulo operations.
 */
-void ShiftPixelsVertically(byte *src, byte *dest, byte *scratch)
+void WrapBackdropVertical(byte *src, byte *dest, byte *scratch)
 {
     register word col, i;
     word bufferIndex, offset, row;
@@ -2005,8 +2025,6 @@ void ShiftPixelsVertically(byte *src, byte *dest, byte *scratch)
     blocks (tiles). A consecutive span of 4 bytes describes a line of 8 pixels.
     A block has 8 of these, so it occupies 8*4 = 32 consecutive bytes.
     After that, the next block starts, etc.
-
-    Backdrops are 40x18 tiles, 23040 (0x5a00) bytes.
     */
 
     /* First, copy the 4 top lines of pixels into the scratch buffer, so that we
@@ -2112,8 +2130,27 @@ Makes a copy of src with all pixels shifted left by 4, with wrap-around.
 src must be a backdrop image. A copy of the image is written to dest, but with
 all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most pixels are
 removed from the left side and placed on the right instead.
+
+The work done by this function is far simpler than what was implemented:
+
+    void WrapBackdropHorizontal(byte *src, byte *dest)
+    {
+        word offset, i;
+
+        for (offset = 0; offset < BACKDROP_SIZE; offset += 1280) {
+            for (i = 0; i < 1280; i++) {
+                *(dest + offset + i) =
+                    // Left half of tile gets right half of the same tile
+                    (*(src + offset + i) << 4) |
+                    // Right half of tile gets left half of *subsequent* tile
+                    (*(src + offset + ((i + 32) % 1280)) >> 4);
+            }
+        }
+    }
+
+The above is far more strightforward, but at a cost of 23,040 modulo operations.
 */
-void ShiftPixelsHorizontally(byte *src, byte *dest)
+void WrapBackdropHorizontal(byte *src, byte *dest)
 {
     register word rowStart, colStart;
     word plane, lineStart;
@@ -2134,8 +2171,6 @@ void ShiftPixelsHorizontally(byte *src, byte *dest)
     pixels of the next tile. To extract those from the corresponding tile's
     byte, we need to shift down by the "inverse" amount, which happens to also
     be 4.
-
-    Backdrops are 40x18 tiles, 23040 (0x5a00) bytes.
     */
 
     /* Go through the image's tiles row by row. A new row of tiles starts every
