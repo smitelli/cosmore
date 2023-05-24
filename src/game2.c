@@ -1987,245 +1987,248 @@ static void ShowKeyboardConfiguration(void)
 }
 
 /*
-Makes a copy of `src` with all pixels shifted up by 4, with wrap-around.
+Make a copy of backdrop `src` with all pixels shifted up by 4, with wrap-around.
 
 `src` must point to a backdrop image. A copy of the image is written to `dest`,
 but with all pixels shifted up by 4, with wrap-around. I.e. the 4 top-most rows
-of pixelsare removed from the top and placed at the bottom instead.
+of pixels are removed from the top and placed at the bottom instead. This
+function can safely modify a backdrop image in-place, so `src` and `dest` may
+point to the same memory if desired (the game does not use this property).
 
-A `scratch` buffer of at least 640 bytes is needed.
+A `scratch` buffer of at least 640 bytes is required.
 
-The work done by this function is far simpler than what was implemented. In
-particular, the `scratch` buffer is not actually necessary:
+Backdrops, like all solid tile images, are laid out as a sequence of 8x8 pixel
+tiles. A consecutive span of 4 bytes describes an 8x1 pixel row within a tile. A
+tile has 8 such pixel rows, so it occupies (8 * 4) 32 consecutive bytes. After
+`BACKDROP_WIDTH` tiles are seen, the next row of tiles begins.
+
+The work done by this function is far simpler than what was implemented because
+the in-place modification capability is never used. In particular, the `scratch`
+buffer is not actually needed here:
 
     void WrapBackdropVertical(byte *src, byte *dest)
     {
-        word offset, i;
-
-        for (offset = 0; offset < BACKDROP_SIZE; offset += 32) {
-            for (i = 0; i < 16; i++) {
+        for (word tile = 0; tile < BACKDROP_SIZE; tile += 32) {
+            for (word i = 0; i < 16; i++) {
                 // Top half of tile gets bottom half of the same tile
-                *(dest + offset + i) = *(src + offset + i + 16);
+                *(dest + tile + i) = *(src + tile + i + 16);
 
                 // Bottom half of tile gets top half of *subsequent* tile
-                *(dest + offset + i + 16) = *(src + ((offset + i + 1280) % BACKDROP_SIZE));
+                *(dest + tile + i + 16) = *(src + ((tile + i + 1280) % BACKDROP_SIZE));
             }
         }
     }
-
-The above is far more strightforward, but at a cost of 11,520 modulo operations.
 */
 void WrapBackdropVertical(byte *src, byte *dest, byte *scratch)
 {
     register word col, i;
-    word bufferIndex, offset, row;
+    word scratchoffset, offset, row;
 
     /*
-    Backdrops (and non-masked tilesets) are laid out as a sequence of 8x8 pixel
-    blocks (tiles). A consecutive span of 4 bytes describes a line of 8 pixels.
-    A block has 8 of these, so it occupies 8*4 = 32 consecutive bytes.
-    After that, the next block starts, etc.
+    Stash the top 4 pixel rows from each tile in the first tile row. These will
+    be restored at the bottom of the image at the end of this function.
     */
-
-    /* First, copy the 4 top lines of pixels into the scratch buffer, so that we
-    can place them at the bottom of the image later */
-    bufferIndex = 0;
+    scratchoffset = 0;
     offset = 0;
-    for (col = 0; col < 40; col++) { /* for each column of tiles */
-        /* Copy the first 4 lines of this tile. Each line is 4 bytes, so we need
-         * to copy 4*4 = 16 bytes. */
+    for (col = 0; col < BACKDROP_WIDTH; col++) {
+        /* We only want the first 4 pixel rows, each having 4 bytes (= 16). */
         for (i = 0; i < 16; i++) {
-            *(scratch + bufferIndex++) = *(src + offset++);
+            *(scratch + scratchoffset++) = *(src + offset++);
         }
 
-        /* Skip the remaining 4 lines, this puts us at the start of the next
-        tile */
+        /* Skip the bottom 4 pixel rows; advance to the top of the next tile. */
         offset += 16;
     }
 
-    /* Now, copy the source image to the destination, but offset by 4
-    (i.e., starting at y = 4) */
-    for (row = 0; row < 18; row++) {
+    /* Copy the bulk of the image data, one tile row at a time. */
+    for (row = 0; row < BACKDROP_HEIGHT; row++) {
+        /*
+        This pair of loops copies the bottom half of every tile in the current
+        tile row into the top half.
+        */
         offset = 0;
-
-        /* Copy the lower 4 lines of the source image's current tile row to the
-        upper 4 lines of the destination's current tile row */
-        for (col = 0; col < 40; col++) {
+        for (col = 0; col < BACKDROP_WIDTH; col++) {
             for (i = 0; i < 16; i++) {
                 /*
-                Since a tile is 32 bytes, each row of tiles occupies
-                40*32 = 1280 bytes.
-
-                Offset the source by 16 to get to the lower 4 lines of
-                each tile.
+                Multiplication by 1,280 is used to skip one tile row ahead in
+                the data. Addition of 16 skips one half-tile worth of data.
 
                 WARNING: Undefined behavior. `offset` on left side wants the
                 PRE-incremented value.
                 */
-                *(dest + offset + (row * 1280)) =
-                  *(src + (row * 1280) + offset++ + 16);
+                *(dest + offset + (row * 1280)) = *(src + (row * 1280) + offset++ + 16);
             }
 
-            /* Skip 4 lines */
+            /* Skip 4 pixel rows to next tile */
             offset += 16;
         }
 
-        /* Copy the upper 4 lines of the next tile row to the lower
-        4 lines of the current destination row */
+        /*
+        This pair of loops copies the top half of every tile in the *subsequent*
+        tile row into the bottom half of the current tile row.
+        */
         offset = 0;
-        for (col = 0; col < 40; col++) {
+        for (col = 0; col < BACKDROP_WIDTH; col++) {
             for (i = 0; i < 16; i++) {
-
                 /*
-                This time, we offset the destination by 16 to get to the lower
-                4 lines. The source is offset by 1280 to skip to the beginning
-                of the next row of tiles.
+                This is similar to the previous loop pair, except here we add 16
+                to the destination to target the bottom half-tile, and add 1,280
+                to the source to read from the top half-tile in the next row.
 
-                This actually ends up reading out of bounds on the last loop
-                iteration, since 17*1280 + 1280 = 23040, which is right after
-                the end of the source image. So the bottom-most lines of the
-                destination are filled with random memory here, but it doesn't
-                matter because they are overwritten again further down when the
-                scratch buffer is written to the destination.
+                WARNING: This reads out of bounds on the last `row` loop
+                iteration, since (17 * 1,280) + 1,280 = 23,040, which is right
+                after the end of the source data. The bottom-most row of half-
+                tiles in the destination gets filled with garbage, but it
+                doesn't matter because they are rewritten when the scratch
+                buffer is restored later.
 
                 WARNING: Undefined behavior. `offset` on left side wants the
                 PRE-incremented value.
                 */
-                *(dest + offset + (row * 1280) + 16) =
-                  *(src + (row * 1280) + offset++ + 1280);
+                *(dest + offset + (row * 1280) + 16) = *(src + (row * 1280) + offset++ + 1280);
             }
+
+            /* Skip 4 pixel rows to next tile */
             offset += 16;
         }
     }
 
     /*
-    Finally, copy the contents of the scratch buffer to the last 4 lines of the
-    destination, so that the source's upper 4 lines end up at the bottom of the
-    output image, creating the wrap-around. This overwrites the garbage that was
-    written during the last iteration of the loop above.
-
-    I actually don't know why the scratch buffer is used. The source image is
-    never modified, so we could just read directly from the source here, and
-    remove the scratch buffer (as well as the copy at the beginning). One theory
-    is that the function used to operate in place at one point, which would
-    necessitate a scratch buffer. This was later changed to make a copy of the
-    image instead, but the scratch buffer wasn't removed.
+    Unstash the original top 4 pixel rows and restore them into the bottom 4
+    pixel rows in the last tile row. This accomplishes the "wrap" where the top
+    strip of image data moves to the bottom.
     */
     offset = 0;
-    bufferIndex = 0;
-    for (col = 0; col < 40; col++) {
-        /* 17*1280 skips over 17 rows of tiles, adding 16 gets us to the
-        bottom 4 lines of the tile. */
+    scratchoffset = 0;
+    for (col = 0; col < BACKDROP_WIDTH; col++) {
         for (i = 0; i < 16; i++) {
-            *(dest + offset++ + (17*1280 + 16)) =
-              *(scratch + bufferIndex++);
+            /*
+            (BACKDROP_HEIGHT - 1) * 1280 skips to the last tile row; adding 16
+            gets us to the bottom 4 pixel rows of the tile.
+            */
+            *(dest + offset++ + ((BACKDROP_HEIGHT - 1) * 1280) + 16) = *(scratch + scratchoffset++);
         }
+
+        /* Skip 4 pixel rows to next `dest` tile. (`scratch` is contiguous.) */
         offset += 16;
     }
 }
 
 /*
-Makes a copy of src with all pixels shifted left by 4, with wrap-around.
+Make a copy of backdrop `src` with pixels shifted left by 4, with wrap-around.
 
-src must be a backdrop image. A copy of the image is written to dest, but with
-all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most pixels are
-removed from the left side and placed on the right instead.
+`src` must point to a backdrop image. A copy of the image is written to `dest`,
+but with all pixels shifted left by 4, with wrap-around. I.e. the 4 left-most
+columns of pixels are removed from the left and placed at the right instead.
+This function can safely modify a backdrop image in-place, so `src` and `dest`
+may point to the same memory if desired (the game does not use this property).
 
-The work done by this function is far simpler than what was implemented:
+Backdrops, like all solid tile images, are laid out as a sequence of 8x8 pixel
+tiles. A consecutive span of 4 bytes describes an 8x1 pixel row within a tile. A
+tile has 8 such pixel rows, so it occupies (8 * 4) 32 consecutive bytes. After
+`BACKDROP_WIDTH` tiles are seen, the next row of tiles begins.
+
+Within a single 8x1 pixel row, eight pixels have four-bit color depth, for a
+total of 32 bits or (4 bytes) of data. Each byte represents the on/off state of
+one color plane from that pixel row, in blue-green-red-intensity order. In order
+to shift pixels on the screen, we must shift an equivalent number of bits in the
+data. A bitwise left-shift of 4 accomplishes a move of pixel data to the left by
+four positions.
+
+The work done by this function is far simpler than what was implemented because
+the in-place modification capability is never used. In particular, the `scratch`
+buffer is not actually needed here:
 
     void WrapBackdropHorizontal(byte *src, byte *dest)
     {
-        word offset, i;
-
-        for (offset = 0; offset < BACKDROP_SIZE; offset += 1280) {
-            for (i = 0; i < 1280; i++) {
-                *(dest + offset + i) =
+        for (word tilerow = 0; tilerow < BACKDROP_SIZE; tilerow += 1280) {
+            for (word i = 0; i < 1280; i++) {
+                *(dest + tilerow + i) =
                     // Left half of tile gets right half of the same tile
-                    (*(src + offset + i) << 4) |
+                    (*(src + tilerow + i) << 4) |
                     // Right half of tile gets left half of *subsequent* tile
-                    (*(src + offset + ((i + 32) % 1280)) >> 4);
+                    (*(src + tilerow + ((i + 32) % 1280)) >> 4);
             }
         }
     }
-
-The above is far more strightforward, but at a cost of 23,040 modulo operations.
 */
 void WrapBackdropHorizontal(byte *src, byte *dest)
 {
-    register word rowStart, colStart;
-    word plane, lineStart;
-    byte buf[4];
+    register word trow, col;
+    word plane, prow;
+    byte scratch[4];
 
     /*
-    Backdrops (and non-masked tilesets) are laid out as a sequence of 8x8 pixel
-    blocks (tiles). A consecutive span of 4 bytes describes a line of 8 pixels.
-    A block has 8 of these, so it occupies 8*4 = 32 consecutive bytes.
-    After that, the next block starts, etc.
-
-    Pixels are arranged in planar order. The first byte of each 8-pixel row
-    holds the first plane, the next one the 2nd plane etc.  This means that each
-    byte holds the bits for 8 pixels. Since we want to move pixels around
-    horizontally by less than 8, this means we need to address individual bits.
-    Left-shifting a byte by 4 will move pixels to the left within the byte,
-    opening up the right-most pixel positions to be replaced with the left-most
-    pixels of the next tile. To extract those from the corresponding tile's
-    byte, we need to shift down by the "inverse" amount, which happens to also
-    be 4.
+    The outermost two loops traverse the entire image by tile row offset
+    (`trow`) and pixel row offset (`prow`) within the current tile row. Tile
+    rows always begin on a 1,280-byte boundary, and pixel rows begin on a 4-byte
+    boundary within each tile. The loops iterate `BACKDROP_HEIGHT` and 8 times,
+    respectively.
     */
-
-    /* Go through the image's tiles row by row. A new row of tiles starts every
-    40*32 = 1280 bytes. */
-    for (rowStart = 0; rowStart < 18 * 1280; rowStart += 1280) {
-        /* Go through the lines within the tile row. A new line starts every 4
-         bytes. */
-        for (lineStart = 0; lineStart < 8 * 4; lineStart += 4) {
-            /* Copy the left-most pixels of the left-most tile into our scratch
-            buffer */
+    for (trow = 0; trow < BACKDROP_HEIGHT * 1280; trow += 1280) {
+        for (prow = 0; prow < 8 * 4; prow += 4) {
+            /*
+            Stash the left 4 pixels from each plane byte in the current pixel
+            row. These will be restored at the right of the image at the end of
+            this pixel row iteration.
+            */
             for (plane = 0; plane < 4; plane++) {
-                /* Downshift to extract the 4 left-most pixels */
-                buf[plane] = *(src + plane + lineStart + rowStart) >> 4;
+                /*
+                We only want to preserve the leftmost 4 pixels; also shifting
+                here saves us from having to do it later.
+                */
+                *(scratch + plane) = *(src + plane + prow + trow) >> 4;
             }
 
-            /* Now go through all tiles within the current row, at the current
-            line */
-            for (colStart = 0; colStart < 40 * 32; colStart += 32) {
+            /* Copy the bulk of the pixel row data, one tile at a time. */
+            for (col = 0; col < BACKDROP_WIDTH * 32; col += 32) {
+                /*
+                This loop moves the right half of a tile's pixel row into the
+                left half, one plane at a time. The new right half becomes zero,
+                which is visually black.
+                */
                 for (plane = 0; plane < 4; plane++) {
-                    /*
-                    Copy pixels to destination, but shifted left by 4. The
-                    left-shift moves the pixels in the line to the left, erasing
-                    the left-most pixels and leaving 0-bits in the right-most
-                    pixel positions.
-                    */
-                    *(dest + colStart + plane + lineStart + rowStart) =
-                      *(src + colStart + plane + lineStart + rowStart) << 4;
+                    /* The shift by 4 accomplishes the half-tile pixel move. */
+                    *(dest + col + plane + prow + trow) =
+                        *(src + col + plane + prow + trow) << 4;
                 }
 
-                if (colStart != 39*32) {  /* not the last iteration */
+                /*
+                If this is *not* the rightmost tile column in the image, this
+                loop copies the left half of every pixel row in the *subsequent*
+                tile into the right half of the current tile's pixel row. The
+                bitwise OR recombines the existing left-hand pixels with the
+                incoming right-hand pixels.
+                */
+                if (col != (BACKDROP_WIDTH - 1) * 32) {
                     for (plane = 0; plane < 4; plane++) {
                         /*
-                        Take the left-most pixels from the next source tile, and
-                        place them into the 0-bits left at the destination by
-                        the previous loop.  Offsetting the source by 32 gets us
-                        to the next tile, down-shifting by 4 extracts the
-                        left-most pixels.
+                        Additon of 32 addresses the same pixel row position in
+                        the next tile to the right, and the shift by 4 moves the
+                        right half of a pixel row to the left, leaving zero
+                        (black) in the newly-exposed left half.
                         */
-                        *(dest + colStart + plane + lineStart + rowStart) =
-                          *(dest + plane + lineStart + rowStart + colStart) |
-                          (*(src + plane + lineStart + rowStart + colStart + 32) >> 4);
+                        *(dest + col + plane + prow + trow) =
+                            *(dest + plane + prow + trow + col) |
+                            (*(src + plane + prow + trow + col + 32) >> 4);
                     }
                 }
             }
 
             /*
-            Finally, place the contents of the scratch buffer at the very end of
-            the line. This makes the original image's left-most pixels appear at
-            the end of the destination, creating the wrap-around.
+            Patch up the rightmost column of tiles, which were skipped above.
+            Since there is no subsequent tile to read from at the rightmost edge
+            of the image, this data must be unstashed from the `scratch` buffer.
+            This produces the left-to-right wraparound behavior.
             */
             for (plane = 0; plane < 4; plane++) {
-                /* Offset destination by 39*32 = 1248 to get to the last tile in
-                a row */
-                *(dest + plane + rowStart + lineStart + 39*32) =
-                  *(dest + plane + rowStart + lineStart + 39*32) | buf[plane];
+                /*
+                (BACKDROP_WIDTH - 1) * 32 skips to the appropriate offset for
+                the rightmost tile column.
+                */
+                *(dest + plane + trow + prow + ((BACKDROP_WIDTH - 1) * 32)) =
+                    *(dest + plane + trow + prow + ((BACKDROP_WIDTH - 1) * 32)) |
+                    *(scratch + plane);
             }
         }
     }
