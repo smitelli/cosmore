@@ -685,104 +685,87 @@ static void LoadInfoData(char *entry_name, word *dest, word length)
 /*
 Draw the static game world (backdrop plus all solid/masked map tiles), windowed
 to the current scroll position.
-*/
-static void DrawMapRegion(void)
-{
-    register int xtile;
-    word destoff = 321;
-    register word ymap;
-    word ymapmax;
-    word ytile = 1;
-    word *mapcell;
-    word bdBaseIndex;
 
-    /*
-    DrawSolidTile interprets the source offset given to it as relative to the
-    start of the area of video memory which is used to hold solid tiles (and
-    backdrops), so it adds an offset of EGA_OFFSET_SOLID_TILES to it. But
-    CopyTilesToEGA uses absolute addresses (i.e., relative to the start of
-    video memory). This means we need to adjust our backdrop addresses, which
-    are given as absolute addresses, before we can use them as arguments to
-    DrawSolidTile.
-    */
-    word bdAddress = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
+Note about `EGA_OFFSET_*`: DrawSolidTile() interprets the source offset given to
+it as relative to the start of the area of video memory which is used to hold
+solid tiles (and backdrops), so it adds an offset of `EGA_OFFSET_SOLID_TILES` to
+it. But CopyTilesToEGA() uses absolute addresses (i.e., relative to the start of
+video memory). This means we need to adjust our backdrop addresses, which are
+given as absolute addresses, before we can use them as arguments to
+DrawSolidTile().
 
-    /*
-    How the parallax scrolling works
+How the parallax scrolling works
 
-    The backdrop scrolls in steps of 4 pixels, while the rest of the gameworld
-    (tiles and sprites) moves in 8-pixel steps. This difference in scrolling
-    speed creates the parallax effect, adding an illusion of depth to the
-    scene.
+The backdrop scrolls in steps of 4 pixels, while the rest of the gameworld
+(tiles and sprites) moves in 8-pixel steps. This difference in scrolling speed
+creates the parallax effect, adding an illusion of depth to the scene.
 
-    However, the backdrop image data is arranged in a way that doesn't lend
-    itself to drawing with a 4-pixel source offset. It's grouped into 8x8 pixel
-    tiles in order to allow for fast drawing via the EGA's latch registers (see
-    DrawSolidTile in lowlevel.asm). If we wanted to draw this data with a
-    4-pixel offset, we would need to draw the second half of one tile for the
-    first 4 pixels, and then draw the first half of the next tile for the next
-    4 pixels. This kind of partial tile drawing is not possible via the latch
-    copy technique, so we would lose all the speed benefits it gives us (there
-    might be some way to make it work via the EGA's bitmasks, but it would
-    still be slower and a lot more complicated).
+However, the backdrop image data is arranged in a way that doesn't lend itself
+to drawing with a 4-pixel source offset. It's grouped into 8x8 pixel tiles in
+order to allow for fast drawing via the EGA's latch registers(see DrawSolidTile
+in lowlevel.asm). If we wanted to draw this data with a 4-pixel offset, we
+would need to draw the second half of one tile for the first 4 pixels, and then
+draw the first half of the next tile for the next 4 pixels. This kind of
+partial tile drawing is not possible via the latch copy technique, so we would
+lose all the speed benefits it gives us (there might be some way to make it
+work via the EGA's bitmasks, but it would still be slower and a lot more
+complicated).
 
-    In order to make 4-pixel offsets possible, the game instead creates copies
-    of the backdrop image that are shifted up/left by 4 pixels, and uploads
-    these shifted versions to video memory next to the unmodified backdrop
-    image. This happens ahead of time, during backdrop loading (see
-    LoadBackdropData).
+In order to make 4-pixel offsets possible, the game instead creates copies of
+the backdrop image that are shifted up/left by 4 pixels, and uploads these
+shifted versions to video memory next to the unmodified backdrop image. This
+happens ahead of time, during backdrop loading (see LoadBackdropData).
 
-    With these copies in place, now it's just a matter of selecting the correct
-    version depending on the scroll positions. Even positions use the
-    unmodified backdrop, odd positions use the shifted version. If only scrollX
-    is odd, we thus use the copy that's shifted left by 4. If only scrollY is
-    odd, we use the version that's shifted up by 4, and if both scrollX and
-    scrollY are odd, we need to use the 3rd copy, which is shifted in both
-    directions. The end result is that the backdrop appears to move by 4 pixels
-    when the scroll position changes by one, due to this scheme of switching
-    between the different images.
+With these copies in place, now it's just a matter of selecting the correct
+version depending on the scroll positions. Even positions use the unmodified
+backdrop, odd positions use the shifted version. If only scrollX is odd, we
+thus use the copy that's shifted left by 4. If only scrollY is odd, we use the
+version that's shifted up by 4, and if both scrollX and scrollY are odd, we
+need to use the 3rd copy, which is shifted in both directions. The end result
+is that the backdrop appears to move by 4 pixels when the scroll position
+changes by one, due to this scheme of switching between the different images.
 
-    Now, there's more to it than just the image switching, of course. If that
-    was all we would do, the backdrop would simply appear to jump back and
-    forth by 4 pixels as the scroll position alternates between odd and even.
-    But the backdrop keeps moving forward, until it eventually wraps around. At
-    scroll position (4, 0) for example, the regular (not shifted) backdrop is
-    drawn, but starting with the 3rd tile from the left instead of the 1st one.
-    How is this achieved? This is where the backdrop start offset lookup table
-    comes into play. This lookup table is an optimization, so before we look at
-    how it works, let's first talk about how we would implement this in a more
-    straightforward (but less optimal) way.
+Now, there's more to it than just the image switching, of course. If that was
+all we would do, the backdrop would simply appear to jump back and forth by 4
+pixels as the scroll position alternates between odd and even. But the backdrop
+keeps moving forward, until it eventually wraps around. At scroll position
+(4, 0) for example, the regular (not shifted) backdrop is drawn, but starting
+with the 3rd tile from the left instead of the 1st one. How is this achieved?
+This is where the backdrop start offset lookup table comes into play. This
+lookup table is an optimization, so before we look at how it works, let's first
+talk about how we would implement this in a more straightforward (but less
+optimal) way.
 
-    To draw the backdrop with an offset of N tiles, we need to add an offset to
-    the source address. An offset of 8 skips one tile horizontally, 320 skips
-    one row of tiles vertically. Each change in scroll position results in an
-    offset of 4 pixels, with odd positions being handled by the image selection
-    as described above. Thus, dividing the scroll position by two gives us a
-    tile column/row index for offseting the start address. Concretely:
+To draw the backdrop with an offset of N tiles, we need to add an offset to the
+source address. An offset of 8 skips one tile horizontally, 320 skips one row
+of tiles vertically. Each change in scroll position results in an offset of 4
+pixels, with odd positions being handled by the image selection as described
+above. Thus, dividing the scroll position by two gives us a tile column/row
+index for offseting the start address. Concretely:
 
     offsetX = scrollX / 2 * 8
     offsetY = scrollY / 2 * 320
 
-    So now we have a way to draw the backdrop offset (scrolled) by a number of
-    tiles, but we still need to handle wrap-around. Let's again say that
-    scrollX is 4, so we draw the backdrop starting at column index 2 (3rd
-    column of tiles). This means we run out of tiles to draw before we reach
-    the right side of the screen, since we've skipped the first 2. We need to
-    draw these skipped tiles after drawing the originally right-most tile, so
-    that the backdrop wraps around and repeats.
+So now we have a way to draw the backdrop offset (scrolled) by a number of
+tiles, but we still need to handle wrap-around. Let's again say that scrollX is
+4, so we draw the backdrop starting at column index 2 (3rd column of tiles).
+This means we run out of tiles to draw before we reach the right side of the
+screen, since we've skipped the first 2. We need to draw these skipped tiles
+after drawing the originally right-most tile, so that the backdrop wraps around
+and repeats.
 
-    This could be accomplished by doing 'offsetX % 320'. Sticking with starting
-    at index 2, we would offset all tile addresses by 16. Once we've drawn 38
-    tiles out of 40 (the width of the entire screen), we're already at offset
-    320 (38*8 + 16), which would result in drawing the first tile of the source
-    image's 2nd row, and would draw whatever is next in video memory once we
-    reach the bottom-most row of tiles. By doing a modulo, we instead end up
-    back at 0, which gives us what we want - drawing the left-most tile right
-    after we've drawn the right-most one. For vertical scrolling, it's the same
-    except that we need to do a modulo by 5760 (320*18).
+This could be accomplished by doing 'offsetX % 320'. Sticking with starting at
+index 2, we would offset all tile addresses by 16. Once we've drawn 38 tiles
+out of 40 (the width of the entire screen), we're already at offset 320
+(38*8 + 16), which would result in drawing the first tile of the source image's
+2nd row, and would draw whatever is next in video memory once we reach the
+bottom-most row of tiles. By doing a modulo, we instead end up back at 0, which
+gives us what we want - drawing the left-most tile right after we've drawn the
+right-most one. For vertical scrolling, it's the same except that we need to do
+a modulo by 5760 (320*18).
 
-    Putting this all together, a possible way to implement the backdrop drawing
-    would be:
+Putting this all together, a possible way to implement the backdrop drawing
+would be:
 
     // before the loop
     bdStartOffsetX = hasHScrollBackdrop ? scrollX / 2 * 8 : 0;
@@ -799,65 +782,70 @@ static void DrawMapRegion(void)
     // Once we finish drawing a row of tiles
     yOffset += 320;
 
-    This would work, and is not too complicated. But on the hardware of the
-    time, modulo operations are expensive: On an x86 CPU, they are implemented
-    via the DIV or IDIV instruction, and these instructions take 22 and 25
-    cycles, respectively (according to
-    https://www2.math.uni-wuppertal.de/~fpf/Uebungen/GdR-SS02/opcode_i.html).
-    Compared to the 2 or 3 cycles needed for an addition or logical operation,
-    this is quite a lot - about an order of magnitude slower. Since the game
-    has to redraw the entire screen full of backdrop and map tiles every frame,
-    making the drawing fast was clearly important. The solution the developers
-    settled on was to use a lookup table.
+This would work, and is not too complicated. But on the hardware of the time,
+modulo operations are expensive: On an x86 CPU, they are implemented via the
+DIV or IDIV instruction, and these instructions take 22 and 25 cycles,
+respectively (according to
+https://www2.math.uni-wuppertal.de/~fpf/Uebungen/GdR-SS02/opcode_i.html).
+Compared to the 2 or 3 cycles needed for an addition or logical operation, this
+is quite a lot - about an order of magnitude slower. Since the game has to
+redraw the entire screen full of backdrop and map tiles every frame, making the
+drawing fast was clearly important. The solution the developers settled on was
+to use a lookup table.
 
-    The idea is to create a table of start offsets for all of the 40*18 tiles a
-    backdrop is comprised off, and then to repeat this table in both directions
-    (i.e., horizontally and vertically). So the entire table is a 80x36 grid of
-    values, stored in a 1-dimensional array. The first 40 entries in the first
-    row of the table are values from 0 to 312, which is the same as the offsets
-    we need to use when drawing a backdrop at scroll position (0,0). The next
-    40 entries are the same values again, followed by the values for the 2nd
-    row of tiles etc. Also see InitializeBackdropTable.
+The idea is to create a table of start offsets for all of the 40*18 tiles a
+backdrop is comprised off, and then to repeat this table in both directions
+(i.e., horizontally and vertically). So the entire table is a 80x36 grid of
+values, stored in a 1-dimensional array. The first 40 entries in the first row
+of the table are values from 0 to 312, which is the same as the offsets we need
+to use when drawing a backdrop at scroll position (0,0). The next 40 entries
+are the same values again, followed by the values for the 2nd row of tiles etc.
+Also see InitializeBackdropTable.
 
-    Now if our scrollX is 4 again, we start at index 2 in the lookup table,
-    which gives us an offset of 16 as before. We keep going until we reach
-    the 38th tile column. At this point, we are at index 40 in the table.
-    Because the table repeats after the first 40 values, we can just keep
-    reading and we will get offsets 0 and 8 - which are the correct offsets to
-    use in order to draw the two left-most columns of backdrop tiles. The
-    expensive modulo operation has now become a cheaper memory read. The table
-    also repeats in the vertical direction, so the same applies to vertical
-    scrolling. Accessing a specific row in the table can be done by doing
-    row * 80.
+Now if our scrollX is 4 again, we start at index 2 in the lookup table, which
+gives us an offset of 16 as before. We keep going until we reach the 38th tile
+column. At this point, we are at index 40 in the table. Because the table
+repeats after the first 40 values, we can just keep reading and we will get
+offsets 0 and 8 - which are the correct offsets to use in order to draw the two
+left-most columns of backdrop tiles. The expensive modulo operation has now
+become a cheaper memory read. The table also repeats in the vertical direction,
+so the same applies to vertical scrolling. Accessing a specific row in the
+table can be done by doing row * 80.
 
-    (Side-note: On a modern CPU, this scheme would actually be a pessimization,
-    since memory reads are much slower than doing arithmetic operations. In
-    the time it takes to fetch the lookup table from main memory, the CPU could
-    perform tons of modulo operations. Now there are CPU caches which alleviate
-    this somewhat, but even if the table would always be in the cache when we
-    need it, it would still take up precious cache space that might be better
-    utilized for other things.)
+(Side-note: On a modern CPU, this scheme would actually be a pessimization,
+since memory reads are much slower than doing arithmetic operations. In the
+time it takes to fetch the lookup table from main memory, the CPU could perform
+tons of modulo operations. Now there are CPU caches which alleviate this
+somewhat, but even if the table would always be in the cache when we need it,
+it would still take up precious cache space that might be better utilized for
+other things.)
 
-    All that remains now is to calculate a base table index based on the scroll
-    position, and then for each backdrop tile that we want to draw, we use that
-    base index plus the index of the current tile column. After each row of
-    tiles, we increment the base index by 80 to skip to the next row in the
-    lookup table.
+All that remains now is to calculate a base table index based on the scroll
+position, and then for each backdrop tile that we want to draw, we use that
+base index plus the index of the current tile column. After each row of tiles,
+we increment the base index by 80 to skip to the next row in the lookup table.
 
-    Calculating the base index still requires modulo operations, but we only
-    need to do this once before the loop that draws all map/backdrop tiles.
-    Within the loop, we only need to do table lookups and additions.
-    */
+Calculating the base index still requires modulo operations, but we only need to
+do this once before the loop that draws all map/backdrop tiles. Within the
+loop, we only need to do table lookups and additions.
+*/
+static void DrawMapRegion(void)
+{
+    register word ymap;
+    word dstoff = 321;  /* skip 40*8 pixel rows, then one more to skip a col */
+    word ymapmax;
+    word yscreen = 1;  /* skip one col; there is a blank border there */
+    word *mapcell;
+    word bdoff;
+    word bdsrc = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
 
     if (hasHScrollBackdrop) {
         if (scrollX % 2 != 0) {
-            /* If scrollX is odd, pick the version of the backdrop that's
-            shifted to the left by 4 pixels. */
-            bdAddress = EGA_OFFSET_BDROP_ODD_X - EGA_OFFSET_SOLID_TILES;
+            /* Use the version of the backdrop that's shifted to the left */
+            bdsrc = EGA_OFFSET_BDROP_ODD_X - EGA_OFFSET_SOLID_TILES;
         } else {
-            /* This is redundant, since bdAddress was already initialized to
-            this value in the variable declaration. */
-            bdAddress = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
+            /* Redundant assignment; uses the unmodified backdrop */
+            bdsrc = EGA_OFFSET_BDROP_EVEN - EGA_OFFSET_SOLID_TILES;
         }
     }
 
@@ -870,13 +858,13 @@ static void DrawMapRegion(void)
         that whenever scrollY is odd, a version of the backdrop is used that's
         shifted up by 4 pixels.
         */
-        bdAddress += (EGA_OFFSET_BDROP_ODD_Y - EGA_OFFSET_BDROP_EVEN);
+        bdsrc += EGA_OFFSET_BDROP_ODD_Y - EGA_OFFSET_BDROP_EVEN;
     }
 
-    /* Compute the base index for indexing into the lookup table */
-    bdBaseIndex =
-        (hasVScrollBackdrop ? ((scrollY / 2) % 18) * 80 : 0) +
-        (hasHScrollBackdrop ?  (scrollX / 2) % 40       : 0);
+    /* Compute the half-speed start value for indexing into the backdrop table */
+    bdoff =
+        (hasVScrollBackdrop ? 80 * ((scrollY / 2) % BACKDROP_HEIGHT) : 0) +
+        (hasHScrollBackdrop ?       (scrollX / 2) % BACKDROP_WIDTH   : 0);
 
     EGA_MODE_LATCHED_WRITE();
 
@@ -884,28 +872,29 @@ static void DrawMapRegion(void)
     ymap = scrollY << mapYPower;
 
     do {
-        xtile = 0;
+        register int x = 0;
+
         do {
-            mapcell = mapData.w + ymap + xtile + scrollX;
+            mapcell = mapData.w + ymap + x + scrollX;
 
             if (*mapcell < TILE_STRIPED_PLATFORM) {
                 /* "Air" tile or platform direction command; show just backdrop */
-                DrawSolidTile(*(backdropTable + bdBaseIndex + xtile) + bdAddress, xtile + destoff);
+                DrawSolidTile(bdsrc + *(backdropTable + bdoff + x), x + dstoff);
             } else if (*mapcell >= TILE_MASKED_0) {
                 /* Masked tile with backdrop showing through transparent areas */
-                DrawSolidTile(*(backdropTable + bdBaseIndex + xtile) + bdAddress, xtile + destoff);
-                DrawMaskedTile(maskedTileData + *mapcell, xtile + 1, ytile);
+                DrawSolidTile(bdsrc + *(backdropTable + bdoff + x), x + dstoff);
+                DrawMaskedTile(maskedTileData + *mapcell, x + 1, yscreen);
             } else {
                 /* Solid map tile */
-                DrawSolidTile(*mapcell, xtile + destoff);
+                DrawSolidTile(*mapcell, x + dstoff);
             }
 
-            xtile++;
-        } while (xtile < SCROLLW);
+            x++;
+        } while (x < SCROLLW);
 
-        destoff += 320;
-        ytile++;
-        bdBaseIndex += 80; /* Go to the next row in the lookup table */
+        dstoff += 320;
+        yscreen++;
+        bdoff += 80;
         ymap += mapWidth;
     } while (ymap < ymapmax);
 }
@@ -1707,12 +1696,13 @@ static void DrawLights(void)
             xorigin >= scrollX && scrollX + SCROLLW > xorigin &&
             yorigin >= scrollY && scrollY + SCROLLH - 1 >= yorigin
         ) {
+            /* Correct by 6 because NewMapActorAtIndex() makes `side` relative to 0 */
             if (side == SPA_LIGHT_WEST - 6) {
-                LightenScreenTileWest(xorigin - scrollX + 1, yorigin - scrollY + 1);
+                LightenScreenTileWest((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
             } else if (side == SPA_LIGHT_MIDDLE - 6) {
-                LightenScreenTile(xorigin - scrollX + 1, yorigin - scrollY + 1);
+                LightenScreenTile((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
             } else {  /* SPA_LIGHT_EAST */
-                LightenScreenTileEast(xorigin - scrollX + 1, yorigin - scrollY + 1);
+                LightenScreenTileEast((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
             }
         }
 
@@ -1723,7 +1713,7 @@ static void DrawLights(void)
                 xorigin >= scrollX && scrollX + SCROLLW > xorigin &&
                 y >= scrollY && scrollY + SCROLLH - 1 >= y
             ) {
-                LightenScreenTile(xorigin - scrollX + 1, y - scrollY + 1);
+                LightenScreenTile((xorigin - scrollX) + 1, (y - scrollY) + 1);
             }
         }
     }
@@ -6378,8 +6368,8 @@ Add sparkles to slippery areas of the map; add raindrops to empty areas of sky.
 */
 static void DrawRandomEffects(void)
 {
-    word x = random(SCROLLW) + scrollX;
-    word y = random(SCROLLH) + scrollY;
+    word x = scrollX + random(SCROLLW);
+    word y = scrollY + random(SCROLLH);
     word maptile = GetMapTile(x, y);
 
     if (random(2U) != 0 && TILE_SLIPPERY(maptile)) {
@@ -9118,9 +9108,8 @@ static bbool DrawPlayerHelper(void)
             StartSound(SND_PLAYER_HURT);
         }
 
-        while (playerFallDeadTime < 12) {
+        for (; playerFallDeadTime < 12; playerFallDeadTime++) {
             WaitHard(2);
-            playerFallDeadTime++;
         }
 
         if (playerFallDeadTime == 13) {
