@@ -102,6 +102,13 @@ for it is present.
 #define JOYSTICK_B              2
 
 /*
+Constants for the Light structure's `side` member.
+*/
+#define LIGHT_SIDE_WEST         0
+#define LIGHT_SIDE_MIDDLE       1
+#define LIGHT_SIDE_EAST         2
+
+/*
 Player/actor move states. Indicates if an attempted move is free to take,
 blocked by map elements, or in need of special processing for sloped areas.
 */

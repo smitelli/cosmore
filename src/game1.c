@@ -1696,12 +1696,11 @@ static void DrawLights(void)
             xorigin >= scrollX && scrollX + SCROLLW > xorigin &&
             yorigin >= scrollY && scrollY + SCROLLH - 1 >= yorigin
         ) {
-            /* Correct by 6 because NewMapActorAtIndex() makes `side` relative to 0 */
-            if (side == SPA_LIGHT_WEST - 6) {
+            if (side == LIGHT_SIDE_WEST) {
                 LightenScreenTileWest((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
-            } else if (side == SPA_LIGHT_MIDDLE - 6) {
+            } else if (side == LIGHT_SIDE_MIDDLE) {
                 LightenScreenTile((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
-            } else {  /* SPA_LIGHT_EAST */
+            } else {  /* LIGHT_SIDE_EAST */
                 LightenScreenTileEast((xorigin - scrollX) + 1, (yorigin - scrollY) + 1);
             }
         }
@@ -10145,7 +10144,8 @@ static void NewMapActorAtIndex(word index, word map_actor, int x, int y)
         case SPA_LIGHT_MIDDLE:
         case SPA_LIGHT_EAST:
             if (numLights != MAX_LIGHTS - 1) {
-                lights[numLights].side = map_actor - 6;
+                /* Normalize SPA_LIGHT_* into LIGHT_SIDE_* */
+                lights[numLights].side = map_actor - SPA_LIGHT_WEST;
                 lights[numLights].x = x;
                 lights[numLights].y = y;
                 numLights++;

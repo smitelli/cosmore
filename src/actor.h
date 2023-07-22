@@ -38,7 +38,8 @@ Special constant used in the propagation of worm crate explosions.
 #define WORM_CRATE_EXPLODE      0xf1f1
 
 /*
-Special actor types. In map files, these are represented by types 0..31.
+Special ("SP") actor ("A") types. In map files, these are represented by types
+0..31.
 */
 #define SPA_PLAYER_START        0  /* map type 0 */
 #define SPA_PLATFORM            1
