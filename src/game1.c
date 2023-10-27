@@ -1527,9 +1527,10 @@ This makes a waaay unsafe assumption about the Platform struct packing.
 */
 static void MovePlatforms(void)
 {
-    register word i, x;
+    register word i;
 
     for (i = 0; i < numPlatforms; i++) {
+        register word x;
         Platform *plat = platforms + i;
         word newdir;
 
