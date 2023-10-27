@@ -1536,7 +1536,7 @@ static void MovePlatforms(void)
 
         for (x = 2; x < 7; x++) {
             /* This is an ugly method of reading Platform.mapstash */
-            SetMapTile(*((word *)plat + x), (plat->x + x) - 4, plat->y);
+            SetMapTile(*((word *)plat + x), plat->x + x - 4, plat->y);
         }
 
         newdir = GetMapTile(plat->x, plat->y) / 8;
@@ -1552,11 +1552,11 @@ static void MovePlatforms(void)
 
         for (x = 2; x < 7; x++) {
             /* Again, now writing to Platform.mapstash */
-            *((word *)plat + x) = GetMapTile((plat->x + x) - 4, plat->y);
+            *((word *)plat + x) = GetMapTile(plat->x + x - 4, plat->y);
         }
 
         for (x = 2; x < 7; x++) {
-            SetMapTile(TILE_BLUE_PLATFORM + ((x - 2) * 8), (plat->x + x) - 4, plat->y);
+            SetMapTile(TILE_BLUE_PLATFORM + ((x - 2) * 8), plat->x + x - 4, plat->y);
         }
     }
 }
@@ -1794,12 +1794,12 @@ static void AdjustActorMove(word index, word dir)
             act->private1 = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x + width, act->y + 1)) &&
-            TILE_SLOPED(GetMapTile((act->x + width) - 1, act->y + 2))
+            TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 2))
         ) {
-            if (!TILE_BLOCK_SOUTH(GetMapTile((act->x + width) - 1, act->y + 1))) {
+            if (!TILE_BLOCK_SOUTH(GetMapTile(act->x + width - 1, act->y + 1))) {
                 act->private1 = 1;
 
-                if (!TILE_SLOPED(GetMapTile((act->x + width) - 1, act->y + 1))) {
+                if (!TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 1))) {
                     act->y++;
                 }
             }
@@ -1808,7 +1808,7 @@ static void AdjustActorMove(word index, word dir)
         } else if (
             !act->acrophile &&
             TestSpriteMove(DIR4_WEST, act->sprite, act->frame, act->x, act->y + 1) == MOVE_FREE &&
-            !TILE_SLOPED(GetMapTile((act->x + width) - 1, act->y + 1))
+            !TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 1))
         ) {
             act->x++;
             act->private1 = 0;
@@ -3346,7 +3346,7 @@ static void ActSplittingPlatform(word index)
         if (act->data2 >= 5 && act->data2 < 8) {
             nextDrawMode = DRAW_MODE_HIDDEN;
             DrawSprite(SPR_SPLITTING_PLATFORM, 1, act->x - (act->data2 - 5), act->y, DRAW_MODE_NORMAL);
-            DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + act->data2) - 3, act->y, DRAW_MODE_NORMAL);
+            DrawSprite(SPR_SPLITTING_PLATFORM, 2, act->x + act->data2 - 3, act->y, DRAW_MODE_NORMAL);
         }
 
         if (act->data2 == 7) {
@@ -3357,8 +3357,8 @@ static void ActSplittingPlatform(word index)
 
     if (act->data1 == 3) {
         nextDrawMode = DRAW_MODE_HIDDEN;
-        DrawSprite(SPR_SPLITTING_PLATFORM, 1, (act->x + act->data2) - 2, act->y, DRAW_MODE_NORMAL);
-        DrawSprite(SPR_SPLITTING_PLATFORM, 2, (act->x + 4) - act->data2, act->y, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_SPLITTING_PLATFORM, 1, act->x + act->data2 - 2, act->y, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_SPLITTING_PLATFORM, 2, act->x + 4 - act->data2, act->y, DRAW_MODE_NORMAL);
 
         if (act->private1 % 2 != 0) {
             act->data2++;
@@ -4794,7 +4794,7 @@ static void ActExitMonsterWest(word index)
         static byte tongueframes[] = {2, 3, 4, 3};
         DrawSprite(
             SPR_EXIT_MONSTER_W, tongueframes[act->data3 % 4],
-            (act->x + 6) - act->data5, act->y - 3, DRAW_MODE_NORMAL
+            act->x + 6 - act->data5, act->y - 3, DRAW_MODE_NORMAL
         );
         act->data3++;
     }
@@ -7018,13 +7018,13 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         height = 7;
         if (
             (y - height) + 5 >= playerY &&
-            y - height <= playerY && playerX + 2 >= x && (x + width) - 1 >= playerX
+            y - height <= playerY && playerX + 2 >= x && x + width - 1 >= playerX
         ) {
             isPounceReady = true;
         }
     } else if (
         (playerFallTime > 3 ? 1 : 0) + (y - height) + 1 >= playerY &&
-        y - height <= playerY && playerX + 2 >= x && (x + width) - 1 >= playerX &&
+        y - height <= playerY && playerX + 2 >= x && x + width - 1 >= playerX &&
         scooterMounted == 0
     ) {
         isPounceReady = true;
