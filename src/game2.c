@@ -138,6 +138,8 @@ Inline functions.
 
 /*
 Prototypes for "private" functions where strictly required.
+
+NOTE: Explicitly not declared `static`. See note in GAME1.
 */
 void StopAdLibPlayback(void);
 void FadeOutAdLibPlayback(void);

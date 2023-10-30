@@ -259,6 +259,16 @@ Inline functions.
 
 /*
 Prototypes for "private" functions where strictly required.
+
+NOTE: It would be reasonable to declare these `static` since they are not used
+in any other compilation unit. Doing so would assemble all references to these
+functions as relative near calls:
+    0E            push cs
+    E88401        call 0x242e
+The original game did not do that; all of these get absolute far calls instead:
+    9AE0049510    call 0x1095:0x4e0
+To remain faithful to the original game, these functions use non-`static`
+external linkage even though nothing depends on that.
 */
 void DrawSprite(word, word, word, word, word);
 void DrawPlayer(byte, word, word, word);
