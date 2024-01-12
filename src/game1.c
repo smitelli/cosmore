@@ -1515,13 +1515,13 @@ static void MovePlayerPlatform(word x_west, word x_east, word x_dir, word y_dir)
         scrollY--;
     }
 
-    if (playerX - scrollX > 23 && mapWidth - SCROLLW > scrollX) {
+    if (playerX - scrollX > SCROLLW - 15 && mapWidth - SCROLLW > scrollX) {
         scrollX++;
     } else if (playerX - scrollX < 12 && scrollX > 0) {
         scrollX--;
     }
 
-    if (dir8Y[y_dir] == 1 && playerY - scrollY > 14) {
+    if (dir8Y[y_dir] == 1 && playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     }
 
@@ -8513,7 +8513,7 @@ static void MovePlayer(void)
                 ) {
                     playerY++;
                 }
-                if (playerY - scrollY > 14) {
+                if (playerY - scrollY > SCROLLH - 4) {
                     scrollY++;
                 }
                 if (playerX - scrollX < 12 && scrollX > 0) {
@@ -8531,10 +8531,10 @@ static void MovePlayer(void)
                 ) {
                     playerY++;
                 }
-                if (playerY - scrollY > 14) {
+                if (playerY - scrollY > SCROLLH - 4) {
                     scrollY++;
                 }
-                if (playerX - scrollX > 23 && mapWidth - SCROLLW > scrollX) {
+                if (playerX - scrollX > SCROLLW - 15 && mapWidth - SCROLLW > scrollX) {
                     scrollX++;
                 }
                 playerClingDir = DIR4_NONE;
@@ -8867,10 +8867,10 @@ static void MovePlayer(void)
         }
         if (playerFrame > PLAYER_WALK_4) playerFrame = PLAYER_WALK_1;
     }
-    if (playerY - scrollY > 14) {
+    if (playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     }
-    if (clingslip && playerY - scrollY > 14) {
+    if (clingslip && playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     } else {
         if (playerMomentumNorth > 10 && playerY - scrollY < 7 && scrollY > 0) {
@@ -8880,7 +8880,7 @@ static void MovePlayer(void)
             scrollY--;
         }
     }
-    if (playerX - scrollX > 23 && mapWidth - SCROLLW > scrollX && mapYPower > 5) {
+    if (playerX - scrollX > SCROLLW - 15 && mapWidth - SCROLLW > scrollX && mapYPower > 5) {
         scrollX++;
     } else if (playerX - scrollX < 12 && scrollX > 0) {
         scrollX--;
@@ -9034,7 +9034,7 @@ decrement:
         cmdBomb = false;
     }
 
-    if (playerY - scrollY > 14) {
+    if (playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     } else {
         if (playerMomentumNorth > 10 && playerY - scrollY < 7 && scrollY > 0) {
@@ -9046,7 +9046,7 @@ decrement:
         }
     }
 
-    if (playerX - scrollX > 23 && mapWidth - SCROLLW > scrollX) {
+    if (playerX - scrollX > SCROLLW - 15 && mapWidth - SCROLLW > scrollX) {
         scrollX++;
     } else if (playerX - scrollX < 12 && scrollX > 0) {
         scrollX--;
