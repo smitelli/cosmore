@@ -31,7 +31,7 @@ The actual C implementation of all the assembly procedures is below:
 ```c
 /**
  * Cosmore
- * Copyright (c) 2020-2023 Scott Smitelli and contributors
+ * Copyright (c) 2020-2024 Scott Smitelli and contributors
  *
  * Based on COSMO{1..3}.EXE distributed with "Cosmo's Cosmic Adventure"
  * Copyright (c) 1992 Apogee Software, Ltd.
