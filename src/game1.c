@@ -6547,8 +6547,11 @@ static void InitializeExplosions(void)
 
 /*
 Insert the requested explosion into the first free spot in the explosions array.
+
+Each explosion is 6x6 tiles. The Y position will be 2 tiles lower on screen than
+the specified `y_origin`.
 */
-void NewExplosion(word x, word y)
+void NewExplosion(word x_origin, word y_origin)
 {
     word i;
 
@@ -6558,8 +6561,8 @@ void NewExplosion(word x, word y)
         if (ex->age != 0) continue;
 
         ex->age = 1;
-        ex->x = x;
-        ex->y = y + 2;
+        ex->x = x_origin;
+        ex->y = y_origin + 2;
 
         StartSound(SND_EXPLOSION);
 
@@ -6585,6 +6588,7 @@ static void DrawExplosions(void)
                 MODE1_WHITE, MODE1_YELLOW, MODE1_WHITE, MODE1_BLACK, MODE1_YELLOW,
                 MODE1_WHITE, MODE1_YELLOW, MODE1_BLACK, MODE1_BLACK
             };
+
             SetPaletteRegister(PALETTE_KEY_INDEX, paletteColors[ex->age - 1]);
         }
 #endif  /* EXPLOSION_PALETTE */
@@ -6610,16 +6614,16 @@ static void DrawExplosions(void)
 /*
 Return true if *any* explosion is touching the specified sprite.
 */
-bool IsNearExplosion(word sprite, word frame, word x, word y)
+bool IsNearExplosion(word sprite, word frame, word x_origin, word y_origin)
 {
     word i;
 
     for (i = 0; i < numExplosions; i++) {
-        /* Basically explosions[i].age; had to write this garbage for parity */
+        /* HACK: Read explosions[i].age; had to write this garbage for parity */
         if (**((word (*)[3]) explosions + i) != 0) {
             Explosion *ex = explosions + i;
 
-            if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x, y)) {
+            if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x_origin, y_origin)) {
                 return true;
             }
         }
@@ -6895,7 +6899,7 @@ Return true if so, and handle special cases. Otherwise returns false. As a side
 effect, adds a shard decoration and adds to the player's score if the sprite is
 explodable.
 */
-static bool CanBeExploded(word sprite, word frame, word x, word y)
+static bool CanExplode(word sprite, word frame, word x_origin, word y_origin)
 {
     switch (sprite) {
     case SPR_ARROW_PISTON_W:
@@ -6940,7 +6944,7 @@ static bool CanBeExploded(word sprite, word frame, word x, word y)
     case SPR_84:  /* " " " ACT_CLAM_PLANT_CEIL " " " */
     case SPR_96:  /* " " " ACT_EYE_PLANT_CEIL " " " */
         if (sprite == SPR_HINT_GLOBE) {
-            NewActor(ACT_SCORE_EFFECT_12800, x, y);
+            NewActor(ACT_SCORE_EFFECT_12800, x_origin, y_origin);
         }
 
         if (
@@ -6948,7 +6952,7 @@ static bool CanBeExploded(word sprite, word frame, word x, word y)
             frame == 2  /* retracted */
         ) return false;
 
-        NewShard(sprite, frame, x, y);
+        NewShard(sprite, frame, x_origin, y_origin);
         AddScoreForSprite(sprite);
 
         if (sprite == SPR_EYE_PLANT) {
@@ -6956,8 +6960,8 @@ static bool CanBeExploded(word sprite, word frame, word x, word y)
                 NewActor(ACT_SPEECH_WOW_50K, playerX - 1, playerY - 5);
             }
 
-            NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_STATIONARY, 1);
-            NewSpawner(ACT_BOMB_IDLE, x, y);
+            NewDecoration(SPR_SPARKLE_LONG, 8, x_origin, y_origin, DIR8_STATIONARY, 1);
+            NewSpawner(ACT_BOMB_IDLE, x_origin, y_origin);
 
             numEyePlants--;
         }
@@ -7850,7 +7854,7 @@ static void ProcessActor(word index)
 
     if (
         IsNearExplosion(act->sprite, act->frame, act->x, act->y) &&
-        CanBeExploded(act->sprite, act->frame, act->x, act->y)
+        CanExplode(act->sprite, act->frame, act->x, act->y)
     ) {
         act->dead = true;
     } else if (
