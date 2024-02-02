@@ -1146,12 +1146,10 @@ static bool IsIntersecting(
     word sprite1, word frame1, word x1, word y1,
     word sprite2, word frame2, word x2, word y2
 ) {
-    word width1;
     register word height1;
-    word offset1;
-    word width2;
+    word width1, offset1;
     register word height2;
-    word offset2;
+    word width2, offset2;
 
     offset1 = *(actorInfoData + sprite1) + (frame1 * 4);
     height1 = *(actorInfoData + offset1);
@@ -1162,19 +1160,16 @@ static bool IsIntersecting(
     width2 = *(actorInfoData + offset2 + 1);
 
     if (x1 > mapWidth && x1 <= WORD_MAX) {
+        /* In what universe does this ever happen? */
         width1 = x1 + width1;
         x1 = 0;
     }
 
-    if ((
+    return (
         (x2 <= x1 && x2 + width2 > x1) || (x2 >= x1 && x1 + width1 > x2)
     ) && (
         (y1 - height1 < y2 && y2 <= y1) || (y2 - height2 < y1 && y1 <= y2)
-    )) {
-        return true;
-    }
-
-    return false;
+    );
 }
 
 /*
