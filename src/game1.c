@@ -6422,17 +6422,17 @@ void NewShard(word sprite_type, word frame, word x_origin, word y_origin)
     for (i = 0; i < numShards; i++) {
         Shard *sh = shards + i;
 
-        if (sh->age == 0) {
-            sh->sprite = sprite_type;
-            sh->x = x_origin;
-            sh->y = y_origin;
-            sh->frame = frame;
-            sh->age = 1;
-            sh->inclination = inclination;
-            sh->bounced = false;
+        if (sh->age != 0) continue;
 
-            break;
-        }
+        sh->sprite = sprite_type;
+        sh->x = x_origin;
+        sh->y = y_origin;
+        sh->frame = frame;
+        sh->age = 1;
+        sh->inclination = inclination;
+        sh->bounced = false;
+
+        break;
     }
 }
 
@@ -6651,14 +6651,14 @@ void NewSpawner(word actor_type, word x_origin, word y_origin)
     for (i = 0; i < numSpawners; i++) {
         Spawner *sp = spawners + i;
 
-        if (sp->actor == ACT_BASKET_NULL) {
-            sp->actor = actor_type;
-            sp->x = x_origin;
-            sp->y = y_origin;
-            sp->age = 0;
+        if (sp->actor != ACT_BASKET_NULL) continue;
 
-            break;
-        }
+        sp->actor = actor_type;
+        sp->x = x_origin;
+        sp->y = y_origin;
+        sp->age = 0;
+
+        break;
     }
 }
 
@@ -6727,19 +6727,19 @@ void NewDecoration(
     for (i = 0; i < (word)numDecorations; i++) {
         Decoration *dec = decorations + i;
 
-        if (!dec->alive) {
-            dec->alive = true;
-            dec->sprite = sprite_type;
-            dec->numframes = num_frames;
-            dec->x = x_origin;
-            dec->y = y_origin;
-            dec->dir = dir;
-            dec->numtimes = num_times;
+        if (dec->alive) continue;
 
-            decorationFrame[i] = 0;
+        dec->alive = true;
+        dec->sprite = sprite_type;
+        dec->numframes = num_frames;
+        dec->x = x_origin;
+        dec->y = y_origin;
+        dec->dir = dir;
+        dec->numtimes = num_times;
 
-            break;
-        }
+        decorationFrame[i] = 0;
+
+        break;
     }
 }
 
