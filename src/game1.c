@@ -912,10 +912,10 @@ static void DrawMapRegion(void)
 /*
 Is any part of the sprite frame at x,y visible within the screen's scroll area?
 */
-static bool IsSpriteVisible(word sprite, word frame, word x, word y)
+static bool IsSpriteVisible(word sprite_type, word frame, word x, word y)
 {
     register word width, height;
-    word offset = *(actorInfoData + sprite) + (frame * 4);
+    word offset = *(actorInfoData + sprite_type) + (frame * 4);
 
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
@@ -940,13 +940,13 @@ NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the sprite wants to move into, and *not* the
 location where it currently is.
 */
-static word TestSpriteMove(word dir, word sprite, word frame, word x, word y)
+static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word y)
 {
     register word i;
     word *mapcell;
     word width;
     register word height;
-    word offset = *(actorInfoData + sprite) + (frame * 4);
+    word offset = *(actorInfoData + sprite_type) + (frame * 4);
 
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
@@ -1112,18 +1112,18 @@ static word TestPlayerMove(word dir, word x, word y)
 /*
 Is the passed sprite frame at x,y touching the player's sprite?
 */
-static bool IsTouchingPlayer(word sprite, word frame, word x, word y)
+static bool IsTouchingPlayer(word sprite_type, word frame, word x, word y)
 {
     register word height, width;
     word offset;
 
     if (playerDeadTime != 0) return false;
 
-    offset = *(actorInfoData + sprite) + (frame * 4);
+    offset = *(actorInfoData + sprite_type) + (frame * 4);
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
-    if (x > mapWidth && x <= WORD_MAX && sprite == SPR_EXPLOSION) {
+    if (x > mapWidth && x <= WORD_MAX && sprite_type == SPR_EXPLOSION) {
         width = x + width;
         x = 0;
     }
@@ -1175,7 +1175,7 @@ static bool IsIntersecting(
 /*
 Draw an actor sprite frame at {x,y}_origin with the requested mode.
 */
-void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode)
+void DrawSprite(word sprite_type, word frame, word x_origin, word y_origin, word mode)
 {
     word x = x_origin;
     word y;
@@ -1186,7 +1186,7 @@ void DrawSprite(word sprite, word frame, word x_origin, word y_origin, word mode
 
     EGA_MODE_DEFAULT();
 
-    offset = *(actorInfoData + sprite) + (frame * 4);
+    offset = *(actorInfoData + sprite_type) + (frame * 4);
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
@@ -1728,7 +1728,7 @@ static void DrawLights(void)
 Create the specified actor at the current nextActorIndex.
 */
 static void ConstructActor(
-    word sprite, word x, word y, bool force_active, bool stay_active,
+    word sprite_type, word x, word y, bool force_active, bool stay_active,
     bool weighted, bool acrophile, ActorTickFunction tick_func, word data1,
     word data2, word data3, word data4, word data5
 ) {
@@ -1740,7 +1740,7 @@ static void ConstructActor(
 
     act = actors + nextActorIndex;
 
-    act->sprite = sprite;
+    act->sprite = sprite_type;
     act->frame = 0;
     act->x = x;
     act->y = y;
@@ -6407,7 +6407,7 @@ static void InitializeShards(void)
 /*
 Insert the requested shard into the first free spot in the shards array.
 */
-void NewShard(word sprite, word frame, word x, word y)
+void NewShard(word sprite_type, word frame, word x_origin, word y_origin)
 {
     /*
     INTERESTING: This never gets reset, so shard behavior is different for each
@@ -6423,9 +6423,9 @@ void NewShard(word sprite, word frame, word x, word y)
         Shard *sh = shards + i;
 
         if (sh->age == 0) {
-            sh->sprite = sprite;
-            sh->x = x;
-            sh->y = y;
+            sh->sprite = sprite_type;
+            sh->x = x_origin;
+            sh->y = y_origin;
             sh->frame = frame;
             sh->age = 1;
             sh->inclination = inclination;
@@ -6609,7 +6609,7 @@ static void DrawExplosions(void)
 /*
 Return true if *any* explosion is touching the specified sprite.
 */
-bool IsNearExplosion(word sprite, word frame, word x_origin, word y_origin)
+bool IsNearExplosion(word sprite_type, word frame, word x_origin, word y_origin)
 {
     word i;
 
@@ -6618,7 +6618,7 @@ bool IsNearExplosion(word sprite, word frame, word x_origin, word y_origin)
         if (**((word (*)[3]) explosions + i) != 0) {
             Explosion *ex = explosions + i;
 
-            if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite, frame, x_origin, y_origin)) {
+            if (IsIntersecting(SPR_EXPLOSION, 0, ex->x, ex->y, sprite_type, frame, x_origin, y_origin)) {
                 return true;
             }
         }
@@ -6644,7 +6644,7 @@ static void InitializeSpawners(void)
 /*
 Insert the requested spawner into the first free spot in the spawners array.
 */
-void NewSpawner(word actor, word x, word y)
+void NewSpawner(word actor_type, word x_origin, word y_origin)
 {
     word i;
 
@@ -6652,9 +6652,9 @@ void NewSpawner(word actor, word x, word y)
         Spawner *sp = spawners + i;
 
         if (sp->actor == ACT_BASKET_NULL) {
-            sp->actor = actor;
-            sp->x = x;
-            sp->y = y;
+            sp->actor = actor_type;
+            sp->x = x_origin;
+            sp->y = y_origin;
             sp->age = 0;
 
             break;
@@ -6719,7 +6719,8 @@ static void InitializeDecorations(void)
 Insert the given decoration into the first free spot in the decorations array.
 */
 void NewDecoration(
-    word sprite, word num_frames, word x, word y, word dir, word num_times
+    word sprite_type, word num_frames, word x_origin, word y_origin, word dir,
+    word num_times
 ) {
     word i;
 
@@ -6728,10 +6729,10 @@ void NewDecoration(
 
         if (!dec->alive) {
             dec->alive = true;
-            dec->sprite = sprite;
+            dec->sprite = sprite_type;
             dec->numframes = num_frames;
-            dec->x = x;
-            dec->y = y;
+            dec->x = x_origin;
+            dec->y = y_origin;
             dec->dir = dir;
             dec->numtimes = num_times;
 
@@ -6894,9 +6895,9 @@ Return true if so, and handle special cases. Otherwise returns false. As a side
 effect, adds a shard decoration and adds to the player's score if the sprite is
 explodable.
 */
-static bool CanExplode(word sprite, word frame, word x_origin, word y_origin)
+static bool CanExplode(word sprite_type, word frame, word x_origin, word y_origin)
 {
-    switch (sprite) {
+    switch (sprite_type) {
     case SPR_ARROW_PISTON_W:
     case SPR_ARROW_PISTON_E:
     case SPR_SPIKES_FLOOR:
@@ -6938,19 +6939,19 @@ static bool CanExplode(word sprite, word frame, word x_origin, word y_origin)
     case SPR_74:  /* probably for ACT_BABY_GHOST_EGG_PROX; never happens */
     case SPR_84:  /* " " " ACT_CLAM_PLANT_CEIL " " " */
     case SPR_96:  /* " " " ACT_EYE_PLANT_CEIL " " " */
-        if (sprite == SPR_HINT_GLOBE) {
+        if (sprite_type == SPR_HINT_GLOBE) {
             NewActor(ACT_SCORE_EFFECT_12800, x_origin, y_origin);
         }
 
         if (
-            (sprite == SPR_SPIKES_FLOOR_RECIP || sprite == SPR_SPIKES_E_RECIP) &&
+            (sprite_type == SPR_SPIKES_FLOOR_RECIP || sprite_type == SPR_SPIKES_E_RECIP) &&
             frame == 2  /* retracted */
         ) return false;
 
-        NewShard(sprite, frame, x_origin, y_origin);
-        AddScoreForSprite(sprite);
+        NewShard(sprite_type, frame, x_origin, y_origin);
+        AddScoreForSprite(sprite_type);
 
-        if (sprite == SPR_EYE_PLANT) {
+        if (sprite_type == SPR_EYE_PLANT) {
             if (numEyePlants == 1) {
                 NewActor(ACT_SPEECH_WOW_50K, playerX - 1, playerY - 5);
             }
@@ -7007,7 +7008,7 @@ standard way.
 It's not clear what benefit there is to passing sprite/frame/x/y instead of
 reading it from the actor itself. Both methods are used interchangeably.
 */
-static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
+static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y)
 {
     Actor *act = actors + index;
     word width;
@@ -7016,14 +7017,14 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
 #define DO_POUNCE(recoil) (act->damagecooldown == 0 && PounceHelper(recoil))
 
-    if (!IsSpriteVisible(sprite, frame, x, y)) return true;
+    if (!IsSpriteVisible(sprite_type, frame, x, y)) return true;
 
-    offset = *(actorInfoData + sprite) + (frame * 4);
+    offset = *(actorInfoData + sprite_type) + (frame * 4);
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
     isPounceReady = false;
-    if (sprite == SPR_BOSS) {
+    if (sprite_type == SPR_BOSS) {
         height = 7;
         if (
             (y - height) + 5 >= playerY &&
@@ -7039,7 +7040,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
         isPounceReady = true;
     }
 
-    switch (sprite) {
+    switch (sprite_type) {
     case SPR_JUMP_PAD:
         if (act->data5 != 0) break;  /* ceiling-mounted */
 
@@ -7072,7 +7073,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                 NewPounceDecoration(act->x, act->y);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7096,14 +7097,14 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             nextDrawMode = DRAW_MODE_WHITE;
             if (act->data5 == 0) {
                 act->dead = true;
-                if (sprite == SPR_GHOST) {
+                if (sprite_type == SPR_GHOST) {
                     NewActor(ACT_BABY_GHOST, act->x, act->y);
                 }
                 NewPounceDecoration(act->x - 1, act->y + 1);
                 AddScoreForSprite(SPR_GHOST);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7117,7 +7118,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             NewPounceDecoration(act->x, act->y);
             AddScoreForSprite(act->sprite);
             return true;
-        } else if (IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7165,7 +7166,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             return false;
         }
         /* Can't maintain parity with the original using an `else if` here. */
-        if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7182,7 +7183,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                 return true;
             }
             nextDrawMode = DRAW_MODE_WHITE;
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7194,16 +7195,16 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             act->damagecooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAW_MODE_WHITE;
-            if (sprite != SPR_RED_CHOMPER) {
+            if (sprite_type != SPR_RED_CHOMPER) {
                 act->data5--;
             }
-            if (act->data5 == 0 || sprite == SPR_RED_CHOMPER) {
+            if (act->data5 == 0 || sprite_type == SPR_RED_CHOMPER) {
                 act->dead = true;
                 AddScoreForSprite(act->sprite);
                 NewPounceDecoration(act->x, act->y);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7231,7 +7232,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             } else {
                 act->frame = 8;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7242,7 +7243,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
             pounceStreak = 0;
             StartSound(SND_PLAYER_POUNCE);
             act->damagecooldown = 5;
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7322,7 +7323,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
                 }
                 NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
                 NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
-            } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite, frame, x, y)) {
+            } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
                 HurtPlayer();
             }
         }
@@ -7332,17 +7333,17 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
 
 #undef DO_POUNCE
 
-    if (!IsTouchingPlayer(sprite, frame, x, y)) {
+    if (!IsTouchingPlayer(sprite_type, frame, x, y)) {
         return false;
     }
 
-    switch (sprite) {
+    switch (sprite_type) {
     case SPR_STAR:
         NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_STATIONARY, 1);
         gameStars++;
         act->dead = true;
         StartSound(SND_BIG_PRIZE);
-        AddScoreForSprite(sprite);
+        AddScoreForSprite(sprite_type);
         NewActor(ACT_SCORE_EFFECT_200, x, y);
         UpdateStars();
         return true;
@@ -7472,8 +7473,8 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_CANDY_CORN:
         act->dead = true;
         if (
-            sprite == SPR_YEL_FRUIT_VINE || sprite == SPR_BANANAS ||
-            sprite == SPR_GRAPES || sprite == SPR_RED_BERRIES
+            sprite_type == SPR_YEL_FRUIT_VINE || sprite_type == SPR_BANANAS ||
+            sprite_type == SPR_GRAPES || sprite_type == SPR_RED_BERRIES
         ) {
             AddScore(800);
             NewActor(ACT_SCORE_EFFECT_800, x, y);
@@ -7566,7 +7567,7 @@ static bool TouchPlayer(word index, word sprite, word frame, word x, word y)
     case SPR_PIPE_CORNER_W:
     case SPR_PIPE_CORNER_E:
         if (isPlayerInPipe) {
-            switch (sprite) {
+            switch (sprite_type) {
             case SPR_PIPE_CORNER_N:
                 SetPlayerPush(DIR8_NORTH, 100, 2, PLAYER_HIDDEN, false, false);
                 break;

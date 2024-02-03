@@ -1209,17 +1209,17 @@ Add `points` to the player's score, then redraw that area of the status bar.
 This function does not know where that x/y position on the screen is, so those
 need to be passed in.
 */
-static void DrawStatusBarScore(dword add_points, word x, word y)
+static void DrawStatusBarScore(dword add_points, word x_origin, word y_origin)
 {
     gameScore += add_points;
 
 #ifndef DEBUG_BAR
 
     SelectDrawPage(activePage);
-    DrawNumberFlushRight(x, y, gameScore);
+    DrawNumberFlushRight(x_origin, y_origin, gameScore);
 
     SelectDrawPage(!activePage);
-    DrawNumberFlushRight(x, y, gameScore);
+    DrawNumberFlushRight(x_origin, y_origin, gameScore);
 
     EGA_MODE_LATCHED_WRITE();
 
@@ -1241,15 +1241,15 @@ Redraw the "Stars" area of the status bar with the current global value. This
 function does not know where that x/y position on the screen is, so those need
 to be passed in.
 */
-static void DrawStatusBarStars(word x, word y)
+static void DrawStatusBarStars(word x_origin, word y_origin)
 {
 #ifndef DEBUG_BAR
 
     SelectDrawPage(activePage);
-    DrawNumberFlushRight(x, y, (word)gameStars);
+    DrawNumberFlushRight(x_origin, y_origin, (word)gameStars);
 
     SelectDrawPage(!activePage);
-    DrawNumberFlushRight(x, y, (word)gameStars);
+    DrawNumberFlushRight(x_origin, y_origin, (word)gameStars);
 
     EGA_MODE_LATCHED_WRITE();
 
@@ -1271,7 +1271,7 @@ Redraw the "Bombs" area of the status bar with the current global value. This
 function does not know where that x/y position on the screen is, so those need
 to be passed in.
 */
-static void DrawStatusBarBombs(word x, word y)
+static void DrawStatusBarBombs(word x_origin, word y_origin)
 {
 #ifndef DEBUG_BAR
 
@@ -1283,12 +1283,12 @@ static void DrawStatusBarBombs(word x, word y)
     transparent areas.
     */
     SelectDrawPage(activePage);
-    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
-    DrawNumberFlushRight(x, y, playerBombs);
+    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x_origin, y_origin);
+    DrawNumberFlushRight(x_origin, y_origin, playerBombs);
 
     SelectDrawPage(!activePage);
-    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, y);
-    DrawNumberFlushRight(x, y, playerBombs);
+    DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x_origin, y_origin);
+    DrawNumberFlushRight(x_origin, y_origin, playerBombs);
 
     EGA_MODE_LATCHED_WRITE();
 
@@ -1311,7 +1311,7 @@ function does not know where that x/y position on the screen is, so those need
 to be passed in. It also does not flip the draw page, so this function must be
 called twice -- once for each page.
 */
-static void DrawStatusBarHealth(word x, word y)
+static void DrawStatusBarHealth(word x_origin, word y_origin)
 {
 #ifndef DEBUG_BAR
 
@@ -1323,11 +1323,11 @@ static void DrawStatusBarHealth(word x, word y)
 
         if (playerHealth - 1 > cell) {
             /* Each bar is made of 2 font characters stacked vertically */
-            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_1, x - cell, y);
-            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_1, x - cell, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_1, x_origin - cell, y_origin);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_1, x_origin - cell, y_origin + 1);
         } else {
-            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_0, x - cell, y);
-            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x - cell, y + 1);
+            DrawSpriteTile(fontTileData + FONT_UPPER_BAR_0, x_origin - cell, y_origin);
+            DrawSpriteTile(fontTileData + FONT_LOWER_BAR_0, x_origin - cell, y_origin + 1);
         }
     }
 

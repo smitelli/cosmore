@@ -87,21 +87,9 @@ typedef void (*ActorTickFunction)(word);
 typedef void (*DrawFunction)(byte *, word, word);
 
 typedef struct {
-    word sprite;
-    word frame;
-    word x;
-    word y;
-    bool forceactive;
-    bool stayactive;
-    bool acrophile;
-    bool weighted;
-    word private1;
-    word private2;
-    word data1;
-    word data2;
-    word data3;
-    word data4;
-    word data5;
+    word sprite, frame, x, y;
+    bool forceactive, stayactive, acrophile, weighted;
+    word private1, private2, data1, data2, data3, data4, data5;
     bool dead;
     word fallspeed;
     byte damagecooldown;
@@ -110,65 +98,40 @@ typedef struct {
 
 typedef struct {
     bool alive;
-    word sprite;
-    word numframes;
-    word x;
-    word y;
-    word dir;
-    word numtimes;
+    word sprite, numframes, x, y, dir, numtimes;
 } Decoration;
 
 typedef struct {
-    word age;
-    word x;
-    word y;
+    word age, x, y;
 } Explosion;
 
 typedef struct {
-    word x;
-    word y;
-    word dir;
-    word stepcount;
-    word height;
-    word stepmax;
-    word delayleft;
+    word x, y, dir, stepcount, height, stepmax, delayleft;
 } Fountain;
 
 typedef struct {
-    word side;
-    word x;
-    word y;
+    word side, x, y;
     word junk;  /* unused; required to keep struct padding correct */
 } Light;
 
 typedef struct {
-    word length;
-    word datahead;
+    word length, datahead;
 } Music;
 
 typedef struct {
-    word x;
-    word y;
+    word x, y;
 
     /* This must begin at word offset 2; see LoadMapData(), MovePlatforms(). */
     word mapstash[5];
 } Platform;
 
 typedef struct {
-    word sprite;
-    word x;
-    word y;
-    word frame;
-    word age;
-    word inclination;
+    word sprite, x, y, frame, age, inclination;
     bool bounced;
 } Shard;
 
 typedef struct {
-    word actor;
-    word x;
-    word y;
-    word age;
+    word actor, x, y, age;
 } Spawner;
 
 extern bbool isInGame;
@@ -211,8 +174,7 @@ typedef char KeyName[6];
 
 typedef struct {
     word junk;  /* in IDLIBC.C/ControlJoystick(), this is movement direction */
-    bool button1;
-    bool button2;
+    bool button1, button2;
 } JoystickState;
 
 extern word yOffsetTable[];
