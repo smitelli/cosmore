@@ -46,7 +46,7 @@ little clearer that something is "directionless" as opposed to north.
 /*
 Eight-way direction system.
 */
-#define DIR8_STATIONARY         0
+#define DIR8_NONE               0  /* Stationary and/or directionless */
 #define DIR8_NORTH              1
 #define DIR8_NORTHEAST          2
 #define DIR8_EAST               3

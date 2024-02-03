@@ -1619,9 +1619,9 @@ static void MoveFountains(void)
 
         if (playerDeadTime == 0 && fnt->y - 1 == playerY) {
             if (fnt->dir != DIR4_NORTH) {
-                MovePlayerPlatform(fnt->x, fnt->x + 2, DIR8_STATIONARY, DIR8_SOUTH);
+                MovePlayerPlatform(fnt->x, fnt->x + 2, DIR8_NONE, DIR8_SOUTH);
             } else {
-                MovePlayerPlatform(fnt->x, fnt->x + 2, DIR8_STATIONARY, DIR8_NORTH);
+                MovePlayerPlatform(fnt->x, fnt->x + 2, DIR8_NONE, DIR8_NORTH);
             }
         }
 
@@ -2824,7 +2824,7 @@ static void ActMysteryWall(word index)
 
     } else {
         if (act->data1 % 2 == 0) {
-            NewDecoration(SPR_SPARKLE_SHORT, 4, act->x - 1, act->y - 1, DIR8_STATIONARY, 1);
+            NewDecoration(SPR_SPARKLE_SHORT, 4, act->x - 1, act->y - 1, DIR8_NONE, 1);
         }
 
         act->data1++;
@@ -4049,11 +4049,11 @@ static void ActTransporter(word index)
     }
 
     if (transporterTimeLeft == 15) {
-        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX - 1, playerY,     DIR8_STATIONARY, 1);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX + 1, playerY,     DIR8_STATIONARY, 1);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX - 1, playerY - 3, DIR8_STATIONARY, 2);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX,     playerY - 2, DIR8_STATIONARY, 3);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX + 1, playerY - 3, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX - 1, playerY,     DIR8_NONE, 1);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX + 1, playerY,     DIR8_NONE, 1);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX - 1, playerY - 3, DIR8_NONE, 2);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX,     playerY - 2, DIR8_NONE, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, playerX + 1, playerY - 3, DIR8_NONE, 3);
 
         StartSound(SND_TRANSPORTER_ON);
     }
@@ -4889,7 +4889,7 @@ static void ActPrize(word index)
     if (act->data5 == 1 && act->sprite != SPR_THRUSTER_JET && act->data4 == 0 && random(64U) == 0) {
         NewDecoration(
             SPR_SPARKLE_LONG, 8,
-            random(act->data1) + act->x, random(act->data2) + act->y, DIR8_STATIONARY, 1
+            random(act->data1) + act->x, random(act->data2) + act->y, DIR8_NONE, 1
         );
     }
 }
@@ -6378,7 +6378,7 @@ static void DrawRandomEffects(void)
     word maptile = GetMapTile(x, y);
 
     if (random(2U) != 0 && TILE_SLIPPERY(maptile)) {
-        NewDecoration(SPR_SPARKLE_SLIPPERY, 5, x, y, DIR8_STATIONARY, 1);
+        NewDecoration(SPR_SPARKLE_SLIPPERY, 5, x, y, DIR8_NONE, 1);
     }
 
     if (hasRain) {
@@ -6589,7 +6589,7 @@ static void DrawExplosions(void)
 #endif  /* EXPLOSION_PALETTE */
 
         if (ex->age == 1) {
-            NewDecoration(SPR_SPARKLE_LONG, 8, ex->x + 2, ex->y - 2, DIR8_STATIONARY, 1);
+            NewDecoration(SPR_SPARKLE_LONG, 8, ex->x + 2, ex->y - 2, DIR8_NONE, 1);
         }
 
         DrawSprite(SPR_EXPLOSION, (ex->age - 1) % 4, ex->x, ex->y, DRAW_MODE_NORMAL);
@@ -6956,7 +6956,7 @@ static bool CanExplode(word sprite_type, word frame, word x_origin, word y_origi
                 NewActor(ACT_SPEECH_WOW_50K, playerX - 1, playerY - 5);
             }
 
-            NewDecoration(SPR_SPARKLE_LONG, 8, x_origin, y_origin, DIR8_STATIONARY, 1);
+            NewDecoration(SPR_SPARKLE_LONG, 8, x_origin, y_origin, DIR8_NONE, 1);
             NewSpawner(ACT_BOMB_IDLE, x_origin, y_origin);
 
             numEyePlants--;
@@ -7339,7 +7339,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     switch (sprite_type) {
     case SPR_STAR:
-        NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_STATIONARY, 1);
+        NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_NONE, 1);
         gameStars++;
         act->dead = true;
         StartSound(SND_BIG_PRIZE);
@@ -7425,7 +7425,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_POWER_UP:
         act->dead = true;
         StartSound(SND_BIG_PRIZE);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         if (!sawHealthHint) {
             sawHealthHint = true;
             ShowHealthHint();
@@ -7448,7 +7448,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         act->dead = true;
         AddScore(200);
         NewActor(ACT_SCORE_EFFECT_200, x, y);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         StartSound(SND_PRIZE);
         return true;
 
@@ -7482,7 +7482,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             AddScore(400);
             NewActor(ACT_SCORE_EFFECT_400, x, y);
         }
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         StartSound(SND_PRIZE);
         return true;
 
@@ -7490,7 +7490,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         act->dead = true;
         AddScore(12800);
         NewActor(SPR_SCORE_EFFECT_12800, x, y);
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         StartSound(SND_PRIZE);
         if (playerHealthCells < 5) playerHealthCells++;
         if (!sawHamburgerBubble) {
@@ -7517,7 +7517,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             AddScore(100);
             NewActor(ACT_SCORE_EFFECT_100, act->x, act->y);
             UpdateBombs();
-            NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+            NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
             StartSound(SND_PRIZE);
             return true;
         }
@@ -7672,7 +7672,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_GRN_EMERALD:
     case SPR_CLR_DIAMOND:
         act->dead = true;
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         AddScore(3200);
         NewActor(ACT_SCORE_EFFECT_3200, x, y);
         StartSound(SND_PRIZE);
@@ -7681,7 +7681,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_BLU_CRYSTAL:
     case SPR_RED_CRYSTAL:
         act->dead = true;
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         AddScore(1600);
         NewActor(ACT_SCORE_EFFECT_1600, x, y);
         StartSound(SND_PRIZE);
@@ -7693,7 +7693,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_BLU_EMERALD:
     case SPR_HEADPHONES:
         act->dead = true;
-        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_STATIONARY, 3);
+        NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         AddScore(800);
         NewActor(ACT_SCORE_EFFECT_800, x, y);
         StartSound(SND_PRIZE);
@@ -7727,7 +7727,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_INVINCIBILITY_CUBE:
         act->dead = true;
         NewActor(ACT_INVINCIBILITY_BUBB, playerX - 1, playerY + 1);
-        NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_STATIONARY, 1);
+        NewDecoration(SPR_SPARKLE_LONG, 8, x, y, DIR8_NONE, 1);
         /* BUG: score effect is spawned, but no score given */
         NewActor(ACT_SCORE_EFFECT_12800, x, y);
         StartSound(SND_BIG_PRIZE);
@@ -8269,7 +8269,7 @@ Cancel any active push the player may be experiencing.
 void ClearPlayerPush(void)
 {
     isPlayerPushed = false;
-    playerPushDir = DIR8_STATIONARY;
+    playerPushDir = DIR8_NONE;
     playerPushMaxTime = 0;
     playerPushTime = 0;
     playerPushSpeed = 0;
