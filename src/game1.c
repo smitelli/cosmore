@@ -6442,10 +6442,9 @@ Animate one frame for each active shard, expiring old ones in the process.
 static void MoveAndDrawShards(void)
 {
     word i;
-    Shard *sh;
 
     for (i = 0; i < numShards; i++) {
-        sh = shards + i;
+        Shard *sh = shards + i;
 
         if (sh->age == 0) continue;
 
