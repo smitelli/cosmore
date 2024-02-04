@@ -6701,7 +6701,7 @@ static void MoveAndDrawSpawners(void)
     }
 }
 
-static int numDecorations = MAX_DECORATIONS;
+static word numDecorations = MAX_DECORATIONS;
 
 /*
 Deactivate every element in the decorations array, freeing them for re-use.
@@ -6710,7 +6710,7 @@ static void InitializeDecorations(void)
 {
     word i;
 
-    for (i = 0; i < (word)numDecorations; i++) {
+    for (i = 0; i < numDecorations; i++) {
         decorations[i].alive = false;
     }
 }
@@ -6724,7 +6724,7 @@ void NewDecoration(
 ) {
     word i;
 
-    for (i = 0; i < (word)numDecorations; i++) {
+    for (i = 0; i < numDecorations; i++) {
         Decoration *dec = decorations + i;
 
         if (dec->alive) continue;
@@ -6748,9 +6748,9 @@ Animate one frame for each active decoration, expiring old ones in the process.
 */
 static void MoveAndDrawDecorations(void)
 {
-    word i;
+    int i;
 
-    for (i = 0; (int)i < numDecorations; i++) {
+    for (i = 0; i < (int)numDecorations; i++) {
         Decoration *dec = decorations + i;
 
         if (!dec->alive) continue;
