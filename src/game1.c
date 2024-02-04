@@ -6410,14 +6410,21 @@ Insert the requested shard into the first free spot in the shards array.
 void NewShard(word sprite_type, word frame, word x_origin, word y_origin)
 {
     /*
+    `xmode` adds some variety to the horizontal movement of each shard:
+      0: moving east
+      1: moving west
+      2: no horizontal movement
+      3: moving east, double speed
+      4: moving west, double speed
+
     INTERESTING: This never gets reset, so shard behavior is different for each
     run through the demo playback.
     */
-    static word inclination = 0;
+    static word xmode = 0;
     word i;
 
-    inclination++;
-    if (inclination == 5) inclination = 0;
+    xmode++;
+    if (xmode == 5) xmode = 0;
 
     for (i = 0; i < numShards; i++) {
         Shard *sh = shards + i;
@@ -6429,7 +6436,7 @@ void NewShard(word sprite_type, word frame, word x_origin, word y_origin)
         sh->y = y_origin;
         sh->frame = frame;
         sh->age = 1;
-        sh->inclination = inclination;
+        sh->xmode = xmode;
         sh->bounced = false;
 
         break;
@@ -6448,19 +6455,19 @@ static void MoveAndDrawShards(void)
 
         if (sh->age == 0) continue;
 
-        if (sh->inclination == 0 || sh->inclination == 3) {
+        if (sh->xmode == 0 || sh->xmode == 3) {
             if (TestSpriteMove(DIR4_EAST, sh->sprite, sh->frame, sh->x + 1, sh->y + 1) == MOVE_FREE) {
                 sh->x++;
 
-                if (sh->inclination == 3) {
+                if (sh->xmode == 3) {
                     sh->x++;
                 }
             }
-        } else if (sh->inclination == 1 || sh->inclination == 4) {
+        } else if (sh->xmode == 1 || sh->xmode == 4) {
             if (TestSpriteMove(DIR4_WEST, sh->sprite, sh->frame, sh->x - 1, sh->y + 1) == MOVE_FREE) {
                 sh->x--;
 
-                if (sh->inclination == 4) {
+                if (sh->xmode == 4) {
                     sh->x--;
                 }
             }

@@ -126,7 +126,7 @@ typedef struct {
 } Platform;
 
 typedef struct {
-    word sprite, x, y, frame, age, inclination;
+    word sprite, x, y, frame, age, xmode;
     bool bounced;
 } Shard;
 
