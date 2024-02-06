@@ -912,7 +912,7 @@ static void DrawMapRegion(void)
 /*
 Is any part of the sprite frame at x,y visible within the screen's scroll area?
 */
-static bool IsSpriteVisible(word sprite_type, word frame, word x, word y)
+static bool IsSpriteVisible(word sprite_type, word frame, word x_origin, word y_origin)
 {
     register word width, height;
     word offset = *(actorInfoData + sprite_type) + (frame * 4);
@@ -920,17 +920,13 @@ static bool IsSpriteVisible(word sprite_type, word frame, word x, word y)
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
-    if ((
-        (scrollX <= x && scrollX + SCROLLW > x) ||
-        (scrollX >= x && x + width > scrollX)
+    return (
+        (scrollX <= x_origin && scrollX + SCROLLW > x_origin) ||
+        (scrollX >= x_origin && x_origin + width > scrollX)
     ) && (
-        (scrollY + SCROLLH > (y - height) + 1 && scrollY + SCROLLH <= y) ||
-        (y >= scrollY && scrollY + SCROLLH > y)
-    )) {
-        return true;
-    }
-
-    return false;
+        (scrollY + SCROLLH > (y_origin - height) + 1 && scrollY + SCROLLH <= y_origin) ||
+        (y_origin >= scrollY && scrollY + SCROLLH > y_origin)
+    );
 }
 
 /*
@@ -9627,6 +9623,7 @@ static bbool ReadDemoFrame(void)
     winLevel =  (bool)(*(miscData + demoDataPos) & 0x40);
 
     demoDataPos++;
+
     if (demoDataPos > demoDataLength) return true;
 
     return false;
