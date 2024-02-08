@@ -317,7 +317,9 @@ Random number generator for world events.
 Unlike rand() or the random() macro, this function returns deterministic results
 for consistent demo recording/playback.
 
-The upper bound for return value is on the order of 4,000.
+The upper bound for return value is *roughly* the perimeter measurement of the
+map (in tiles) plus 236. In practice this is around 1,350. The lower bound is
+maybe 10 or 20.
 */
 static word GameRand(void)
 {
@@ -1108,7 +1110,7 @@ static word TestPlayerMove(word dir, word x, word y)
 /*
 Is the passed sprite frame at x,y touching the player's sprite?
 */
-static bool IsTouchingPlayer(word sprite_type, word frame, word x, word y)
+static bool IsTouchingPlayer(word sprite_type, word frame, word x_origin, word y_origin)
 {
     register word height, width;
     word offset;
@@ -1119,17 +1121,21 @@ static bool IsTouchingPlayer(word sprite_type, word frame, word x, word y)
     height = *(actorInfoData + offset);
     width = *(actorInfoData + offset + 1);
 
-    if (x > mapWidth && x <= WORD_MAX && sprite_type == SPR_EXPLOSION) {
-        width = x + width;
-        x = 0;
+    if (x_origin > mapWidth && x_origin <= WORD_MAX && sprite_type == SPR_EXPLOSION) {
+        /* Handle explosions with negative X; discussed in IsIntersecting() */
+        width = x_origin + width;
+        x_origin = 0;
     }
 
     if ((
-        (playerX <= x && playerX + 3 > x) || (playerX >= x && x + width > playerX)
+        (playerX <= x_origin && playerX + 3 > x_origin) ||
+        (playerX >= x_origin && x_origin + width > playerX)
     ) && (
-        (y - height < playerY && playerY <= y) || (playerY - 4 <= y && y <= playerY)  /* extra <= */
+        (y_origin - height < playerY && playerY <= y_origin) ||
+        (playerY - 4 <= y_origin && y_origin <= playerY)  /* extra <= */
     )) return true;
 
+    /* Need this constant return so the jumps compile like the original did */
     return false;
 }
 
@@ -1156,7 +1162,18 @@ static bool IsIntersecting(
     width2 = *(actorInfoData + offset2 + 1);
 
     if (x1 > mapWidth && x1 <= WORD_MAX) {
-        /* In what universe does this ever happen? */
+        /*
+        This is papering over the case where something spawned an explosion
+        whose origin is off the left edge of the screen. Conceptually this is a
+        negative X, but our math is unsigned and it underflows around to 0xFFFF.
+
+        By adding the sprite's width to the underflowed X, it overflows back to
+        the positive side of zero, becoming the width decreased by abs(X). With
+        a reduced width, X can be zeroed and still produce the right answer.
+
+        I suspect the author had `x1 <= -1` in the test but I don't want to poke
+        the "constant out of range" bear.
+        */
         width1 = x1 + width1;
         x1 = 0;
     }
