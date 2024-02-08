@@ -9114,7 +9114,7 @@ different player death animations.
 Returns true if the level needs to restart due to player death, and false during
 normal gameplay.
 */
-static bbool DrawPlayerHelper(void)
+static bbool ProcessPlayer(void)
 {
     static byte speechframe = 0;
 
@@ -9162,7 +9162,7 @@ static bbool DrawPlayerHelper(void)
         if (playerFallDeadTime > 30) {
             LoadGameState('T');
             InitializeLevel(levelNum);
-            playerFallDeadTime = 0;
+            playerFallDeadTime = 0;  /* InitializeMapGlobals() already did this */
             return true;
         }
 
@@ -9189,7 +9189,7 @@ static bbool DrawPlayerHelper(void)
         }
 
         playerDeadTime++;
-        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAW_MODE_IN_FRONT);
+        DrawPlayer(PLAYER_DEAD_1 + (playerDeadTime % 2), playerX - 1, playerY, DRAW_MODE_IN_FRONT);
 
     } else if (playerDeadTime > 9) {
         if (scrollY > 0 && playerDeadTime < 12) {
@@ -9202,7 +9202,7 @@ static bbool DrawPlayerHelper(void)
 
         playerY--;
         playerDeadTime++;
-        DrawPlayer((playerDeadTime % 2) + PLAYER_DEAD_1, playerX - 1, playerY, DRAW_MODE_IN_FRONT);
+        DrawPlayer(PLAYER_DEAD_1 + (playerDeadTime % 2), playerX - 1, playerY, DRAW_MODE_IN_FRONT);
 
         if (playerDeadTime > 36) {
             LoadGameState('T');
@@ -10036,7 +10036,7 @@ static void GameLoop(byte demo_state)
         MoveFountains();
         DrawMapRegion();
 
-        if (DrawPlayerHelper()) continue;
+        if (ProcessPlayer()) continue;
 
         DrawFountains();
         MoveAndDrawActors();
