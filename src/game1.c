@@ -10072,6 +10072,7 @@ static void GameLoop(byte demo_state)
         {
             char debugBar[41];
             word x, y, southmove;
+            static word spinoff = 0;
             bool ise, isw;
 
             for (x = 0; x < 40; x++) {
@@ -10089,7 +10090,7 @@ static void GameLoop(byte demo_state)
             );
             DrawTextLine(0, 0, debugBar);
             sprintf(debugBar,
-                "Score=%07lu Health=%u:%u Bomb=%u Star=%02lu",
+                "Score=%07lu Health=%d:%u Bomb=%u Star=%02lu",
                 gameScore, playerHealth - 1, playerHealthCells, playerBombs, gameStars
             );
             DrawTextLine(0, 19, debugBar);
@@ -10102,21 +10103,27 @@ static void GameLoop(byte demo_state)
             sprintf(debugBar,
                 "iF=%s FT=%02d QD=%s DL=%u HC=%02u DT=%02u FDT=%02u",
                 BSTR(isPlayerFalling), playerFallTime, BSTR(queuePlayerDizzy),
-                playerDizzyLeft, playerHurtCooldown, playerDeadTime, playerFallDeadTim
+                playerDizzyLeft, playerHurtCooldown, playerDeadTime, playerFallDeadTime
             );
             DrawTextLine(0, 22, debugBar);
             southmove = TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1);
             ise = isPlayerSlidingEast;
             isw = isPlayerSlidingWest;
             sprintf(debugBar,
-                "NSWE=%u%u%u%u iSE=%s iSW=%s cC=%s CD=%u",
+                "NSWE=%u%u%u%u iSE=%s iSW=%s bAbM=%s%s cC=%s CD=%u",
                 TestPlayerMove(DIR4_NORTH, playerX, playerY - 1),
                 southmove,
                 TestPlayerMove(DIR4_WEST, playerX - 1, playerY),
                 TestPlayerMove(DIR4_EAST, playerX + 1, playerY),
-                BSTR(ise), BSTR(isw), BSTR(canPlayerCling), playerClingDir
+                BSTR(ise), BSTR(isw), BSTR(blockActionCmds), BSTR(blockMovementCmds),
+                BSTR(canPlayerCling), playerClingDir
             );
             DrawTextLine(0, 23, debugBar);
+
+            spinoff += 8;
+            if (spinoff >= 4 * 8) spinoff = 0;
+            EGA_MODE_LATCHED_WRITE();
+            DrawSolidTile(TILE_WAIT_SPINNER_1 + spinoff, 39 + (0 * 320));
         }
 #undef BSTR
 #endif  /* DEBUG_BAR */

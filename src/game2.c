@@ -3596,7 +3596,9 @@ void DrawStaticGameScreen(void)
 
     for (y = 19; y < 25; y++) {
         for (x = 1; x < 39; x++) {
+#ifndef DEBUG_BAR
             DRAW_SOLID_TILE_XY(src, x, y);
+#endif  /* DEBUG_BAR */
             src += 8;
         }
     }
