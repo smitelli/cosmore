@@ -1224,7 +1224,7 @@ static void DrawStatusBarScore(dword add_points, word x_origin, word y_origin)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-    (void) x, (void) y;
+    (void) x_origin, (void) y_origin;
 #endif  /* DEBUG_BAR */
 }
 
@@ -1254,7 +1254,7 @@ static void DrawStatusBarStars(word x_origin, word y_origin)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-    (void) x, (void) y;
+    (void) x_origin, (void) y_origin;
 #endif  /* DEBUG_BAR */
 }
 
@@ -1293,7 +1293,7 @@ static void DrawStatusBarBombs(word x_origin, word y_origin)
     EGA_MODE_LATCHED_WRITE();
 
 #else
-    (void) x, (void) y;
+    (void) x_origin, (void) y_origin;
 #endif  /* DEBUG_BAR */
 }
 
@@ -1332,7 +1332,7 @@ static void DrawStatusBarHealth(word x_origin, word y_origin)
     }
 
 #else
-    (void) x, (void) y;
+    (void) x_origin, (void) y_origin;
 #endif  /* DEBUG_BAR */
 }
 
