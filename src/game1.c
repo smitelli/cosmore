@@ -1037,10 +1037,22 @@ static word TestPlayerMove(word dir, word x, word y)
         break;
 
     case DIR4_SOUTH:
-        if (maxScrollY + SCROLLH == playerY) return MOVE_FREE;
-
 #ifdef SAFETY_NET
-        if (isGodMode && maxScrollY + SCROLLH < playerY) return MOVE_BLOCKED;
+        if (isGodMode && maxScrollY + SCROLLH <= y) {
+            if (cmdJump && !cmdJumpLatch) {
+                cmdJumpLatch = true;
+                isPlayerRecoiling = true;
+                isPlayerLongJumping = true;
+                playerFallTime = 1;
+                playerMomentumNorth = 20;
+
+                StartSound(SND_PUSH_PLAYER);
+            }
+
+            return MOVE_BLOCKED;
+        }
+#else
+        if (maxScrollY + SCROLLH == playerY) return MOVE_FREE;
 #endif  /* SAFETY_NET */
 
         mapcell = MAP_CELL_ADDR(x, y);
@@ -10056,11 +10068,12 @@ static void GameLoop(byte demo_state)
         }
 
 #ifdef DEBUG_BAR
+#define BSTR(value) ((value) ? "T" : "F")
         {
             char debugBar[41];
-            word x, y;
+            word x, y, southmove;
+            bool ise, isw;
 
-            /* Dump variable contents into a bar at the edges of the screen. */
             for (x = 0; x < 40; x++) {
                 DrawSpriteTile(fontTileData + FONT_BACKGROUND_GRAY, x, 0);
                 for (y = 19; y < 25; y++) {
@@ -10068,35 +10081,44 @@ static void GameLoop(byte demo_state)
                 }
             }
 
+            /* Dump variable contents into bars at the top/bottom of the screen */
+
             sprintf(debugBar,
-                "E%uL%02u! PX=%03u PY=%03u SX=%03u SY=%03u",
-                EPISODE, levelNum, playerX, playerY, scrollX, scrollY);
+                "E%uL%02u PX=%04u PY=%04u SX=%04u SY=%04u",
+                EPISODE, levelNum, playerX, playerY, scrollX, scrollY
+            );
             DrawTextLine(0, 0, debugBar);
             sprintf(debugBar,
                 "Score=%07lu Health=%u:%u Bomb=%u Star=%02lu",
-                gameScore, playerHealth - 1, playerHealthCells, playerBombs, gameStars);
+                gameScore, playerHealth - 1, playerHealthCells, playerBombs, gameStars
+            );
             DrawTextLine(0, 19, debugBar);
             sprintf(debugBar,
-                "CJ=%d CJL=%d iF=%d FT=%02d iR=%u iLJ=%u MN=%02u",
-                cmdJump, cmdJumpLatch, isPlayerFalling, playerFallTime,
-                isPlayerRecoiling, isPlayerLongJumping, playerMomentumNorth);
-            DrawTextLine(0, 20, debugBar);
-            sprintf(debugBar,
-                "JT=%d QD=%u DL=%u DT=%02u FDT=%02d HC=%02u",
-                playerJumpTime, queuePlayerDizzy, playerDizzyLeft, playerDeadTime,
-                playerFallDeadTime, playerHurtCooldown);
+                "CJ=%s CJL=%s iR=%s iLJ=%s JT=%u MN=%02u PS=%u",
+                BSTR(cmdJump), BSTR(cmdJumpLatch), BSTR(isPlayerRecoiling), BSTR(isPlayerLongJumping),
+                playerJumpTime, playerMomentumNorth, pounceStreak
+            );
             DrawTextLine(0, 21, debugBar);
-            TestPlayerMove(1, playerX, playerY + 1);
             sprintf(debugBar,
-                "NSWE=%u%u%u%u PS=%u iSE=%u iSW=%u cC=%03u CD=%u",
+                "iF=%s FT=%02d QD=%s DL=%u HC=%02u DT=%02u FDT=%02u",
+                BSTR(isPlayerFalling), playerFallTime, BSTR(queuePlayerDizzy),
+                playerDizzyLeft, playerHurtCooldown, playerDeadTime, playerFallDeadTim
+            );
+            DrawTextLine(0, 22, debugBar);
+            southmove = TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1);
+            ise = isPlayerSlidingEast;
+            isw = isPlayerSlidingWest;
+            sprintf(debugBar,
+                "NSWE=%u%u%u%u iSE=%s iSW=%s cC=%s CD=%u",
                 TestPlayerMove(DIR4_NORTH, playerX, playerY - 1),
-                TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1),
+                southmove,
                 TestPlayerMove(DIR4_WEST, playerX - 1, playerY),
                 TestPlayerMove(DIR4_EAST, playerX + 1, playerY),
-                pounceStreak, isPlayerSlidingEast, isPlayerSlidingWest,
-                canPlayerCling, playerClingDir);
-            DrawTextLine(0, 22, debugBar);
+                BSTR(ise), BSTR(isw), BSTR(canPlayerCling), playerClingDir
+            );
+            DrawTextLine(0, 23, debugBar);
         }
+#undef BSTR
 #endif  /* DEBUG_BAR */
 
         SelectDrawPage(activePage);
