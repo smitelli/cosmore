@@ -1039,6 +1039,10 @@ static word TestPlayerMove(word dir, word x, word y)
     case DIR4_SOUTH:
         if (maxScrollY + SCROLLH == playerY) return MOVE_FREE;
 
+#ifdef SAFETY_NET
+        if (isGodMode && maxScrollY + SCROLLH < playerY) return MOVE_BLOCKED;
+#endif  /* SAFETY_NET */
+
         mapcell = MAP_CELL_ADDR(x, y);
 
         if (
