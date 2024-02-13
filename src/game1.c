@@ -938,10 +938,11 @@ NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the sprite wants to move into, and *not* the
 location where it currently is.
 */
-static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word y)
-{
-    register word i;
+static word TestSpriteMove(
+    word dir, word sprite_type, word frame, word x_origin, word y_origin
+) {
     word *mapcell;
+    register word i;
     word width;
     register word height;
     word offset = *(actorInfoData + sprite_type) + (frame * 4);
@@ -951,7 +952,7 @@ static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word 
 
     switch (dir) {
     case DIR4_NORTH:
-        mapcell = MAP_CELL_ADDR(x, y - height + 1);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin - height + 1);
 
         for (i = 0; i < width; i++) {
             if (TILE_BLOCK_NORTH(*(mapcell + i))) return MOVE_BLOCKED;
@@ -960,7 +961,7 @@ static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word 
         break;
 
     case DIR4_SOUTH:
-        mapcell = MAP_CELL_ADDR(x, y);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin);
 
         for (i = 0; i < width; i++) {
             if (TILE_SLOPED(*(mapcell + i))) return MOVE_SLOPED;
@@ -970,9 +971,9 @@ static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word 
         break;
 
     case DIR4_WEST:
-        if (x == 0) return MOVE_BLOCKED;
+        if (x_origin == 0) return MOVE_BLOCKED;
 
-        mapcell = MAP_CELL_ADDR(x, y);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin);
 
         for (i = 0; i < height; i++) {
             if (
@@ -988,9 +989,9 @@ static word TestSpriteMove(word dir, word sprite_type, word frame, word x, word 
         break;
 
     case DIR4_EAST:
-        if (x + width == mapWidth) return MOVE_BLOCKED;
+        if (x_origin + width == mapWidth) return MOVE_BLOCKED;
 
-        mapcell = MAP_CELL_ADDR(x + width - 1, y);
+        mapcell = MAP_CELL_ADDR(x_origin + width - 1, y_origin);
 
         for (i = 0; i < height; i++) {
             if (
@@ -1016,10 +1017,10 @@ NOTE: `dir` does not adjust the x,y values. Therefore, the passed x,y should
 always reflect the location the player wants to move into, and *not* the
 location where they currently are.
 */
-static word TestPlayerMove(word dir, word x, word y)
+static word TestPlayerMove(word dir, word x_origin, word y_origin)
 {
-    word i;
     word *mapcell;
+    word i;
 
     isPlayerSlidingEast = false;
     isPlayerSlidingWest = false;
@@ -1028,7 +1029,7 @@ static word TestPlayerMove(word dir, word x, word y)
     case DIR4_NORTH:
         if (playerY - 3 == 0 || playerY - 2 == 0) return MOVE_BLOCKED;
 
-        mapcell = MAP_CELL_ADDR(x, y - 4);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin - 4);
 
         for (i = 0; i < 3; i++) {
             if (TILE_BLOCK_NORTH(*(mapcell + i))) return MOVE_BLOCKED;
@@ -1038,7 +1039,7 @@ static word TestPlayerMove(word dir, word x, word y)
 
     case DIR4_SOUTH:
 #ifdef SAFETY_NET
-        if (isGodMode && maxScrollY + SCROLLH <= y) {
+        if (isGodMode && maxScrollY + SCROLLH <= y_origin) {
             if (cmdJump && !cmdJumpLatch) {
                 cmdJumpLatch = true;
                 isPlayerRecoiling = true;
@@ -1055,7 +1056,7 @@ static word TestPlayerMove(word dir, word x, word y)
         if (maxScrollY + SCROLLH == playerY) return MOVE_FREE;
 #endif  /* SAFETY_NET */
 
-        mapcell = MAP_CELL_ADDR(x, y);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin);
 
         if (
             !TILE_BLOCK_SOUTH(*mapcell) &&
@@ -1084,7 +1085,7 @@ static word TestPlayerMove(word dir, word x, word y)
         break;
 
     case DIR4_WEST:
-        mapcell = MAP_CELL_ADDR(x, y);
+        mapcell = MAP_CELL_ADDR(x_origin, y_origin);
         canPlayerCling = TILE_CAN_CLING(*(mapcell - (mapWidth * 2)));
 
         for (i = 0; i < 5; i++) {
@@ -1102,7 +1103,7 @@ static word TestPlayerMove(word dir, word x, word y)
         break;
 
     case DIR4_EAST:
-        mapcell = MAP_CELL_ADDR(x + 2, y);
+        mapcell = MAP_CELL_ADDR(x_origin + 2, y_origin);
         canPlayerCling = TILE_CAN_CLING(*(mapcell - (mapWidth * 2)));
 
         for (i = 0; i < 5; i++) {
@@ -1757,9 +1758,9 @@ static void DrawLights(void)
 Create the specified actor at the current nextActorIndex.
 */
 static void ConstructActor(
-    word sprite_type, word x, word y, bool force_active, bool stay_active,
-    bool weighted, bool acrophile, ActorTickFunction tick_func, word data1,
-    word data2, word data3, word data4, word data5
+    word sprite_type, word x_origin, word y_origin, bool force_active,
+    bool stay_active, bool weighted, bool acrophile, ActorTickFunction tick_func,
+    word data1, word data2, word data3, word data4, word data5
 ) {
     Actor *act;
 
@@ -1771,8 +1772,8 @@ static void ConstructActor(
 
     act->sprite = sprite_type;
     act->frame = 0;
-    act->x = x;
-    act->y = y;
+    act->x = x_origin;
+    act->y = y_origin;
     act->forceactive = force_active;
     act->stayactive = stay_active;
     act->weighted = weighted;
@@ -6365,7 +6366,7 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
 /*
 Add a new actor of the specified type at x,y. This function finds a free slot.
 */
-void NewActor(word actor_type, word x, word y)
+void NewActor(word actor_type, word x_origin, word y_origin)
 {
     Actor *act;
     word i;
@@ -6374,7 +6375,7 @@ void NewActor(word actor_type, word x, word y)
         act = actors + i;
 
         if (act->dead) {
-            NewActorAtIndex(i, actor_type, x, y);
+            NewActorAtIndex(i, actor_type, x_origin, y_origin);
 
             if (actor_type == ACT_PARACHUTE_BALL) {
                 act->forceactive = true;
@@ -6387,7 +6388,7 @@ void NewActor(word actor_type, word x, word y)
     if (numActors < MAX_ACTORS - 2) {
         act = actors + numActors;
 
-        NewActorAtIndex(numActors, actor_type, x, y);
+        NewActorAtIndex(numActors, actor_type, x_origin, y_origin);
 
         if (actor_type == ACT_PARACHUTE_BALL) {
             act->forceactive = true;
