@@ -48,7 +48,7 @@ static word playerX, playerY, scrollX, scrollY;
 static word playerFaceDir, playerBombDir;
 static word playerBaseFrame = PLAYER_BASE_WEST;
 static word playerFrame = PLAYER_WALK_1;
-static word playerPushFrame;
+static word playerPushForceFrame;
 static byte playerClingDir;
 static bool canPlayerCling, isPlayerNearHintGlobe, isPlayerNearTransporter;
 
@@ -144,8 +144,8 @@ static bbool isPlayerFalling;
 static int playerFallTime;
 #define playerJumpTime soundPriority[0]  /* HACK: `static byte playerJumpTime` would be sane */
 static word playerPushDir, playerPushMaxTime, playerPushTime, playerPushSpeed;
-static bbool canCancelPlayerPush;
-static bool isPlayerPushed, stopPlayerPushAtWall;
+static bbool isPlayerPushAbortable;
+static bool isPlayerPushed, isPlayerPushBlockable;
 static bool queuePlayerDizzy;
 static word playerDizzyLeft;
 
@@ -1363,7 +1363,7 @@ void DrawPlayer(byte frame, word x_origin, word y_origin, word mode)
     }
 
     if (mode != DRAW_MODE_ABSOLUTE && (
-        playerPushFrame == PLAYER_HIDDEN ||
+        playerPushForceFrame == PLAYER_HIDDEN ||
         activeTransporter != 0 ||
         playerHurtCooldown % 2 != 0 ||
         blockActionCmds
@@ -8309,10 +8309,13 @@ void ClearPlayerPush(void)
     playerPushMaxTime = 0;
     playerPushTime = 0;
     playerPushSpeed = 0;
-    playerPushFrame = PLAYER_WALK_1;
+    playerPushForceFrame = PLAYER_WALK_1;
+
     isPlayerRecoiling = false;
     playerMomentumNorth = 0;
-    canCancelPlayerPush = false;
+
+    isPlayerPushAbortable = false;
+
     isPlayerFalling = true;
     playerFallTime = 0;
 }
@@ -8324,18 +8327,21 @@ pass through walls. The ability to "jump out" of a push is available, but this
 is never used in the game.
 */
 void SetPlayerPush(
-    word dir, word max_count, word speed, word force_frame, bool can_cancel,
-    bool stop_at_wall
+    word dir, word max_time, word speed, word force_frame, bool abortable,
+    bool blockable
 ) {
     playerPushDir = dir;
-    playerPushMaxTime = max_count;
+    playerPushMaxTime = max_time;
     playerPushTime = 0;
     playerPushSpeed = speed;
-    playerPushFrame = force_frame;
-    canCancelPlayerPush = can_cancel;
+    playerPushForceFrame = force_frame;
+    isPlayerPushAbortable = abortable;
     isPlayerPushed = true;
+
     scooterMounted = 0;
-    stopPlayerPushAtWall = stop_at_wall;
+
+    isPlayerPushBlockable = blockable;
+
     isPlayerRecoiling = false;
     playerMomentumNorth = 0;
 
@@ -8349,19 +8355,19 @@ wall (if enabled), or if the push expires.
 static void MovePlayerPush(void)
 {
     word i;
-    bool wallhit = false;
+    bool blocked = false;
 
     if (!isPlayerPushed) return;
 
-    if (cmdJump && canCancelPlayerPush) {
+    if (cmdJump && isPlayerPushAbortable) {
         isPlayerPushed = false;
         return;
     }
 
     for (i = 0; i < playerPushSpeed; i++) {
         if (
-            dir8X[playerPushDir] + playerX > 0 &&
-            dir8X[playerPushDir] + playerX + 2 < mapWidth
+            playerX + dir8X[playerPushDir] > 0 &&
+            playerX + dir8X[playerPushDir] + 2 < mapWidth
         ) {
             playerX += dir8X[playerPushDir];
         }
@@ -8369,28 +8375,28 @@ static void MovePlayerPush(void)
         playerY += dir8Y[playerPushDir];
 
         if (
-            dir8X[playerPushDir] + scrollX > 0 &&
-            dir8X[playerPushDir] + scrollX < mapWidth - (SCROLLW - 1)
+            scrollX + dir8X[playerPushDir] > 0 &&
+            scrollX + dir8X[playerPushDir] < mapWidth - (SCROLLW - 1)
         ) {
             scrollX += dir8X[playerPushDir];
         }
 
-        if (dir8Y[playerPushDir] + scrollY > 2) {
+        if (scrollY + dir8Y[playerPushDir] > 2) {
             scrollY += dir8Y[playerPushDir];
         }
 
-        if (stopPlayerPushAtWall && (
+        if (isPlayerPushBlockable && (
             TestPlayerMove(DIR4_WEST,  playerX, playerY) != MOVE_FREE ||
             TestPlayerMove(DIR4_EAST,  playerX, playerY) != MOVE_FREE ||
             TestPlayerMove(DIR4_NORTH, playerX, playerY) != MOVE_FREE ||
             TestPlayerMove(DIR4_SOUTH, playerX, playerY) != MOVE_FREE
         )) {
-            wallhit = true;
+            blocked = true;
             break;
         }
     }
 
-    if (wallhit) {
+    if (blocked) {
         /* Rather than precompute, move into the wall then back up one step. */
         playerX -= dir8X[playerPushDir];
         playerY -= dir8Y[playerPushDir];
@@ -9196,7 +9202,7 @@ static bbool ProcessPlayer(void)
             if (!isPlayerPushed) {
                 DrawPlayer(playerBaseFrame + playerFrame, playerX, playerY, DRAW_MODE_NORMAL);
             } else {
-                DrawPlayer(playerPushFrame, playerX, playerY, DRAW_MODE_NORMAL);
+                DrawPlayer(playerPushForceFrame, playerX, playerY, DRAW_MODE_NORMAL);
             }
         }
 
