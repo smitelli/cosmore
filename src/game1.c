@@ -8309,7 +8309,7 @@ void ClearPlayerPush(void)
     playerPushMaxTime = 0;
     playerPushTime = 0;
     playerPushSpeed = 0;
-    playerPushForceFrame = PLAYER_WALK_1;
+    playerPushForceFrame = 0;
 
     isPlayerRecoiling = false;
     playerMomentumNorth = 0;
