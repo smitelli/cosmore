@@ -98,7 +98,7 @@ typedef struct {
     word private1, private2, data1, data2, data3, data4, data5;
     bool dead;
     word fallspeed;
-    byte damagecooldown;
+    byte hurtcooldown;
     ActorTickFunction tickfunc;
 } Actor;
 

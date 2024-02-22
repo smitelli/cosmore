@@ -1788,7 +1788,7 @@ static void ConstructActor(
     act->data3 = data3;
     act->data4 = data4;
     act->data5 = data5;
-    act->damagecooldown = 0;
+    act->hurtcooldown = 0;
 }
 
 /*
@@ -4565,7 +4565,7 @@ static void ActSentryRobot(word index)
 {
     Actor *act = actors + index;
 
-    if (act->damagecooldown != 0) return;
+    if (act->hurtcooldown != 0) return;
 
     act->data3 = !act->data3;
     if (act->data3 != 0) return;
@@ -6368,21 +6368,21 @@ Add a new actor of the specified type at x,y. This function finds a free slot.
 */
 void NewActor(word actor_type, word x_origin, word y_origin)
 {
-    Actor *act;
     word i;
+    Actor *act;
 
     for (i = 0; i < numActors; i++) {
         act = actors + i;
 
-        if (act->dead) {
-            NewActorAtIndex(i, actor_type, x_origin, y_origin);
+        if (!act->dead) continue;
 
-            if (actor_type == ACT_PARACHUTE_BALL) {
-                act->forceactive = true;
-            }
+        NewActorAtIndex(i, actor_type, x_origin, y_origin);
 
-            return;
+        if (actor_type == ACT_PARACHUTE_BALL) {
+            act->forceactive = true;
         }
+
+        return;
     }
 
     if (numActors < MAX_ACTORS - 2) {
@@ -7051,7 +7051,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     register word height;
     register word offset;
 
-#define DO_POUNCE(recoil) (act->damagecooldown == 0 && PounceHelper(recoil))
+#define DO_POUNCE(recoil) (act->hurtcooldown == 0 && PounceHelper(recoil))
 
     if (!IsSpriteVisible(sprite_type, frame, x, y)) return true;
 
@@ -7099,7 +7099,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_CABBAGE:
         if (DO_POUNCE(7)) {
-            act->damagecooldown = 5;
+            act->hurtcooldown = 5;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAW_MODE_WHITE;
             act->data1--;
@@ -7109,7 +7109,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 NewPounceDecoration(act->x, act->y);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7127,7 +7127,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_GHOST:
     case SPR_MOON:
         if (DO_POUNCE(7)) {
-            act->damagecooldown = 3;
+            act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             act->data5--;
             nextDrawMode = DRAW_MODE_WHITE;
@@ -7140,7 +7140,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 AddScoreForSprite(SPR_GHOST);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7175,7 +7175,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         if (DO_POUNCE(7)) {
             StartSound(SND_PLAYER_POUNCE);
             act->data3 = 0;
-            act->damagecooldown = 3;
+            act->hurtcooldown = 3;
             act->data5--;
             if (act->data1 != 0 || act->fallspeed != 0) {
                 act->data5 = 0;
@@ -7202,7 +7202,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             return false;
         }
         /* Can't maintain parity with the original using an `else if` here. */
-        if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7210,7 +7210,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_RED_JUMPER:
         if (DO_POUNCE(15)) {
             StartSound(SND_PLAYER_POUNCE);
-            act->damagecooldown = 6;
+            act->hurtcooldown = 6;
             act->data5--;
             if (act->data5 == 0) {
                 NewActor(ACT_STAR_FLOAT, act->x, act->y);
@@ -7219,7 +7219,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 return true;
             }
             nextDrawMode = DRAW_MODE_WHITE;
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7228,7 +7228,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_RED_CHOMPER:
     case SPR_PUSHER_ROBOT:
         if (DO_POUNCE(7)) {
-            act->damagecooldown = 3;
+            act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAW_MODE_WHITE;
             if (sprite_type != SPR_RED_CHOMPER) {
@@ -7240,7 +7240,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 NewPounceDecoration(act->x, act->y);
                 return true;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7261,14 +7261,14 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             ((!areLightsActive && hasLightSwitch) || (areLightsActive && !hasLightSwitch)) &&
             DO_POUNCE(15)
         ) {
-            act->damagecooldown = 3;
+            act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             if (act->data1 != DIR2_WEST) {
                 act->frame = 7;
             } else {
                 act->frame = 8;
             }
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7278,8 +7278,8 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         if (DO_POUNCE(7)) {
             pounceStreak = 0;
             StartSound(SND_PLAYER_POUNCE);
-            act->damagecooldown = 5;
-        } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+            act->hurtcooldown = 5;
+        } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
             HurtPlayer();
         }
         return false;
@@ -7344,7 +7344,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 StartSound(SND_PLAYER_POUNCE);
                 act->data5++;
                 act->private1 = 10;
-                act->damagecooldown = 7;
+                act->hurtcooldown = 7;
                 if (act->data1 != 2) {
                     act->data1 = 2;
                     act->data2 = 31;
@@ -7359,7 +7359,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 }
                 NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
                 NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
-            } else if (act->damagecooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
+            } else if (act->hurtcooldown == 0 && IsTouchingPlayer(sprite_type, frame, x, y)) {
                 HurtPlayer();
             }
         }
@@ -7578,9 +7578,9 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_ROAMER_SLUG:
         {  /* for scope */
             word i = GameRand() % 4;
-            if (act->damagecooldown == 0) {
+            if (act->hurtcooldown == 0) {
                 word gifts[] = {ACT_RED_GOURD, ACT_RED_TOMATO, ACT_CLR_DIAMOND, ACT_GRN_EMERALD};
-                act->damagecooldown = 10;
+                act->hurtcooldown = 10;
                 if (PounceHelper(7)) {
                     StartSound(SND_PLAYER_POUNCE);
                 } else {
@@ -7785,10 +7785,10 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_JUMP_PAD:  /* ceiling-mounted only */
         if (
-            act->data5 != 0 && act->damagecooldown == 0 && scooterMounted == 0 &&
+            act->data5 != 0 && act->hurtcooldown == 0 && scooterMounted == 0 &&
             (!isPlayerFalling || isPlayerRecoiling)
         ) {
-            act->damagecooldown = 2;
+            act->hurtcooldown = 2;
             StartSound(SND_PLAYER_POUNCE);
             act->data1 = 3;
             playerMomentumNorth = 0;
@@ -7841,7 +7841,7 @@ static void ProcessActor(word index)
 
     nextDrawMode = DRAW_MODE_NORMAL;
 
-    if (act->damagecooldown != 0) act->damagecooldown--;
+    if (act->hurtcooldown != 0) act->hurtcooldown--;
 
     if (IsSpriteVisible(act->sprite, act->frame, act->x, act->y)) {
         if (act->stayactive) {
@@ -10165,33 +10165,34 @@ regular actor type 0.
 
 The caller must provide the index for regular actors, which is convoluted.
 */
-static void NewMapActorAtIndex(word index, word map_actor, int x, int y)
-{
-    if (map_actor < 32) {
-        switch (map_actor) {
+static void NewMapActorAtIndex(
+    word index, word map_actor_type, word x_origin, word y_origin
+) {
+    if (map_actor_type < 32) {
+        switch (map_actor_type) {
         case SPA_PLAYER_START:
-            if ((word)x > mapWidth - 15) {
+            if (x_origin > mapWidth - 15) {
                 scrollX = mapWidth - SCROLLW;
-            } else if (x - 15 >= 0 && mapYPower > 5) {
-                scrollX = x - 15;
+            } else if ((int)x_origin - 15 >= 0 && mapYPower > 5) {
+                scrollX = x_origin - 15;
             } else {
                 scrollX = 0;
             }
 
-            if (y - 10 >= 0) {
-                scrollY = y - 10;
+            if ((int)y_origin - 10 >= 0) {
+                scrollY = y_origin - 10;
             } else {
                 scrollY = 0;
             }
 
-            playerX = x;
-            playerY = y;
+            playerX = x_origin;
+            playerY = y_origin;
 
             break;
 
         case SPA_PLATFORM:
-            platforms[numPlatforms].x = x;
-            platforms[numPlatforms].y = y;
+            platforms[numPlatforms].x = x_origin;
+            platforms[numPlatforms].y = y_origin;
             numPlatforms++;
 
             break;
@@ -10200,12 +10201,12 @@ static void NewMapActorAtIndex(word index, word map_actor, int x, int y)
         case SPA_FOUNTAIN_MEDIUM:
         case SPA_FOUNTAIN_LARGE:
         case SPA_FOUNTAIN_HUGE:
-            fountains[numFountains].x = x - 1;
-            fountains[numFountains].y = y - 1;
+            fountains[numFountains].x = x_origin - 1;
+            fountains[numFountains].y = y_origin - 1;
             fountains[numFountains].dir = DIR4_NORTH;
             fountains[numFountains].stepcount = 0;
             fountains[numFountains].height = 0;
-            fountains[numFountains].stepmax = map_actor * 3;
+            fountains[numFountains].stepmax = map_actor_type * 3;
             fountains[numFountains].delayleft = 0;
             numFountains++;
 
@@ -10214,19 +10215,21 @@ static void NewMapActorAtIndex(word index, word map_actor, int x, int y)
         case SPA_LIGHT_WEST:
         case SPA_LIGHT_MIDDLE:
         case SPA_LIGHT_EAST:
-            if (numLights != MAX_LIGHTS - 1) {
-                /* Normalize SPA_LIGHT_* into LIGHT_SIDE_* */
-                lights[numLights].side = map_actor - SPA_LIGHT_WEST;
-                lights[numLights].x = x;
-                lights[numLights].y = y;
-                numLights++;
-            }
+            if (numLights == MAX_LIGHTS - 1) break;
+
+            /* Normalize SPA_LIGHT_* into LIGHT_SIDE_* */
+            lights[numLights].side = map_actor_type - SPA_LIGHT_WEST;
+            lights[numLights].x = x_origin;
+            lights[numLights].y = y_origin;
+            numLights++;
 
             break;
         }
     }
 
-    if (map_actor >= 31 && NewActorAtIndex(index, map_actor - 31, x, y)) {
+    if (map_actor_type < 31) return;
+
+    if (NewActorAtIndex(index, map_actor_type - 31, x_origin, y_origin)) {
         numActors++;
     }
 }
@@ -10240,7 +10243,7 @@ static void LoadMapData(word level_num)
 {
     word i;
     word actorwords;
-    word t;  /* holds an actor's *T*ype OR a *T*ile's horizontal position */
+    word t;  /* holds a map actor's *T*ype OR a *T*ile's horizontal position */
     FILE *fp = GroupEntryFp(mapNames[level_num]);
 
     isCartoonDataLoaded = false;
