@@ -1782,7 +1782,7 @@ static void ConstructActor(
     act->tickfunc = tick_func;
     act->private1 = 0;
     act->private2 = 0;
-    act->fallspeed = 0;
+    act->falltime = 0;
     act->data1 = data1;
     act->data2 = data2;
     act->data3 = data3;
@@ -3187,13 +3187,13 @@ static void ActParachuteBall(word index)
 {
     Actor *act = actors + index;
 
-    if (act->fallspeed != 0) {
+    if (act->falltime != 0) {
         act->data1 = 0;
         act->data2 = 20;
 
-        if (act->fallspeed < 2) {
+        if (act->falltime < 2) {
             act->frame = 1;  /* no purpose */
-        } else if (act->fallspeed >= 2 && act->fallspeed <= 4) {
+        } else if (act->falltime >= 2 && act->falltime <= 4) {
             DrawSprite(SPR_PARACHUTE_BALL, 8, act->x, act->y - 2, DRAW_MODE_NORMAL);
         } else {
             act->y--;
@@ -3630,7 +3630,7 @@ static void ActBoss(word index)
         }
 
         act->weighted = false;
-        act->fallspeed = 0;
+        act->falltime = 0;
 
         if (
             act->private2 == 1 ||
@@ -3781,7 +3781,7 @@ static void ActBoss(word index)
             if (TestSpriteMove(DIR4_SOUTH, SPR_BOSS, 0, act->x, act->y + 1) != MOVE_FREE) {
                 act->data3 = 0;
                 act->weighted = false;
-                act->fallspeed = 0;
+                act->falltime = 0;
                 StartSound(SND_SMASH);
                 NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
                 NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
@@ -3806,7 +3806,7 @@ static void ActBoss(word index)
             act->data2 = 0;
             act->data3 = 0;
             act->weighted = false;
-            act->fallspeed = 0;
+            act->falltime = 0;
             StartSound(SND_OBJECT_HIT);
             NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
             NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
@@ -3817,7 +3817,7 @@ static void ActBoss(word index)
 
     } else if (act->data1 == 4) {
         act->weighted = false;
-        act->fallspeed = 0;
+        act->falltime = 0;
         act->y--;
 
         act->data2++;
@@ -7177,7 +7177,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             act->data3 = 0;
             act->hurtcooldown = 3;
             act->data5--;
-            if (act->data1 != 0 || act->fallspeed != 0) {
+            if (act->data1 != 0 || act->falltime != 0) {
                 act->data5 = 0;
             }
             if (act->data5 == 0) {
@@ -7186,7 +7186,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 if (act->data1 > 0) {
                     AddScore(3200);
                     NewActor(ACT_SCORE_EFFECT_3200, act->x, act->y);
-                } else if (act->fallspeed != 0) {
+                } else if (act->falltime != 0) {
                     AddScore(12800);
                     NewActor(ACT_SCORE_EFFECT_12800, act->x, act->y);
                 } else {
@@ -7351,7 +7351,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                     act->data3 = 0;
                     act->data4 = 1;
                     act->weighted = false;
-                    act->fallspeed = 0;
+                    act->falltime = 0;
                 }
                 if (act->data5 == 4) {
                     NewShard(SPR_BOSS, 1, act->x, act->y - 4);
@@ -7856,25 +7856,25 @@ static void ProcessActor(word index)
     if (act->weighted) {
         if (TestSpriteMove(DIR4_SOUTH, act->sprite, 0, act->x, act->y) != MOVE_FREE) {
             act->y--;
-            act->fallspeed = 0;
+            act->falltime = 0;
         }
 
         if (TestSpriteMove(DIR4_SOUTH, act->sprite, 0, act->x, act->y + 1) == MOVE_FREE) {
-            if (act->fallspeed < 5) act->fallspeed++;
+            if (act->falltime < 5) act->falltime++;
 
-            if (act->fallspeed > 1 && act->fallspeed < 6) {
+            if (act->falltime > 1 && act->falltime < 6) {
                 act->y++;
             }
 
-            if (act->fallspeed == 5) {
+            if (act->falltime == 5) {
                 if (TestSpriteMove(DIR4_SOUTH, act->sprite, 0, act->x, act->y + 1) != MOVE_FREE) {
-                    act->fallspeed = 0;
+                    act->falltime = 0;
                 } else {
                     act->y++;
                 }
             }
         } else {
-            act->fallspeed = 0;
+            act->falltime = 0;
         }
     }
 
@@ -7889,10 +7889,12 @@ static void ProcessActor(word index)
         CanExplode(act->sprite, act->frame, act->x, act->y)
     ) {
         act->dead = true;
-    } else if (
-        !TouchPlayer(index, act->sprite, act->frame, act->x, act->y) &&
-        nextDrawMode != DRAW_MODE_HIDDEN
-    ) {
+        return;
+    }
+
+    if (TouchPlayer(index, act->sprite, act->frame, act->x, act->y)) return;
+
+    if (nextDrawMode != DRAW_MODE_HIDDEN) {
         DrawSprite(act->sprite, act->frame, act->x, act->y, nextDrawMode);
     }
 }

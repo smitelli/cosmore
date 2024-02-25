@@ -97,7 +97,7 @@ typedef struct {
     bool forceactive, stayactive, acrophile, weighted;
     word private1, private2, data1, data2, data3, data4, data5;
     bool dead;
-    word fallspeed;
+    word falltime;
     byte hurtcooldown;
     ActorTickFunction tickfunc;
 } Actor;
