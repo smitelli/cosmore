@@ -1801,6 +1801,12 @@ revert the move if not.
 
 Sets private1 to 0 if westward movement was blocked, and 1 if the move was valid
 as-is. private2 is changed the same way for eastward movement.
+
+NOTE: Because this uses slightly different criteria than ProcessActor() when
+determining if actors are standing on the ground at a given position, it's
+possible for an actor to be permitted to walk somewhere by this code, only to be
+detected as falling by ProcessActor() later. See the comment about pink worms in
+the aforementioned function.
 */
 static void AdjustActorMove(word index, word dir)
 {
@@ -4412,10 +4418,6 @@ static void ActPinkWorm(word index)
             act->frame = 3;
         }
 
-    /*
-    Something below makes the worms willing to fall off west ledges but not east
-    ledges.
-    */
     } else if (act->data1 == DIR2_WEST) {
         act->frame = !act->frame;
         if (act->frame != 0) {
@@ -7854,6 +7856,12 @@ static void ProcessActor(word index)
     }
 
     if (act->weighted) {
+        /*
+        BUG: Each TestSpriteMove() call uses zero for the frame number, not the
+        actual frame in view. For walking actors with variable-width sprite
+        frames (specifically the pink worms) this makes them choose to walk off
+        ledges in the west direction but not do so in the opposite direction.
+        */
         if (TestSpriteMove(DIR4_SOUTH, act->sprite, 0, act->x, act->y) != MOVE_FREE) {
             act->y--;
             act->falltime = 0;
@@ -10161,9 +10169,9 @@ static void GameLoop(byte demo_state)
 
 /*
 Insert either a regular actor or a special actor into the world. The map format
-uses types 0..31 for special actor types, and types 32+ become regular actor
-types 1+. Due to an overlap in branch coverage, there is no way to refer to
-regular actor type 0.
+reserves types 0..31 for special actors, and map types 31+ become regular actors
+starting from type 0. (Map actor type 31 has overlapping branch coverage, but as
+a special actor it is a no-op due to no matching switch case.)
 
 The caller must provide the index for regular actors, which is convoluted.
 */

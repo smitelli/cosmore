@@ -41,7 +41,7 @@ Special constant used in the propagation of worm crate explosions.
 Special ("SP") actor ("A") types. In map files, these are represented by types
 0..31.
 */
-#define SPA_PLAYER_START        0  /* map type 0 */
+#define SPA_PLAYER_START        0  /* map actor type 0 */
 #define SPA_PLATFORM            1
 #define SPA_FOUNTAIN_SMALL      2
 #define SPA_FOUNTAIN_MEDIUM     3
@@ -52,10 +52,10 @@ Special ("SP") actor ("A") types. In map files, these are represented by types
 #define SPA_LIGHT_EAST          8
 
 /*
-Actor types. In map files, these are represented by types 32..296.
+Actor types. In map files, these are represented by types 31..296.
 */
-#define ACT_BASKET_NULL         0  /* not expressible in map format */
-#define ACT_STAR_FLOAT          1  /* map type 32 */
+#define ACT_BASKET_NULL         0  /* map actor type 31 */
+#define ACT_STAR_FLOAT          1
 #define ACT_JUMP_PAD_FLOOR      2
 #define ACT_ARROW_PISTON_W      3
 #define ACT_ARROW_PISTON_E      4
