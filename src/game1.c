@@ -943,8 +943,8 @@ static word TestSpriteMove(
 ) {
     word *mapcell;
     register word i;
-    word width;
     register word height;
+    word width;
     word offset = *(actorInfoData + sprite_type) + (frame * 4);
 
     height = *(actorInfoData + offset);
@@ -952,7 +952,7 @@ static word TestSpriteMove(
 
     switch (dir) {
     case DIR4_NORTH:
-        mapcell = MAP_CELL_ADDR(x_origin, y_origin - height + 1);
+        mapcell = MAP_CELL_ADDR(x_origin, (y_origin - height) + 1);
 
         for (i = 0; i < width; i++) {
             if (TILE_BLOCK_NORTH(*(mapcell + i))) return MOVE_BLOCKED;
@@ -965,6 +965,7 @@ static word TestSpriteMove(
 
         for (i = 0; i < width; i++) {
             if (TILE_SLOPED(*(mapcell + i))) return MOVE_SLOPED;
+
             if (TILE_BLOCK_SOUTH(*(mapcell + i))) return MOVE_BLOCKED;
         }
 
@@ -983,6 +984,7 @@ static word TestSpriteMove(
             ) return MOVE_SLOPED;
 
             if (TILE_BLOCK_WEST(*mapcell)) return MOVE_BLOCKED;
+
             mapcell -= mapWidth;
         }
 
@@ -1001,6 +1003,7 @@ static word TestSpriteMove(
             ) return MOVE_SLOPED;
 
             if (TILE_BLOCK_EAST(*mapcell)) return MOVE_BLOCKED;
+
             mapcell -= mapWidth;
         }
 
@@ -7049,8 +7052,8 @@ reading it from the actor itself. Both methods are used interchangeably.
 static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y)
 {
     Actor *act = actors + index;
-    word width;
     register word height;
+    word width;
     register word offset;
 
 #define DO_POUNCE(recoil) (act->hurtcooldown == 0 && PounceHelper(recoil))
