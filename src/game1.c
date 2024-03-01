@@ -1783,8 +1783,8 @@ static void ConstructActor(
     act->acrophile = acrophile;
     act->dead = false;
     act->tickfunc = tick_func;
-    act->private1 = 0;
-    act->private2 = 0;
+    act->westfree = 0;
+    act->eastfree = 0;
     act->falltime = 0;
     act->data1 = data1;
     act->data2 = data2;
@@ -1802,8 +1802,8 @@ actor should have already been (blindly) moved into the desired location, then
 this function will check to see if the actor is in a good place and adjust or
 revert the move if not.
 
-Sets private1 to 0 if westward movement was blocked, and 1 if the move was valid
-as-is. private2 is changed the same way for eastward movement.
+Sets westfree to 0 if westward movement was blocked, and 1 if the move was valid
+as-is. eastfree is changed the same way for eastward movement.
 
 NOTE: Because this uses slightly different criteria than ProcessActor() when
 determining if actors are standing on the ground at a given position, it's
@@ -1823,27 +1823,27 @@ static void AdjustActorMove(word index, word dir)
 
     if (dir == DIR4_WEST) {
         result = TestSpriteMove(DIR4_WEST, act->sprite, act->frame, act->x, act->y);
-        act->private1 = !result;
+        act->westfree = !result;
 
-        if (act->private1 == 0 && result != MOVE_SLOPED) {
+        if (act->westfree == 0 && result != MOVE_SLOPED) {
             act->x++;
         } else if (result == MOVE_SLOPED) {
-            act->private1 = 1;
+            act->westfree = 1;
             act->y--;
             return;  /* shouldn't need this; only here for jump target parity */
         } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
-            act->private1 = 1;
+            act->westfree = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x + width, act->y + 1)) &&
             TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 2))
         ) {
             if (!TILE_BLOCK_SOUTH(GetMapTile(act->x + width - 1, act->y + 1))) {
-                act->private1 = 1;
+                act->westfree = 1;
                 if (!TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 1))) {
                     act->y++;
                 }
             }
-        } else if (act->private1 == 0) {
+        } else if (act->westfree == 0) {
             act->x++;
         } else if (
             !act->acrophile &&
@@ -1851,31 +1851,31 @@ static void AdjustActorMove(word index, word dir)
             !TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 1))
         ) {
             act->x++;
-            act->private1 = 0;
+            act->westfree = 0;
         }
     } else {  /* DIR4_EAST */
         result = TestSpriteMove(DIR4_EAST, act->sprite, act->frame, act->x, act->y);
-        act->private2 = !result;
+        act->eastfree = !result;
 
-        if (act->private2 == 0 && result != MOVE_SLOPED) {
+        if (act->eastfree == 0 && result != MOVE_SLOPED) {
             act->x--;
         } else if (result == MOVE_SLOPED) {
-            act->private2 = 1;
+            act->eastfree = 1;
             act->y--;
             return;  /* shouldn't need this; only here for jump target parity */
         } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
-            act->private2 = 1;
+            act->eastfree = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x - 1, act->y + 1)) &&
             TILE_SLOPED(GetMapTile(act->x, act->y + 2))
         ) {
             if (!TILE_BLOCK_SOUTH(GetMapTile(act->x, act->y + 1))) {
-                act->private2 = 1;
+                act->eastfree = 1;
                 if (!TILE_SLOPED(GetMapTile(act->x, act->y + 1))) {
                     act->y++;
                 }
             }
-        } else if (act->private2 == 0) {
+        } else if (act->eastfree == 0) {
             act->x--;
         } else if (
             !act->acrophile &&
@@ -1883,7 +1883,7 @@ static void AdjustActorMove(word index, word dir)
             !TILE_SLOPED(GetMapTile(act->x, act->y + 1))
         ) {
             act->x--;
-            act->private2 = 0;
+            act->eastfree = 0;
         }
     }
 }
@@ -1901,8 +1901,9 @@ static void ActFootSwitch(word index)
     */
     if (act->sprite != SPR_FOOT_SWITCH) return;
 
-    if (act->private1 == 0) {
-        act->private1 = 1;
+    /* extra data var */
+    if (act->westfree == 0) {
+        act->westfree = 1;
         /*
         BUG: TILE_SWITCH_BLOCK_* have a horizontal white line on the top edge
         which is not appropriate for the design of the topmost switch position.
@@ -2002,14 +2003,14 @@ static void ActHorizontalMover(word index)
         if (act->data2 != DIR2_WEST) {
             act->x++;
             AdjustActorMove(index, DIR4_EAST);
-            if (act->private2 == 0) {
+            if (act->eastfree == 0) {
                 act->data2 = DIR2_WEST;
                 act->data4 = act->data1;
             }
         } else {
             act->x--;
             AdjustActorMove(index, DIR4_WEST);
-            if (act->private1 == 0) {
+            if (act->westfree == 0) {
                 act->data2 = DIR2_EAST;
                 act->data4 = act->data1;
             }
@@ -2099,8 +2100,8 @@ static void ActFireball(word index)
     } else {
         if (act->data5 == DIR2_WEST) {
             act->x--;
-            act->private1 = !TestSpriteMove(DIR4_WEST, act->sprite, 0, act->x, act->y);
-            if (act->private1 == 0) {
+            act->westfree = !TestSpriteMove(DIR4_WEST, act->sprite, 0, act->x, act->y);
+            if (act->westfree == 0) {
                 act->data1 = 0;
                 NewDecoration(SPR_SMOKE, 6, act->x + 1, act->y, DIR8_NORTH, 1);
                 act->x = act->data2;
@@ -2109,8 +2110,8 @@ static void ActFireball(word index)
             }
         } else {
             act->x++;
-            act->private2 = !TestSpriteMove(DIR4_EAST, act->sprite, 0, act->x, act->y);
-            if (act->private2 == 0) {
+            act->eastfree = !TestSpriteMove(DIR4_EAST, act->sprite, 0, act->x, act->y);
+            if (act->eastfree == 0) {
                 act->data1 = 0;
                 NewDecoration(SPR_SMOKE, 6, act->x - 2, act->y, DIR8_NORTH, 1);
                 act->x = act->data2;
@@ -2176,9 +2177,10 @@ static void ActDoor(word index)
     word y;
     Actor *act = actors + index;
 
-    if (act->private1 != 0) return;
+    /* extra data var */
+    if (act->westfree != 0) return;
 
-    act->private1 = 1;
+    act->westfree = 1;
 
     for (y = 0; y < 5; y++) {
         *((word *)&act->data1 + y) = GetMapTile(act->x + 1, act->y - y);
@@ -2203,13 +2205,13 @@ static void ActJumpPadRobot(word index)
         if (act->data2 != DIR2_WEST) {
             act->x++;
             AdjustActorMove(index, DIR4_EAST);
-            if (act->private2 == 0) {
+            if (act->eastfree == 0) {
                 act->data2 = DIR2_WEST;
             }
         } else {
             act->x--;
             AdjustActorMove(index, DIR4_WEST);
-            if (act->private1 == 0) {
+            if (act->westfree == 0) {
                 act->data2 = DIR2_EAST;
             }
         }
@@ -3238,7 +3240,7 @@ static void ActParachuteBall(word index)
     } else if (act->data1 == 1) {  /* W */
         act->x--;
         AdjustActorMove(index, DIR4_WEST);
-        if (act->private1 == 0) {
+        if (act->westfree == 0) {
             act->data1 = 0;
             act->data2 = 0;
             act->frame = 0;
@@ -3255,7 +3257,7 @@ static void ActParachuteBall(word index)
     } else if (act->data1 == 2) {  /* E */
         act->x++;
         AdjustActorMove(index, DIR4_EAST);
-        if (act->private2 == 0) {
+        if (act->eastfree == 0) {
             act->data1 = 0;
             act->data2 = 0;
             act->frame = 0;
@@ -3304,7 +3306,7 @@ static void ActBeamRobot(word index)
         }
 
         AdjustActorMove(index, DIR4_WEST);
-        if (act->private1 == 0) {
+        if (act->westfree == 0) {
             act->data1 = 0;  /* E */
         }
     } else {
@@ -3313,7 +3315,7 @@ static void ActBeamRobot(word index)
         }
 
         AdjustActorMove(index, DIR4_EAST);
-        if (act->private2 == 0) {
+        if (act->eastfree == 0) {
             act->data1 = 1;  /* W */
         }
     }
@@ -3354,7 +3356,8 @@ static void ActSplittingPlatform(word index)
 {
     Actor *act = actors + index;
 
-    act->private1++;
+    /* extra data var */
+    act->westfree++;
 
     if (act->data1 == 0) {
         act->data1 = 1;
@@ -3371,7 +3374,7 @@ static void ActSplittingPlatform(word index)
         }
 
     } else if (act->data1 == 2) {
-        if (act->private1 % 2 != 0) {
+        if (act->westfree % 2 != 0) {
             act->data2++;
         }
 
@@ -3396,7 +3399,7 @@ static void ActSplittingPlatform(word index)
         DrawSprite(SPR_SPLITTING_PLATFORM, 1, act->x + act->data2 - 2, act->y, DRAW_MODE_NORMAL);
         DrawSprite(SPR_SPLITTING_PLATFORM, 2, act->x + 4 - act->data2, act->y, DRAW_MODE_NORMAL);
 
-        if (act->private1 % 2 != 0) {
+        if (act->westfree % 2 != 0) {
             act->data2++;
         }
 
@@ -3624,9 +3627,10 @@ static void ActBoss(word index)
         StartGameMusic(MUSIC_BOSS);
     }
 
-    if (act->private2 > 0) {
-        act->private2--;
-        if (act->private2 < 40) {
+    /* extra data var */
+    if (act->eastfree > 0) {
+        act->eastfree--;
+        if (act->eastfree < 40) {
             act->y--;
         }
 
@@ -3634,27 +3638,27 @@ static void ActBoss(word index)
         act->falltime = 0;
 
         if (
-            act->private2 == 1 ||
+            act->eastfree == 1 ||
 #ifndef HARDER_BOSS
             act->y == 0 ||
 #endif  /* HARDER_BOSS */
-            (!IsSpriteVisible(SPR_BOSS, 0, act->x, act->y) && act->private2 < 30)
+            (!IsSpriteVisible(SPR_BOSS, 0, act->x, act->y) && act->eastfree < 30)
         ) {
             WIN_VAR = true;
             AddScore(100000L);
         }
 
-        if (act->private2 < 40 && act->private2 != 0 && act->private2 % 3 == 0) {
+        if (act->eastfree < 40 && act->eastfree != 0 && act->eastfree % 3 == 0) {
             NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
             NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
             StartSound(SND_BOSS_MOVE);
         }
 
-        if (act->private2 % 2 != 0) {
+        if (act->eastfree % 2 != 0) {
             DrawSprite(SPR_BOSS, 0, act->x, act->y,     DRAW_MODE_WHITE);
             DrawSprite(SPR_BOSS, 5, act->x, act->y - 4, DRAW_MODE_WHITE);
 
-            if (act->private2 > 39) {
+            if (act->eastfree > 39) {
                 NewDecoration(SPR_SMOKE, 6, act->x,     act->y, DIR8_NORTHWEST, 1);
                 NewDecoration(SPR_SMOKE, 6, act->x + 3, act->y, DIR8_NORTHEAST, 1);
             }
@@ -3680,17 +3684,18 @@ static void ActBoss(word index)
         }
 
         if (TestSpriteMove(DIR4_SOUTH, SPR_BOSS, 0, act->x, act->y + 1) != MOVE_FREE) {
-            act->private2 = 80;
+            act->eastfree = 80;
         }
 
         return;
     }
 
-    if (act->private1 != 0) {
+    /* extra data var */
+    if (act->westfree != 0) {
         word frame = act->data5 > 3 ? 5 : 1;
 
-        act->private1--;
-        if (act->private1 % 2 != 0) {
+        act->westfree--;
+        if (act->westfree % 2 != 0) {
             DrawSprite(SPR_BOSS, 0,     act->x, act->y,     DRAW_MODE_WHITE);
             DrawSprite(SPR_BOSS, frame, act->x, act->y - 4, DRAW_MODE_WHITE);
         } else {
@@ -3829,7 +3834,7 @@ static void ActBoss(word index)
         }
     }
 
-    if (act->private1 == 0) {
+    if (act->westfree == 0) {
         DrawSprite(SPR_BOSS, 0, act->x, act->y, 0);
 
         if (act->data5 < 4) {
@@ -4315,7 +4320,7 @@ static void ActRedChomper(word index)
                 act->frame = !act->frame;
                 act->x--;
                 AdjustActorMove(index, DIR4_WEST);
-                if (act->private1 == 0) {
+                if (act->westfree == 0) {
                     act->data1 = DIR2_EAST;
                     act->frame = 4;
                 }
@@ -4326,7 +4331,7 @@ static void ActRedChomper(word index)
                 act->frame = act->data3 + 2;
                 act->x++;
                 AdjustActorMove(index, DIR4_EAST);
-                if (act->private2 == 0) {
+                if (act->eastfree == 0) {
                     act->data1 = DIR2_WEST;
                     act->frame = 4;
                 }
@@ -4418,7 +4423,7 @@ static void ActPinkWorm(word index)
         if (act->frame != 0) {
             act->x--;
             AdjustActorMove(index, DIR4_WEST);
-            if (act->private1 == 0) {
+            if (act->westfree == 0) {
                 act->data1 = DIR2_EAST;
             }
         }
@@ -4429,7 +4434,7 @@ static void ActPinkWorm(word index)
             act->x++;
             act->frame = 1;
             AdjustActorMove(index, DIR4_EAST);
-            if (act->private2 == 0) {
+            if (act->eastfree == 0) {
                 act->data1 = DIR2_WEST;
             }
         }
@@ -4519,7 +4524,7 @@ static void ActPusherRobot(word index)
         } else if (act->data3 != 0) {
             act->x--;
             AdjustActorMove(index, DIR4_WEST);
-            if (act->private1 == 0) {
+            if (act->westfree == 0) {
                 act->data1 = DIR2_EAST;
                 act->frame = (act->x % 2) + 3;
             } else {
@@ -4545,7 +4550,7 @@ static void ActPusherRobot(word index)
         } else if (act->data3 != 0) {
             act->x++;
             AdjustActorMove(index, DIR4_EAST);
-            if (act->private2 == 0) {
+            if (act->eastfree == 0) {
                 act->frame = !act->frame;
                 act->data1 = DIR2_WEST;
             } else {
@@ -4606,7 +4611,7 @@ static void ActSentryRobot(word index)
         if (act->data1 == DIR2_WEST) {
             act->x--;
             AdjustActorMove(index, DIR4_WEST);
-            if (act->private1 == 0) {
+            if (act->westfree == 0) {
                 act->data1 = DIR2_EAST;
                 act->frame = 4;
             } else {
@@ -4616,7 +4621,7 @@ static void ActSentryRobot(word index)
         } else {
             act->x++;
             AdjustActorMove(index, DIR4_EAST);
-            if (act->private2 == 0) {
+            if (act->eastfree == 0) {
                 act->data1 = DIR2_WEST;
                 act->frame = 4;
             } else {
@@ -4690,14 +4695,15 @@ static void ActWormCrate(word index)
     } else if (IsSpriteVisible(SPR_WORM_CRATE, 0, act->x, act->y)) {
         if (IsNearExplosion(act->sprite, act->frame, act->x, act->y)) {
             act->data5 = 1;
-            act->private2 = WORM_CRATE_EXPLODE;
+            /* extra data var */
+            act->eastfree = WORM_CRATE_EXPLODE;
         }
 
         if (act->data5 != 0) {
             act->data5--;
         } else {
             act->dead = true;
-            if (act->private2 == WORM_CRATE_EXPLODE) {
+            if (act->eastfree == WORM_CRATE_EXPLODE) {
                 NewExplosion(act->x - 1, act->y - 1);
             }
 
@@ -4981,8 +4987,9 @@ static void ActFallingFloor(word index)
 
     } else {
         if (act->data1 == 0) {
-            act->private1 = GetMapTile(act->x,     act->y - 1);
-            act->private2 = GetMapTile(act->x + 1, act->y - 1);
+            /* extra data vars */
+            act->westfree = GetMapTile(act->x,     act->y - 1);
+            act->eastfree = GetMapTile(act->x + 1, act->y - 1);
 
             SetMapTile(TILE_STRIPED_PLATFORM, act->x,     act->y - 1);
             SetMapTile(TILE_STRIPED_PLATFORM, act->x + 1, act->y - 1);
@@ -4999,8 +5006,8 @@ static void ActFallingFloor(word index)
             if (act->data2 == 0) {
                 act->weighted = true;
 
-                SetMapTile(act->private1, act->x,     act->y - 1);
-                SetMapTile(act->private2, act->x + 1, act->y - 1);
+                SetMapTile(act->westfree, act->x,     act->y - 1);
+                SetMapTile(act->eastfree, act->x + 1, act->y - 1);
             }
         }
     }
@@ -5354,8 +5361,9 @@ static void ActMonument(word index)
         return;
     }
 
-    if (act->private1 == 0) {
-        act->private1 = 1;
+    /* extra data var */
+    if (act->westfree == 0) {
+        act->westfree = 1;
         for (i = 0; i < 9; i++) {
             SetMapTile(TILE_SWITCH_BLOCK_1, act->x + 1, act->y - i);
         }
@@ -5389,7 +5397,8 @@ static void ActTulipLauncher(word index)
     byte launchframes[] = {0, 2, 1, 0, 1};
     Actor *act = actors + index;
 
-    if (act->private2 > 0 && act->private2 < 7) return;
+    /* extra data var */
+    if (act->eastfree > 0 && act->eastfree < 7) return;
 
     if (act->data3 != 0) {
         act->data3--;
@@ -5422,7 +5431,8 @@ static void ActTulipLauncher(word index)
         act->frame = launchframes[act->data1];
 
         act->data1++;
-        if (act->data1 == 2 && act->private1 == 0) {
+        /* extra data ver */
+        if (act->data1 == 2 && act->westfree == 0) {
             NewSpawner(ACT_PARACHUTE_BALL, act->x + 2, act->y - 5);
             StartSound(SND_TULIP_LAUNCH);
         }
@@ -5430,7 +5440,7 @@ static void ActTulipLauncher(word index)
         if (act->data1 == 5) {
             act->data2 = 100;
             act->data1 = 0;
-            act->private1 = 0;
+            act->westfree = 0;
         }
     } else {
         act->frame = 1;
@@ -7290,9 +7300,9 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_TULIP_LAUNCHER:
-        if (act->private2 != 0) {
-            act->private2--;
-            if (act->private2 == 0) {
+        if (act->eastfree != 0) {
+            act->eastfree--;
+            if (act->eastfree == 0) {
                 isPlayerFalling = true;
                 isPounceReady = true;
                 DO_POUNCE(20);
@@ -7300,7 +7310,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 blockMovementCmds = false;
                 blockActionCmds = false;
                 playerFallTime = 0;
-                act->private1 = 1;
+                act->westfree = 1;
                 act->data2 = 0;
                 act->data1 = 1;
                 playerY -= 2;
@@ -7310,16 +7320,16 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
                 }
             }
         } else if (
-            act->private1 == 0 && act->x + 1 <= playerX && act->x + 5 >= playerX + 2 &&
+            act->westfree == 0 && act->x + 1 <= playerX && act->x + 5 >= playerX + 2 &&
             (act->y - 1 == playerY || act->y - 2 == playerY) && isPlayerFalling
         ) {
-            act->private2 = 20;
+            act->eastfree = 20;
             isPounceReady = false;
             playerMomentumNorth = 0;
             isPlayerFalling = false;
             blockMovementCmds = true;
             blockActionCmds = true;
-            act->private1 = 1;
+            act->westfree = 1;
             act->data2 = 0;
             act->data1 = 1;
             StartSound(SND_TULIP_INGEST);
@@ -7334,7 +7344,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 #endif  /* HARDER_BOSS */
 
         if (
-            act->private2 == 0
+            act->eastfree == 0
 #ifdef HAS_ACT_BOSS
             && act->data5 != D5_VALUE
 #endif  /* HAS_ACT_BOSS */
@@ -7342,7 +7352,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             if (DO_POUNCE(7)) {
                 StartSound(SND_PLAYER_POUNCE);
                 act->data5++;
-                act->private1 = 10;
+                act->westfree = 10;
                 act->hurtcooldown = 7;
                 if (act->data1 != 2) {
                     act->data1 = 2;

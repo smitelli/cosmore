@@ -95,7 +95,7 @@ typedef void (*DrawFunction)(byte *, word, word);
 typedef struct {
     word sprite, frame, x, y;
     bool forceactive, stayactive, acrophile, weighted;
-    word private1, private2, data1, data2, data3, data4, data5;
+    word westfree, eastfree, data1, data2, data3, data4, data5;
     bool dead;
     word falltime;
     byte hurtcooldown;
