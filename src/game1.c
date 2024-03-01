@@ -1827,14 +1827,11 @@ static void AdjustActorMove(word index, word dir)
 
         if (act->private1 == 0 && result != MOVE_SLOPED) {
             act->x++;
-            return;
         } else if (result == MOVE_SLOPED) {
             act->private1 = 1;
             act->y--;
-            return;
-        }
-
-        if ((word)TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
+            return;  /* shouldn't need this; only here for jump target parity */
+        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
             act->private1 = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x + width, act->y + 1)) &&
@@ -1842,7 +1839,6 @@ static void AdjustActorMove(word index, word dir)
         ) {
             if (!TILE_BLOCK_SOUTH(GetMapTile(act->x + width - 1, act->y + 1))) {
                 act->private1 = 1;
-
                 if (!TILE_SLOPED(GetMapTile(act->x + width - 1, act->y + 1))) {
                     act->y++;
                 }
@@ -1863,14 +1859,11 @@ static void AdjustActorMove(word index, word dir)
 
         if (act->private2 == 0 && result != MOVE_SLOPED) {
             act->x--;
-            return;
         } else if (result == MOVE_SLOPED) {
             act->private2 = 1;
             act->y--;
-            return;
-        }
-
-        if ((word)TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
+            return;  /* shouldn't need this; only here for jump target parity */
+        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
             act->private2 = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x - 1, act->y + 1)) &&
@@ -1878,7 +1871,6 @@ static void AdjustActorMove(word index, word dir)
         ) {
             if (!TILE_BLOCK_SOUTH(GetMapTile(act->x, act->y + 1))) {
                 act->private2 = 1;
-
                 if (!TILE_SLOPED(GetMapTile(act->x, act->y + 1))) {
                     act->y++;
                 }
@@ -6831,21 +6823,22 @@ static void MoveAndDrawDecorations(void)
 /*
 Decide, somehow, if a pounce is valid. Not totally clear on this yet.
 */
-static bool PounceHelper(int recoil)
+static bool PounceHelper(word recoil)
 {
     if (playerDeadTime != 0 || playerDizzyLeft != 0) return false;
 
-    if (
+    if ((
         /* 2nd `isPlayerRecoiling` test is pointless */
-        (!isPlayerRecoiling || (isPlayerRecoiling && playerMomentumNorth < 2)) &&
-        (((isPlayerFalling && playerFallTime >= 0) || playerJumpTime > 6) && isPounceReady)
-    ) {
+        !isPlayerRecoiling || (isPlayerRecoiling && playerMomentumNorth < 2)
+    ) && (
+        ((isPlayerFalling && playerFallTime >= 0) || playerJumpTime > 6) && isPounceReady
+    )) {
         playerMomentumSaved = playerMomentumNorth = recoil + 1;
         isPlayerRecoiling = true;
 
         ClearPlayerDizzy();
 
-        if (recoil > 18) {
+        if ((int)recoil > 18) {
             isPlayerLongJumping = true;
         } else {
             isPlayerLongJumping = false;
@@ -6864,8 +6857,9 @@ static bool PounceHelper(int recoil)
         }
 
         return true;
+    }
 
-    } else if (playerMomentumSaved - 2 < playerMomentumNorth && isPounceReady && isPlayerRecoiling) {
+    if (playerMomentumSaved - 2 < playerMomentumNorth && isPounceReady && isPlayerRecoiling) {
         ClearPlayerDizzy();
 
         if (playerMomentumNorth > 18) {
