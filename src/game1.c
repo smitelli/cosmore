@@ -1831,7 +1831,7 @@ static void AdjustActorMove(word index, word dir)
             act->westfree = 1;
             act->y--;
             return;  /* shouldn't need this; only here for jump target parity */
-        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
+        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > MOVE_FREE) {
             act->westfree = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x + width, act->y + 1)) &&
@@ -1863,7 +1863,7 @@ static void AdjustActorMove(word index, word dir)
             act->eastfree = 1;
             act->y--;
             return;  /* shouldn't need this; only here for jump target parity */
-        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > 0) {
+        } else if (TestSpriteMove(DIR4_SOUTH, act->sprite, act->frame, act->x, act->y + 1) > MOVE_FREE) {
             act->eastfree = 1;
         } else if (
             TILE_SLOPED(GetMapTile(act->x - 1, act->y + 1)) &&
