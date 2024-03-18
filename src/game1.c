@@ -137,7 +137,7 @@ jumping, pouncing, and falling. Horizontal movement takes the form of east/
 west sliding for slippery surfaces. There are also variables for involuntary
 pushes and "dizzy" immobilization.
 */
-static word playerMomentumNorth = 0, playerMomentumSaved;
+static word playerRecoilLeft = 0;
 static bool isPlayerLongJumping, isPlayerRecoiling = false;
 static bool isPlayerSlidingEast, isPlayerSlidingWest;
 static bbool isPlayerFalling;
@@ -1048,7 +1048,7 @@ static word TestPlayerMove(word dir, word x_origin, word y_origin)
                 isPlayerRecoiling = true;
                 isPlayerLongJumping = true;
                 playerFallTime = 1;
-                playerMomentumNorth = 20;
+                playerRecoilLeft = 20;
 
                 StartSound(SND_PUSH_PLAYER);
             }
@@ -5236,7 +5236,7 @@ static void ActRocket(word index)
         }
 
         if (act->x == playerX && act->y - 7 <= playerY && act->y - 4 >= playerY) {
-            playerMomentumNorth = 16;
+            playerRecoilLeft = 16;
             isPlayerRecoiling = true;
             ClearPlayerDizzy();
             isPlayerLongJumping = false;
@@ -6831,24 +6831,34 @@ static void MoveAndDrawDecorations(void)
 }
 
 /*
-Decide, somehow, if a pounce is valid. Not totally clear on this yet.
+Converts the `recoil` argument into a global `playerRecoilLeft` value, as long
+as the player's jump/fall state is correct for a pounce. Returns true if the
+recoil was imparted, or false otherwise. This function is called *a lot*, but
+it rarely acts because `isPounceReady` is usually false (i.e. the player is not
+lined up against an actor).
+
+The outer `else if` handles the case where the player pounces on more than one
+actor in the same game tick. In such cases `lastrecoil` and `playerRecoilLeft`
+will be very close, and we don't have to re-test nearly as many variables.
 */
-static bool PounceHelper(word recoil)
+static bool TryPounce(int recoil)
 {
+    static word lastrecoil;
+
     if (playerDeadTime != 0 || playerDizzyLeft != 0) return false;
 
     if ((
         /* 2nd `isPlayerRecoiling` test is pointless */
-        !isPlayerRecoiling || (isPlayerRecoiling && playerMomentumNorth < 2)
+        !isPlayerRecoiling || (isPlayerRecoiling && playerRecoilLeft < 2)
     ) && (
         ((isPlayerFalling && playerFallTime >= 0) || playerJumpTime > 6) && isPounceReady
     )) {
-        playerMomentumSaved = playerMomentumNorth = recoil + 1;
+        lastrecoil = playerRecoilLeft = recoil + 1;
         isPlayerRecoiling = true;
 
         ClearPlayerDizzy();
 
-        if ((int)recoil > 18) {
+        if (recoil > 18) {
             isPlayerLongJumping = true;
         } else {
             isPlayerLongJumping = false;
@@ -6867,12 +6877,11 @@ static bool PounceHelper(word recoil)
         }
 
         return true;
-    }
 
-    if (playerMomentumSaved - 2 < playerMomentumNorth && isPounceReady && isPlayerRecoiling) {
+    } else if (lastrecoil - 2 < playerRecoilLeft && isPounceReady && isPlayerRecoiling) {
         ClearPlayerDizzy();
 
-        if (playerMomentumNorth > 18) {
+        if (playerRecoilLeft > 18) {
             isPlayerLongJumping = true;
         } else {
             isPlayerLongJumping = false;
@@ -7038,7 +7047,6 @@ void DestroyBarrel(word index)
     if (numBarrels == 1) {
         NewActor(ACT_SPEECH_WOW_50K, playerX - 1, playerY - 5);
     }
-
     numBarrels--;
 }
 
@@ -7053,14 +7061,12 @@ standard way.
 It's not clear what benefit there is to passing sprite/frame/x/y instead of
 reading it from the actor itself. Both methods are used interchangeably.
 */
-static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y)
+static bool InteractPlayer(word index, word sprite_type, word frame, word x, word y)
 {
     Actor *act = actors + index;
     register word height;
     word width;
     register word offset;
-
-#define DO_POUNCE(recoil) (act->hurtcooldown == 0 && PounceHelper(recoil))
 
     if (!IsSpriteVisible(sprite_type, frame, x, y)) return true;
 
@@ -7071,15 +7077,16 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     isPounceReady = false;
     if (sprite_type == SPR_BOSS) {
         height = 7;
+
         if (
-            (y - height) + 5 >= playerY &&
-            y - height <= playerY && playerX + 2 >= x && x + width - 1 >= playerX
+            (y - height) + 5 >= playerY && y - height <= playerY &&
+            playerX + 2 >= x && x + width - 1 >= playerX
         ) {
             isPounceReady = true;
         }
     } else if (
-        (playerFallTime > 3 ? 1 : 0) + (y - height) + 1 >= playerY &&
-        y - height <= playerY && playerX + 2 >= x && x + width - 1 >= playerX &&
+        (playerFallTime > 3 ? 1 : 0) + (y - height) + 1 >= playerY && y - height <= playerY &&
+        playerX + 2 >= x && x + width - 1 >= playerX &&
         scooterMounted == 0
     ) {
         isPounceReady = true;
@@ -7089,7 +7096,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_JUMP_PAD:
         if (act->data5 != 0) break;  /* ceiling-mounted */
 
-        if (DO_POUNCE(40)) {
+        if (act->hurtcooldown == 0 && TryPounce(40)) {
             StartSound(SND_PLAYER_POUNCE);
             if (!sawJumpPadBubble) {
                 sawJumpPadBubble = true;
@@ -7100,14 +7107,14 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_JUMP_PAD_ROBOT:
-        if (DO_POUNCE(20)) {
+        if (act->hurtcooldown == 0 && TryPounce(20)) {
             StartSound(SND_JUMP_PAD_ROBOT);
             act->data1 = 3;
         }
         return false;
 
     case SPR_CABBAGE:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             act->hurtcooldown = 5;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAW_MODE_WHITE;
@@ -7125,7 +7132,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_BASKET:
     case SPR_BARREL:
-        if (DO_POUNCE(5)) {
+        if (act->hurtcooldown == 0 && TryPounce(5)) {
             DestroyBarrel(index);
             AddScore(100);
             NewActor(ACT_SCORE_EFFECT_100, act->x, act->y);
@@ -7135,7 +7142,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_GHOST:
     case SPR_MOON:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             act->data5--;
@@ -7157,7 +7164,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_BABY_GHOST:
     case SPR_SUCTION_WALKER:
     case SPR_BIRD:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             StartSound(SND_PLAYER_POUNCE);
             act->dead = true;
             NewPounceDecoration(act->x, act->y);
@@ -7170,7 +7177,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_BABY_GHOST_EGG:
     case SPR_74:  /* probably for ACT_BABY_GHOST_EGG_PROX; never happens */
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             StartSound(SND_BGHOST_EGG_CRACK);
             if (act->data2 == 0) {
                 act->data2 = 10;
@@ -7181,7 +7188,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_PARACHUTE_BALL:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             StartSound(SND_PLAYER_POUNCE);
             act->data3 = 0;
             act->hurtcooldown = 3;
@@ -7217,7 +7224,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_RED_JUMPER:
-        if (DO_POUNCE(15)) {
+        if (act->hurtcooldown == 0 && TryPounce(15)) {
             StartSound(SND_PLAYER_POUNCE);
             act->hurtcooldown = 6;
             act->data5--;
@@ -7236,7 +7243,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_SPITTING_TURRET:
     case SPR_RED_CHOMPER:
     case SPR_PUSHER_ROBOT:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
             nextDrawMode = DRAW_MODE_WHITE;
@@ -7255,7 +7262,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_PINK_WORM:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             AddScoreForSprite(SPR_PINK_WORM);
             StartSound(SND_PLAYER_POUNCE);
             NewPounceDecoration(act->x, act->y);
@@ -7268,7 +7275,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
     case SPR_SENTRY_ROBOT:
         if (
             ((!areLightsActive && hasLightSwitch) || (areLightsActive && !hasLightSwitch)) &&
-            DO_POUNCE(15)
+            act->hurtcooldown == 0 && TryPounce(15)
         ) {
             act->hurtcooldown = 3;
             StartSound(SND_PLAYER_POUNCE);
@@ -7284,7 +7291,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 
     case SPR_DRAGONFLY:
     case SPR_IVY_PLANT:
-        if (DO_POUNCE(7)) {
+        if (act->hurtcooldown == 0 && TryPounce(7)) {
             pounceStreak = 0;
             StartSound(SND_PLAYER_POUNCE);
             act->hurtcooldown = 5;
@@ -7294,7 +7301,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         return false;
 
     case SPR_ROCKET:
-        if (act->x == playerX && DO_POUNCE(5)) {
+        if (act->x == playerX && act->hurtcooldown == 0 && TryPounce(5)) {
             StartSound(SND_PLAYER_POUNCE);
         }
         return false;
@@ -7305,7 +7312,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             if (act->eastfree == 0) {
                 isPlayerFalling = true;
                 isPounceReady = true;
-                DO_POUNCE(20);
+                act->hurtcooldown == 0 && TryPounce(20);
                 StartSound(SND_PLAYER_POUNCE);
                 blockMovementCmds = false;
                 blockActionCmds = false;
@@ -7325,7 +7332,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         ) {
             act->eastfree = 20;
             isPounceReady = false;
-            playerMomentumNorth = 0;
+            playerRecoilLeft = 0;
             isPlayerFalling = false;
             blockMovementCmds = true;
             blockActionCmds = true;
@@ -7349,7 +7356,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             && act->data5 != D5_VALUE
 #endif  /* HAS_ACT_BOSS */
         ) {
-            if (DO_POUNCE(7)) {
+            if (act->hurtcooldown == 0 && TryPounce(7)) {
                 StartSound(SND_PLAYER_POUNCE);
                 act->data5++;
                 act->westfree = 10;
@@ -7376,11 +7383,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
 #undef D5_VALUE
     }
 
-#undef DO_POUNCE
-
-    if (!IsTouchingPlayer(sprite_type, frame, x, y)) {
-        return false;
-    }
+    if (!IsTouchingPlayer(sprite_type, frame, x, y)) return false;
 
     switch (sprite_type) {
     case SPR_STAR:
@@ -7572,7 +7575,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
         if (act->data1 < 4 && act->data4 == 0) {
             isPlayerFalling = true;
             ClearPlayerDizzy();
-            PounceHelper(3);
+            TryPounce(3);  /* used for side effects */
             act->data1++;
             if (act->data2 == 0) {
                 act->data3 = 64;
@@ -7590,7 +7593,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             if (act->hurtcooldown == 0) {
                 word gifts[] = {ACT_RED_GOURD, ACT_RED_TOMATO, ACT_CLR_DIAMOND, ACT_GRN_EMERALD};
                 act->hurtcooldown = 10;
-                if (PounceHelper(7)) {
+                if (TryPounce(7)) {
                     StartSound(SND_PLAYER_POUNCE);
                 } else {
                     playerClingDir = DIR4_NONE;
@@ -7685,7 +7688,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             playerFallTime = 0;
             isPlayerRecoiling = false;
             isPounceReady = false;
-            playerMomentumNorth = 0;
+            playerRecoilLeft = 0;
             pounceStreak = 0;
             if (!sawScooterBubble) {
                 sawScooterBubble = true;
@@ -7800,7 +7803,7 @@ static bool TouchPlayer(word index, word sprite_type, word frame, word x, word y
             act->hurtcooldown = 2;
             StartSound(SND_PLAYER_POUNCE);
             act->data1 = 3;
-            playerMomentumNorth = 0;
+            playerRecoilLeft = 0;
             isPlayerRecoiling = false;
             isPlayerFalling = true;
             playerFallTime = 4;
@@ -7907,7 +7910,7 @@ static void ProcessActor(word index)
         return;
     }
 
-    if (TouchPlayer(index, act->sprite, act->frame, act->x, act->y)) return;
+    if (InteractPlayer(index, act->sprite, act->frame, act->x, act->y)) return;
 
     if (nextDrawMode != DRAW_MODE_HIDDEN) {
         DrawSprite(act->sprite, act->frame, act->x, act->y, nextDrawMode);
@@ -8329,7 +8332,7 @@ void ClearPlayerPush(void)
     playerPushForceFrame = 0;
 
     isPlayerRecoiling = false;
-    playerMomentumNorth = 0;
+    playerRecoilLeft = 0;
 
     isPlayerPushAbortable = false;
 
@@ -8360,7 +8363,7 @@ void SetPlayerPush(
     isPlayerPushBlockable = blockable;
 
     isPlayerRecoiling = false;
-    playerMomentumNorth = 0;
+    playerRecoilLeft = 0;
 
     ClearPlayerDizzy();
 }
@@ -8616,7 +8619,7 @@ static void MovePlayer(void)
                     if (TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1) == MOVE_FREE && canPlayerCling) {
                         playerClingDir = DIR4_WEST;
                         isPlayerRecoiling = false;
-                        playerMomentumNorth = 0;
+                        playerRecoilLeft = 0;
                         StartSound(SND_PLAYER_CLING);
                         isPlayerFalling = false;
                         playerJumpTime = 0;
@@ -8657,7 +8660,7 @@ static void MovePlayer(void)
                     if (TestPlayerMove(DIR4_SOUTH, playerX, playerY + 1) == MOVE_FREE && canPlayerCling) {
                         playerClingDir = DIR4_EAST;
                         isPlayerRecoiling = false;
-                        playerMomentumNorth = 0;
+                        playerRecoilLeft = 0;
                         StartSound(SND_PLAYER_CLING);
                         playerJumpTime = 0;
                         isPlayerFalling = false;
@@ -8685,22 +8688,22 @@ static void MovePlayer(void)
             cmdJumpLatch = false;
         }
         if (
-            playerMomentumNorth != 0 ||
+            playerRecoilLeft != 0 ||
             (cmdJump && !isPlayerFalling && !cmdJumpLatch) ||
             (playerClingDir != DIR4_NONE && cmdJump && !cmdJumpLatch)
         ) {
             bool newjump;
 
-            if (isPlayerRecoiling && playerMomentumNorth > 0) {
-                playerMomentumNorth--;
-                if (playerMomentumNorth < 10) {
+            if (isPlayerRecoiling && playerRecoilLeft > 0) {
+                playerRecoilLeft--;
+                if (playerRecoilLeft < 10) {
                     isPlayerLongJumping = false;
                 }
-                if (playerMomentumNorth > 1) {
+                if (playerRecoilLeft > 1) {
                     playerY--;
                 }
-                if (playerMomentumNorth > 13) {
-                    playerMomentumNorth--;
+                if (playerRecoilLeft > 13) {
+                    playerRecoilLeft--;
                     if (TestPlayerMove(DIR4_NORTH, playerX, playerY) == MOVE_FREE) {
                         playerY--;
                     } else {
@@ -8708,7 +8711,7 @@ static void MovePlayer(void)
                     }
                 }
                 newjump = false;
-                if (playerMomentumNorth == 0) {
+                if (playerRecoilLeft == 0) {
                     playerJumpTime = 0;
                     isPlayerRecoiling = false;
                     playerFallTime = 0;
@@ -8746,7 +8749,7 @@ static void MovePlayer(void)
                 if (playerJumpTime > 0 || isPlayerRecoiling) {
                     StartSound(SND_PLAYER_HIT_HEAD);
                 }
-                playerMomentumNorth = 0;
+                playerRecoilLeft = 0;
                 isPlayerRecoiling = false;
                 if (TestPlayerMove(DIR4_NORTH, playerX, playerY + 1) != MOVE_FREE) {
                     playerY++;
@@ -8883,7 +8886,7 @@ static void MovePlayer(void)
         if (isPlayerRecoiling && isPlayerLongJumping) {
             playerFrame = PLAYER_JUMP_LONG;
         }
-        if (playerMomentumNorth < 3 && isPlayerRecoiling) {
+        if (playerRecoilLeft < 3 && isPlayerRecoiling) {
             playerFrame = PLAYER_FALL;
         }
     } else if (cmdWest == cmdEast) {
@@ -8932,7 +8935,7 @@ static void MovePlayer(void)
     if (clingslip && playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     } else {
-        if (playerMomentumNorth > 10 && playerY - scrollY < 7 && scrollY > 0) {
+        if (playerRecoilLeft > 10 && playerY - scrollY < 7 && scrollY > 0) {
             scrollY--;
         }
         if (playerY - scrollY < 7 && scrollY > 0) {
@@ -8956,7 +8959,7 @@ static void MovePlayerScooter(void)
     ClearPlayerDizzy();
 
     isPounceReady = false;
-    playerMomentumNorth = 0;
+    playerRecoilLeft = 0;
     isPlayerFalling = false;
 
     if (playerDeadTime != 0) return;
@@ -8971,8 +8974,8 @@ static void MovePlayerScooter(void)
         playerFallTime = 1;
         isPlayerRecoiling = false;
         isPounceReady = true;
-        PounceHelper(9);
-        playerMomentumNorth -= 2;
+        TryPounce(9);  /* used for side effects */
+        playerRecoilLeft -= 2;
         StartSound(SND_PLAYER_JUMP);
         return;
     }
@@ -9096,7 +9099,7 @@ decrement:
     if (playerY - scrollY > SCROLLH - 4) {
         scrollY++;
     } else {
-        if (playerMomentumNorth > 10 && playerY - scrollY < 7 && scrollY > 0) {
+        if (playerRecoilLeft > 10 && playerY - scrollY < 7 && scrollY > 0) {
             scrollY--;
         }
 
@@ -10119,9 +10122,9 @@ static void GameLoop(byte demo_state)
             );
             DrawTextLine(0, 19, debugBar);
             sprintf(debugBar,
-                "CJ=%s CJL=%s iR=%s iLJ=%s JT=%u MN=%02u PS=%u",
+                "CJ=%s CJL=%s iR=%s iLJ=%s JT=%u RL=%02u PS=%u",
                 BSTR(cmdJump), BSTR(cmdJumpLatch), BSTR(isPlayerRecoiling), BSTR(isPlayerLongJumping),
-                playerJumpTime, playerMomentumNorth, pounceStreak
+                playerJumpTime, playerRecoilLeft, pounceStreak
             );
             DrawTextLine(0, 21, debugBar);
             sprintf(debugBar,
@@ -10426,7 +10429,7 @@ static void InitializeMapGlobals(void)
     playerJumpTime = 0;
     playerFallTime = 1;
     isPlayerRecoiling = false;
-    playerMomentumNorth = 0;
+    playerRecoilLeft = 0;
     playerFaceDir = DIR4_EAST;
     playerFrame = PLAYER_WALK_1;
     playerBaseFrame = PLAYER_BASE_EAST;
