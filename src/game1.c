@@ -45,7 +45,7 @@ or almost-direct control of the player.
 */
 word playerHealth, playerHealthCells, playerBombs;
 static word playerX, playerY, scrollX, scrollY;
-static word playerFaceDir, playerBombDir;
+static word playerFaceDir, playerBombDir /* TODO static? */;
 static word playerBaseFrame = PLAYER_BASE_WEST;
 static word playerFrame = PLAYER_WALK_1;
 static word playerPushForceFrame;
@@ -175,7 +175,7 @@ static Decoration decorations[MAX_DECORATIONS];
 /* Holds each decoration's currently displayed frame. Why this isn't in the Decoration struct, who knows. */
 static word decorationFrame[MAX_DECORATIONS];
 static word backdropTable[BACKDROP_WIDTH * BACKDROP_HEIGHT * 4];
-static char joinPathBuffer[80];
+static char joinPathBuffer[80] /* TODO static? */;
 
 /*
 Heap storage areas. Space for all of these is allocated on startup.
@@ -220,7 +220,7 @@ static bool isNewSound, enableSpeaker;
 /*
 Level/map control and global world variables.
 */
-static word levelNum, mapVariables, musicNum;
+static word levelNum, mapVariables /* TODO static? */, musicNum /* TODO static? */;
 static word mapWidth, maxScrollY, mapYPower;  /* y power = map width expressed as 2^n. */
 static bool hasLightSwitch, hasRain, hasHScrollBackdrop, hasVScrollBackdrop;
 static bool areForceFieldsActive, areLightsActive, arePlatformsActive;
