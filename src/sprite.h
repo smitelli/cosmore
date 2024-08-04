@@ -79,7 +79,7 @@
 #define SPR_BOMB_IDLE           57
 /*#define SPR_58                  58*/
 /*#define SPR_59                  59*/
-#define SPR_FOOT_SWITCH         60
+#define SPR_FOOT_SWITCH_KNOB    60
 /*#define SPR_61                  61*/
 #define SPR_MYSTERY_WALL        62
 #define SPR_SPIKES_FLOOR_BENT   63

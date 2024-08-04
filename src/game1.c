@@ -1899,7 +1899,7 @@ static void ActFootSwitch(word index)
     This function is used for a variety of functionless actors, and in those
     cases it behaves as a no-op.
     */
-    if (act->sprite != SPR_FOOT_SWITCH) return;
+    if (act->sprite != SPR_FOOT_SWITCH_KNOB) return;
 
     /* extra data var */
     if (act->westfree == 0) {
@@ -1963,7 +1963,7 @@ static void ActFootSwitch(word index)
 
     if (
         act->data1 < 4 && act->data4 == 0 &&
-        IsNearExplosion(SPR_FOOT_SWITCH, 0, act->x, act->y)
+        IsNearExplosion(SPR_FOOT_SWITCH_KNOB, 0, act->x, act->y)
     ) {
         act->data1++;
 
@@ -5775,11 +5775,11 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_BOMB_IDLE, x, y, T, F, T, F, ActBombIdle, 0, 0, 0, 0, 0);
         break;
     case ACT_SWITCH_PLATFORMS:
-        ConstructActor(SPR_FOOT_SWITCH, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_PLATFORMS);
+        ConstructActor(SPR_FOOT_SWITCH_KNOB, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_PLATFORMS);
         arePlatformsActive = false;
         break;
     case ACT_SWITCH_MYSTERY_WALL:
-        ConstructActor(SPR_FOOT_SWITCH, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_MYSTERY_WALL);
+        ConstructActor(SPR_FOOT_SWITCH_KNOB, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_MYSTERY_WALL);
         break;
     case ACT_MYSTERY_WALL:
         ConstructActor(SPR_MYSTERY_WALL, x, y, T, F, F, F, ActMysteryWall, 0, 0, 0, 0, 0);
@@ -5919,12 +5919,12 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_RED_CHOMPER, x, y, F, T, T, F, ActRedChomper, DIR2_WEST, 0, 0, 0, 0);
         break;
     case ACT_SWITCH_LIGHTS:
-        ConstructActor(SPR_FOOT_SWITCH, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_LIGHTS);
+        ConstructActor(SPR_FOOT_SWITCH_KNOB, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_LIGHTS);
         areLightsActive = false;
         hasLightSwitch = true;
         break;
     case ACT_SWITCH_FORCE_FIELD:
-        ConstructActor(SPR_FOOT_SWITCH, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_FORCE_FIELD);
+        ConstructActor(SPR_FOOT_SWITCH_KNOB, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, ACT_SWITCH_FORCE_FIELD);
         break;
     case ACT_FORCE_FIELD_VERT:
         ConstructActor(SPR_FORCE_FIELD_VERT, x, y, T, F, F, F, ActForceField, 0, 0, 0, 0, 0);
@@ -7571,7 +7571,7 @@ static bool InteractPlayer(word index, word sprite_type, word frame, word x, wor
         }
         return false;
 
-    case SPR_FOOT_SWITCH:
+    case SPR_FOOT_SWITCH_KNOB:
         if (act->data1 < 4 && act->data4 == 0) {
             isPlayerFalling = true;
             ClearPlayerDizzy();
@@ -9157,7 +9157,7 @@ different player death animations.
 Returns true if the level needs to restart due to player death, and false during
 normal gameplay.
 */
-static bbool ProcessPlayer(void)
+static bbool ProcessAndDrawPlayer(void)
 {
     static byte speechframe = 0;
 
@@ -10079,7 +10079,7 @@ static void GameLoop(byte demo_state)
         MoveFountains();
         DrawMapRegion();
 
-        if (ProcessPlayer()) continue;
+        if (ProcessAndDrawPlayer()) continue;
 
         DrawFountains();
         MoveAndDrawActors();
