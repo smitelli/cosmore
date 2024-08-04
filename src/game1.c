@@ -45,7 +45,7 @@ or almost-direct control of the player.
 */
 word playerHealth, playerHealthCells, playerBombs;
 static word playerX, playerY, scrollX, scrollY;
-static word playerFaceDir, playerBombDir /* TODO static? */;
+static word playerFaceDir;
 static word playerBaseFrame = PLAYER_BASE_WEST;
 static word playerFrame = PLAYER_WALK_1;
 static word playerPushForceFrame;
@@ -175,7 +175,6 @@ static Decoration decorations[MAX_DECORATIONS];
 /* Holds each decoration's currently displayed frame. Why this isn't in the Decoration struct, who knows. */
 static word decorationFrame[MAX_DECORATIONS];
 static word backdropTable[BACKDROP_WIDTH * BACKDROP_HEIGHT * 4];
-static char joinPathBuffer[80] /* TODO static? */;
 
 /*
 Heap storage areas. Space for all of these is allocated on startup.
@@ -220,7 +219,7 @@ static bool isNewSound, enableSpeaker;
 /*
 Level/map control and global world variables.
 */
-static word levelNum, mapVariables /* TODO static? */, musicNum /* TODO static? */;
+static word levelNum;
 static word mapWidth, maxScrollY, mapYPower;  /* y power = map width expressed as 2^n. */
 static bool hasLightSwitch, hasRain, hasHScrollBackdrop, hasVScrollBackdrop;
 static bool areForceFieldsActive, areLightsActive, arePlatformsActive;
@@ -8441,6 +8440,7 @@ static void MovePlayer(void)
     static int jumptable[] = {-2, -1, -1, -1, -1, -1, -1, 0, 0, 0};
     static word movecount = 0;
     static word bombcooldown = 0;
+    static word playerBombDir;
     word horizmove;
     register word southmove = 0;
     register bool clingslip = false;
@@ -9286,6 +9286,7 @@ which is never a problem in DOS.
 */
 char *JoinPath(char *dir, char *file)
 {
+    static char joinPathBuffer[80];
     int dstoff;
     word srcoff;
 
@@ -10478,6 +10479,7 @@ initialization tasks.
 */
 void InitializeLevel(word level_num)
 {
+    static word mapVariables, musicNum;
     FILE *fp;
     word bdnum;
 

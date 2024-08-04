@@ -2,9 +2,11 @@
 
 by [Scott Smitelli](mailto:scott@smitelli.com) and [contributors](AUTHORS.md)
 
+https://www.scottsmitelli.com/projects/cosmore/
+
 Cosmore is a reconstruction of the source code of _Cosmo's Cosmic Adventure_ version 1.20, using the original DOS compiler and toolchain. Its goal is to duplicate every detail, quirk, and bug of the original game as faithfully as possible. A player should not be able to distinguish a Cosmore binary from the original.
 
-The reconstruction is **96.29%** accurate by the following metric: The load images (skipping the EXE headers and relocation tables), when compared byte-by-byte against the corresponding uncompressed originals, have the same byte values in the same locations 96% of the time. The remaining 4% consists of uninitialized data segment memory addresses that have not (yet!) been arranged to match the original layout.
+The reconstruction is **96.30%** accurate by the following metric: The load images (skipping the EXE headers and relocation tables), when compared byte-by-byte against the corresponding uncompressed originals, have the same byte values in the same locations 96% of the time. The remaining 4% consists of uninitialized data segment memory addresses that have not (yet!) been arranged to match the original layout.
 
 ## Requirements
 
