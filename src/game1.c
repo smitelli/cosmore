@@ -6850,8 +6850,8 @@ static bool TryPounce(int recoil)
         /* 2nd `isPlayerRecoiling` test is pointless */
         !isPlayerRecoiling || (isPlayerRecoiling && playerRecoilLeft < 2)
     ) && (
-        ((isPlayerFalling && playerFallTime >= 0) || playerJumpTime > 6) && isPounceReady
-    )) {
+        (isPlayerFalling && playerFallTime >= 0) || playerJumpTime > 6
+    ) && isPounceReady) {
         lastrecoil = playerRecoilLeft = recoil + 1;
         isPlayerRecoiling = true;
 
