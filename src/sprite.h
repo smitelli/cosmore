@@ -126,8 +126,8 @@
 /*#define SPR_104                 104*/
 #define SPR_PIPE_END            105
 #define SPR_SUCTION_WALKER      106
-#define SPR_TRANSPORTER_107     107
-#define SPR_TRANSPORTER_108     108
+#define SPR_TRANSPORTER_COPY    107
+#define SPR_TRANSPORTER         108
 /*#define SPR_109                 109*/
 /*#define SPR_110                 110*/
 #define SPR_SPIT_WALL_PLANT_E   111

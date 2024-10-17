@@ -4073,14 +4073,15 @@ static void ActTransporter(word index)
 
     nextDrawMode = DRAW_MODE_HIDDEN;
 
+    /* SPR_TRANSPORTER_COPY draws as SPR_TRANSPORTER; inconsistent for parity */
     if (transporterTimeLeft != 0 && random(2U) != 0) {
-        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAW_MODE_WHITE);
+        DrawSprite(SPR_TRANSPORTER_COPY, 0, act->x, act->y, DRAW_MODE_WHITE);
     } else {
-        DrawSprite(SPR_TRANSPORTER_107, 0, act->x, act->y, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_TRANSPORTER_COPY, 0, act->x, act->y, DRAW_MODE_NORMAL);
     }
 
     if (GameRand() % 2 != 0) {
-        DrawSprite(SPR_TRANSPORTER_107, random(2U) + 1, act->x, act->y, DRAW_MODE_NORMAL);
+        DrawSprite(SPR_TRANSPORTER_COPY, random(2U) + 1, act->x, act->y, DRAW_MODE_NORMAL);
     }
 
     if (transporterTimeLeft == 15) {
@@ -5845,7 +5846,7 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_SPIKES_E, x, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, 0);
         break;
     case ACT_SPIKES_E_RECIP:
-        ConstructActor(ACT_SPIKES_E_RECIP, x, y, F, F, F, F, ActReciprocatingSpikes, 1, 0, 0, 0, 0);
+        ConstructActor(SPR_SPIKES_E_RECIP, x, y, F, F, F, F, ActReciprocatingSpikes, 1, 0, 0, 0, 0);
         break;
     case ACT_SPIKES_W:
         ConstructActor(SPR_SPIKES_W, x - 3, y, F, F, F, F, ActFootSwitch, 0, 0, 0, 0, 0);
@@ -5891,10 +5892,10 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_SUCTION_WALKER, x, y, F, T, F, F, ActSuctionWalker, DIR2_WEST, 0, 0, 0, 0);
         break;
     case ACT_TRANSPORTER_1:
-        ConstructActor(SPR_TRANSPORTER_108, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 2);
+        ConstructActor(SPR_TRANSPORTER, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 2);
         break;
     case ACT_TRANSPORTER_2:
-        ConstructActor(SPR_TRANSPORTER_108, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 1);
+        ConstructActor(SPR_TRANSPORTER, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 1);
         break;
     case ACT_PROJECTILE_W:
         ConstructActor(SPR_PROJECTILE, x, y, T, F, F, F, ActProjectile, 0, 0, 0, 0, DIRP_WEST);
@@ -6165,7 +6166,7 @@ static bbool NewActorAtIndex(word index, word actor_type, word x, word y)
         ConstructActor(SPR_THRUSTER_JET, x, y + 2, F, F, F, F, ActPrize, 0, 0, 0, 0, 4);
         break;
     case ACT_EXIT_TRANSPORTER:
-        ConstructActor(SPR_TRANSPORTER_108, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 3);
+        ConstructActor(SPR_TRANSPORTER, x, y, T, F, F, F, ActTransporter, 0, 0, 0, 0, 3);
         break;
     case ACT_HINT_GLOBE_1:
         ConstructActor(SPR_HINT_GLOBE, x, y, F, F, F, F, ActHintGlobe, 0, 0, 0, 0, 1);
@@ -7536,7 +7537,7 @@ static bool InteractPlayer(word index, word sprite_type, word frame, word x, wor
     case SPR_HAMBURGER:
         act->dead = true;
         AddScore(12800);
-        NewActor(SPR_SCORE_EFFECT_12800, x, y);
+        NewActor(ACT_SCORE_EFFECT_12800, x, y);
         NewDecoration(SPR_SPARKLE_SHORT, 4, act->x, act->y, DIR8_NONE, 3);
         StartSound(SND_PRIZE);
         if (playerHealthCells < 5) playerHealthCells++;
@@ -7655,7 +7656,7 @@ static bool InteractPlayer(word index, word sprite_type, word frame, word x, wor
         }
         return false;
 
-    case SPR_TRANSPORTER_108:
+    case SPR_TRANSPORTER:
         if (transporterTimeLeft == 0) {
             if (act->x <= playerX && act->x + 4 >= playerX + 2 && act->y == playerY) {
                 if (cmdNorth) {
