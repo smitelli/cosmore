@@ -4,9 +4,17 @@ by [Scott Smitelli](mailto:scott@smitelli.com) and [contributors](AUTHORS.md)
 
 https://www.scottsmitelli.com/projects/cosmore/
 
-Cosmore is a reconstruction of the source code of _Cosmo's Cosmic Adventure_ version 1.20, using the original DOS compiler and toolchain. Its goal is to duplicate every detail, quirk, and bug of the original game as faithfully as possible. A player should not be able to distinguish a Cosmore binary from the original.
+**Cosmore** is a reconstruction of the source code of _Cosmo's Cosmic Adventure_ version 1.20, using the original DOS compiler and toolchain. Its goal is to duplicate every detail, quirk, and bug of the original game as faithfully as possible. A player should not be able to distinguish a Cosmore binary from the original.
 
 The reconstruction is **96.30%** accurate by the following metric: The load images (skipping the EXE headers and relocation tables), when compared byte-by-byte against the corresponding uncompressed originals, have the same byte values in the same locations 96% of the time. The remaining 4% consists of uninitialized data segment memory addresses that have not (yet!) been arranged to match the original layout.
+
+## The Cosmodoc Project
+
+Cosmore is pretty well commented at the function level, but there are various nuances, bugs, non-obvious behaviors, and arcane IBM PC hardware details that would require an entire tome to explain in adequate detail. The comments in this repository tend to only call out the absolute most critical bits.
+
+For those who want to see those deep details, I have created a parallel project called [**Cosmodoc**](https://cosmodoc.org/) to document every conceivable piece of this code. Two pages that might be of immediate use to a person looking at Cosmore would be the [list of global variables and constants](https://cosmodoc.org/topics/global-variables-and-constants/) and the [index of all functions](https://cosmodoc.org/topics/function-index/). Feel free to browse the [list of topics](https://cosmodoc.org/topics/) to see if there's something specific that grabs your attention.
+
+At the time of this writing the only incomplete topics in Cosmodoc pertain to player movement and the tick functions for various actor types.
 
 ## Requirements
 
@@ -159,6 +167,27 @@ This project includes a few files that are not my own work, but which are requir
 
 * `src/C0.ASM`: This is the startup code for the Turbo C runtime library version 2.0, copyright 1988 by Borland International. This file is not needed to build the vast majority of projects under Turbo C, and (in situations where it is required) the compiler ships with its own copy for the developer's use. In Cosmore's case, there is a one-line change near the very bottom of this file to include the assembly code in `lowlevel.asm`, and there seemed to be no other obvious way to replicate the way the original game was built without embedding this file into the project.
 * `src/LZEXE91/LZEXE.EXE`: This is LZEXE version 0.91, copyright 1989 by Fabrice Bellard. This is used by the build script to compress the final compiled binaries in the same manner as the original game. Also included is `LZEXE.DOC`, the documentation for the tool as originally released; and `lzexe.txt`, a duplicate copy of this documentation with the CP437 encoding translated to UTF-8. The related tools COMTOEXE, INFOEXE, and UPACKEXE are not used and therefore not included in this project. Note that the tool and its documentation are entirely in French.
+
+## Code Conventions
+
+Cosmore aims to be an educational tool as much as it is a working software project. This has resulted in identifier names that are longer and more descriptive than one might find in other C codebases. Each of these names tries to succinctly convey its function without adding too much line noise. The goal is for names to be unique enough to be machine-selectable by `grep` or a find-and-replace tool but not so unique that the additional length serves no benefit. It is a delicate balance, and only serves to assist human eyes.
+
+Broadly, these are the naming conventions that the code in Cosmore adheres to:
+
+* Global variables use **lowerCamelCase** and will always be constructed from two or more words. Boolean flags tend to begin with verbs that imply a yes-or-no state ("are", "is", "has", "saw"). When any array is described in comments or documentation, the name will be suffixed with square brackets.
+* Each C function name uses **UpperCamelCase** text. The first word is typically an English verb that summarizes the overall effect of what the function does (e.g. "Draw", "Load", "Prompt", "Set"). When functions are described in comments or documentation, the name will be suffixed with parentheses. Assembly language procedures are named similarly, except for the addition of a leading underscore which is required for painless linking with the C code.
+* Things defined with `typedef` to produce a shorter name also use **UpperCamelCase**.
+* Function parameters are **lowercase** when single words, or **snake_case** when multiple words.
+* Local variables inside a function are **lowercase** and, where necessary, multiple words are collapsed to **multiplewords** at this level. These variables are more likely to use abbreviated names due to their limited scope.
+* Structure, union, and enumeration members also use the lowercase **multiplewords** form.
+* Macros and other preprocessor names are in **SCREAMING_SNAKE_CASE**.
+
+Stylistic conventions (colloquially, spaces and braces) are fairly apparent and tend to be internally consistent. There are some choices that warrant specific attention:
+
+* The code tests boolean types directly, while using a compare against zero for integer types. Even though the values are handled identically under the hood, booleans will appear like `if (boolVal)` and integers will appear like `if (intVal != 0)`. This serves as a reminder of the underlying type.
+* When hardware constants are encountered (think register addresses and values) the hexadecimal literals are zero-padded to the full width of the register. Using a live example from the code -- `outportb(0x0061, inportb(0x0061) & ~0x03)` -- the I/O addresses are padded to a 16-bit width while the value written is padded to 8 bits. This reinforces the bit widths of the locations being operated on.
+* If something needed to be done to avoid a compiler warning, that thing was done. Even the pedantic nonsense that required uglying up the code.
+* Similarly, many things do not raise compiler warnings but still look weird under scrutiny. These tend to be unfortunate necessities that are required to faithfully recreate the original executable. These are called out with comments.
 
 ## License
 
